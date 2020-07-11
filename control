@@ -1,0 +1,9 @@
+Package: com.brend0n.volumemixer
+Name: VolumeMixer
+Depends: mobilesubstrate
+Version: 0.0.1~alpha1
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: Brend0n <brendonjkding@126.com>
+Author: Brend0n <brendonjkding@126.com>
+Section: Tweaks

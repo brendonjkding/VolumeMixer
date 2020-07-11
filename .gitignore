@@ -1,0 +1,6 @@
+.DS_Store
+.theos/
+packages/
+AppIcons/
+._*
+note*
