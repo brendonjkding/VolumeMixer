@@ -2,10 +2,81 @@
 #import <substrate.h>
 #import <AudioUnit/AudioUnit.h>
 #import <AudioToolbox/AudioToolbox.h>
+#import <AVFoundation/AVFoundation.h>
+#import "VMHUDView.h"
+#import "VMHUDWindow.h"
 
 BOOL enabled;
 UInt32 mFormatID=0;
+VMHUDWindow*hudWindow;
 
+@implementation VMHUDWindow
+
+- (id)initWithFrame:(CGRect)frame{
+	self=[super initWithFrame:frame];
+	[self configureUI];
+
+	[[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(volumeChanged:)
+     name:@"AVSystemController_SystemVolumeDidChangeNotification"
+     object:nil];
+
+
+	// [self hideWindow];
+
+	return self;
+}
+// -(id)initWithWindowScene:(UIWindowScene *)windowScene{
+// 	self=[super initWithWindowScene:windowScene];
+// 	[self configureUI];
+// 	return self;
+// }
+
+
+-(void) configureUI{
+	self.windowLevel = UIWindowLevelStatusBar;
+	[self setHidden:NO];
+	[self setAlpha:1.0];
+	[self setBackgroundColor:[UIColor clearColor]];
+	// [self makeKeyAndVisible];
+}
+-(void) hideWindow{
+	[self setHidden:YES];
+}
+-(void) showWindow{
+	[self setHidden:NO];
+}
+-(void) cancelAutoHide{
+	[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hideWindow) object:nil];
+}
+-(void) autoHide{
+	[self performSelector:@selector(hideWindow) withObject:nil afterDelay:4];
+} 
+
+- (void)volumeChanged:(NSNotification *)notification{
+	NSLog(@"???");
+	[self cancelAutoHide];
+	[self showWindow];
+	[self autoHide];
+}
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    UIView *hitTestView = [super hitTest:point withEvent:event];
+    // NSLog(@"%@",[hitTestView class]);
+    if(hitTestView ==self||hitTestView==[self rootViewController].view){
+    	return nil;
+    }
+    return hitTestView;
+    // if (hitTestView == button||[hitTestView superview]==button) 
+    // {
+    //     return hitTestView;
+    // }
+    // else
+    // {
+    //     return nil;
+    // }
+}
+@end
 BOOL loadPref(){
 	NSLog(@"loadPref..........");
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"];
@@ -17,7 +88,7 @@ BOOL is_enabled_app(){
 	NSString* bundleIdentifier=[[NSBundle mainBundle] bundleIdentifier];
 	if([bundleIdentifier isEqualToString:@"com.bilibili.priconne"])return YES;
 	if([bundleIdentifier isEqualToString:@"com.github.GBA4iOS.brend0n"])return YES;
-	return YES;
+	// return YES;
 
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"];
 	NSArray *apps=prefs?prefs[@"apps"]:nil;
@@ -46,7 +117,7 @@ static int volume_adjust(T  * in_buf, T  * out_buf, double in_vol)
 //        vol = 0;
 //    else if(vol>=2)
 //        vol = 40;  //这个值可以根据你的实际情况去调整
-    double vol=in_vol/100.0;
+    double vol=in_vol;
 
     tmp = (*in_buf)*vol; // 上面所有关于vol的判断，其实都是为了此处*in_buf乘以一个倍数，你可以根据自己的需要去修改
 
@@ -68,6 +139,9 @@ static int volume_adjust(T  * in_buf, T  * out_buf, double in_vol)
 
     return 0;
 }
+
+VMHUDView* hudview;
+
 // typedef OSStatus(*orig_t)(void*,AudioUnitRenderActionFlags*,const AudioTimeStamp*,UInt32,UInt32,AudioBufferList*);
 static OSStatus (*orig_outputCallback32)(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
 		const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData);
@@ -94,6 +168,8 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 	// return ret;
 	// NSLog(@"%u",ioData -> mNumberBuffers);
 	// for (UInt32 i = 1; i < MIN(2,ioData->mNumberBuffers); i++){
+	if(!hudview) return ret;
+	CGFloat curScale=[hudview curScale];
 	for (UInt32 i = 0; i < ioData -> mNumberBuffers; i++){
 		auto *buf = (unsigned char*)ioData->mBuffers[i].mData;
 
@@ -106,7 +182,7 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 	    //     volume_adjust((short*)(buf+j), (short*)(buf+j), (float)((25)%100));
 	    // }
 	    for(UInt32 j=0;j<bytes;j+=sizeof(T)){
-	        volume_adjust((T*)(buf+j), (T*)(buf+j), (float)((10)%100));
+	        volume_adjust((T*)(buf+j), (T*)(buf+j), curScale);
 	    }
 	}
 	
@@ -115,6 +191,28 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 }
 void *outputCallback;
 UInt32 mFormatFlags;
+
+
+void showHUDWindow(){
+	static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+    	NSLog(@"showing");
+    	void(^blockForMain)(void) = ^{
+				CGRect bounds=[UIScreen mainScreen].bounds;
+		    	CGFloat sWidth=MIN(bounds.size.width,bounds.size.height);
+		    	CGFloat sHeight=MAX(bounds.size.width,bounds.size.height);
+		    	CGFloat hudWidth=47.*sWidth/(750./2.);
+		    	CGFloat hudHeight=148.*sHeight/(1334./2.);
+		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
+		        // [window makeKeyAndVisible];
+		        hudview=[[VMHUDView alloc] initWithFrame:CGRectMake((sWidth-hudWidth)/2.,(sHeight-hudHeight)/2.,hudWidth,hudHeight)];
+				[hudWindow addSubview:hudview];
+			};
+		if ([NSThread isMainThread]) blockForMain();
+		else dispatch_async(dispatch_get_main_queue(), blockForMain);
+    	
+    });
+}
 
 void hookIfReady(){
 	/*
@@ -137,7 +235,8 @@ void hookIfReady(){
 			MSHookFunction((void *)outputCallback, (void *)my_outputCallback<short>, (void **)&orig_outputCallback32);
 			NSLog(@"%d: hook short",cs++);
 		}
-		
+
+		showHUDWindow();
 		
 		mFormatFlags=0;
 		return;
@@ -209,7 +308,34 @@ void hookIfReady(){
 	// return %orig;
 }
 %end
+%group SB
+%hook  SBVolumeHardwareButton
+- (void)volumeDecreasePress:(id)arg1{
+	%orig;
+	notify_post("com.brend0n.volumemixer/volumePressed");
+}
+- (void)volumeIncreasePress:(id)arg1{
+	%orig;
+	notify_post("com.brend0n.volumemixer/volumePressed");
+}
+%end
+%hook MTMaterialView
++(id)materialViewWithRecipe:(NSInteger)arg1 configuration:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
+	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
+	return %orig;
+}
++(id)materialViewWithRecipe:(NSInteger)arg1 options:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
+	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
+	return %orig;
+
+}
+%end
+%end
+
 %ctor{
+	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]){
+		%init(SB);
+	}
 	if(!is_enabled_app()) return;
 	// if(!loadPref()) return;
 	NSLog(@"ctor: VolumeMixer");
@@ -217,7 +343,7 @@ void hookIfReady(){
 	%init(hook);
 
 	int token = 0;
-	notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
-		loadPref();
+	notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token, dispatch_get_main_queue(), ^(int token) {
+		[hudWindow volumeChanged:nil];
 	});
 }
