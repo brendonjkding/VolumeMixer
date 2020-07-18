@@ -24,13 +24,15 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
 after-install::
-	install.exec "killall -9 priconne" ||true
-	install.exec "killall -9 GBA4iOS" ||true
-	install.exec "killall -9 Sample" ||true
-	install.exec "killall -9 ProductName" ||true
-	install.exec "killall -9 NewHLDDZ" ||true
-	install.exec "killall -9 fatego" ||true
+# 	install.exec "killall -9 priconne" ||true
+# 	install.exec "killall -9 GBA4iOS" ||true
+# 	install.exec "killall -9 Sample" ||true
+# 	install.exec "killall -9 ProductName" ||true
+# 	install.exec "killall -9 NewHLDDZ" ||true
+# 	install.exec "killall -9 fatego" ||true
 	install.exec "killall -9 Preferences" ||true
+	install.exec "killall -9 neteasemusic" ||true
+	install.exec "killall -9 QQMusic" ||true
 
 ifdef SIMULATOR
 include $(THEOS)/makefiles/locatesim.mk

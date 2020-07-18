@@ -5,10 +5,12 @@
 #import <AVFoundation/AVFoundation.h>
 #import "VMHUDView.h"
 #import "VMHUDWindow.h"
+#import <OpenAL/OpenAL.h>
 
 BOOL enabled;
 UInt32 mFormatID=0;
 VMHUDWindow*hudWindow;
+AudioQueueRef lstAudioQueue;
 
 @implementation VMHUDWindow
 
@@ -23,7 +25,7 @@ VMHUDWindow*hudWindow;
      object:nil];
 
 
-	// [self hideWindow];
+	[self hideWindow];
 
 	return self;
 }
@@ -51,7 +53,7 @@ VMHUDWindow*hudWindow;
 	[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hideWindow) object:nil];
 }
 -(void) autoHide{
-	[self performSelector:@selector(hideWindow) withObject:nil afterDelay:4];
+	[self performSelector:@selector(hideWindow) withObject:nil afterDelay:2];
 } 
 
 - (void)volumeChanged:(NSNotification *)notification{
@@ -206,6 +208,9 @@ void showHUDWindow(){
 		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
 		        // [window makeKeyAndVisible];
 		        hudview=[[VMHUDView alloc] initWithFrame:CGRectMake((sWidth-hudWidth)/2.,(sHeight-hudHeight)/2.,hudWidth,hudHeight)];
+		        [hudview setVolumeChangedCallBlock:^{
+		        	AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,[hudview curScale]);
+		        }];
 				[hudWindow addSubview:hudview];
 			};
 		if ([NSThread isMainThread]) blockForMain();
@@ -319,29 +324,108 @@ void hookIfReady(){
 	notify_post("com.brend0n.volumemixer/volumePressed");
 }
 %end
-%hook MTMaterialView
-+(id)materialViewWithRecipe:(NSInteger)arg1 configuration:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
-	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
-	return %orig;
-}
-+(id)materialViewWithRecipe:(NSInteger)arg1 options:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
-	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
-	return %orig;
+// %hook MTMaterialView
+// +(id)materialViewWithRecipe:(NSInteger)arg1 configuration:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
+// 	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
+// 	return %orig;
+// }
+// +(id)materialViewWithRecipe:(NSInteger)arg1 options:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
+// 	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
+// 	return %orig;
 
+// }
+// %end
+%hook SpringBoard
+
+- (void)_ringerChanged:(struct __IOHIDEvent *)arg1{
+	notify_post("com.brend0n.volumemixer/volumePressed");
+	%orig;
+}
+// - (BOOL)_handlePhysicalButtonEvent:(id)arg1{
+// 	NSLog(@"_handlePhysicalButtonEvent");
+// 	return %orig;
+// }
+%end
+%end//sb
+%group test
+%hookf(ALCdevice*,alcOpenDevice ,const ALCchar *devicename){
+	NSLog(@"openal!!!");
+	return %orig;
+}
+
+%hookf(void, alcGetProcAddress,ALCdevice *device, const ALCchar *funcName){
+	NSLog(@"openal!!!");
+	%orig;
+}
+%hookf(OSStatus,AudioQueueAllocateBuffer,AudioQueueRef inAQ, UInt32 inBufferByteSize, AudioQueueBufferRef *outBuffer ){
+	NSLog(@"AudioQueueAllocateBuffer!!!");
+	return %orig(inAQ,inBufferByteSize,outBuffer);
+}
+/*
+	kAudioQueueParam_Volume         = 1,
+    kAudioQueueParam_PlayRate       = 2,
+    kAudioQueueParam_Pitch          = 3,
+    kAudioQueueParam_VolumeRampTime = 4,
+    kAudioQueueParam_Pan            = 13
+*/
+
+%hookf(OSStatus ,AudioQueueSetParameter,AudioQueueRef inAQ, AudioQueueParameterID inParamID, AudioQueueParameterValue inValue){
+	showHUDWindow();
+	lstAudioQueue=inAQ;
+	NSLog(@"%p %u %lf",(void*)inAQ,inParamID,inValue);
+	if(hudview) {
+		if(inParamID==kAudioQueueParam_Volume){
+			return %orig(inAQ,inParamID,[hudview curScale]);
+		}
+	}
+
+	return %orig(inAQ,inParamID,inValue);
+}
+%hook AVAudioPlayer
+-(id)alloc{
+	NSLog(@"AVAudioPlayer");
+	return %orig;
+}
+-(void)play{
+	NSLog(@"AVAudioPlayer");
+	return %orig;
 }
 %end
+%hook AVPlayer
+-(void)play{
+	NSLog(@"AVPlayer");
+	return %orig;
+}
+
+-(id)alloc{
+	NSLog(@"AVPlayer");
+	return %orig;
+}
 %end
+%hookf(OSStatus, AudioFileOpenWithCallbacks,void *inClientData, AudioFile_ReadProc inReadFunc, AudioFile_WriteProc inWriteFunc, AudioFile_GetSizeProc inGetSizeFunc, AudioFile_SetSizeProc inSetSizeFunc, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
+	NSLog(@"AudioFileOpenWithCallbacks");
+	return %orig;
+}
+%hookf(OSStatus ,AudioFileOpenURL,CFURLRef inFileRef, AudioFilePermissions inPermissions, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
+	NSLog(@"AudioFileOpenURL");
+	return %orig;
+}
+%end//test
 
 %ctor{
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]){
 		%init(SB);
+		NSLog(@"SB");
 	}
 	if(!is_enabled_app()) return;
 	// if(!loadPref()) return;
 	NSLog(@"ctor: VolumeMixer");
 
 	%init(hook);
-
+#if DEBUG
+	%init(test);
+	NSLog(@"test");
+#endif
 	int token = 0;
 	notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token, dispatch_get_main_queue(), ^(int token) {
 		[hudWindow volumeChanged:nil];

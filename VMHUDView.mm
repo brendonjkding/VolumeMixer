@@ -81,6 +81,7 @@
         if(fabs(scale-_curScale)>1/16){
         	_curScale=scale;
             // NSLog(@"newScale:%lf",_curScale);
+            _volumeChangedCallBlock();
 
         }
 
