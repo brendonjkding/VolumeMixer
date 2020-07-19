@@ -25,10 +25,17 @@
 	blurView.frame = self.bounds;
 	blurView.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
 	[self addSubview:blurView];
-	NSArray* bundles = @[
-		@"/System/Library/PrivateFrameworks/MaterialKit.framework",
-		@"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot/System/Library/PrivateFrameworks/MaterialKit.framework"
-	];
+#if TARGET_OS_SIMULATOR
+    NSArray* bundles = @[
+        @"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot/System/Library/PrivateFrameworks/MaterialKit.framework",
+        @"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/Library/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot/System/Library/PrivateFrameworks/MaterialKit.framework"
+    ];
+#else
+    NSArray* bundles = @[
+        @"/System/Library/PrivateFrameworks/MaterialKit.framework",
+    ];
+#endif
+	
 
 	for (NSString* bundlePath in bundles)
 	{

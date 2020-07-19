@@ -7,10 +7,14 @@
 #import "VMHUDWindow.h"
 #import <OpenAL/OpenAL.h>
 
+%config(generator=MobileSubstrate)
+
 BOOL enabled;
 UInt32 mFormatID=0;
 VMHUDWindow*hudWindow;
 AudioQueueRef lstAudioQueue;
+AVPlayer* lstAVPlayer;
+AVAudioPlayer* lstAVAudioPlayer;
 
 @implementation VMHUDWindow
 
@@ -18,11 +22,11 @@ AudioQueueRef lstAudioQueue;
 	self=[super initWithFrame:frame];
 	[self configureUI];
 
-	[[NSNotificationCenter defaultCenter]
-     addObserver:self
-     selector:@selector(volumeChanged:)
-     name:@"AVSystemController_SystemVolumeDidChangeNotification"
-     object:nil];
+	// [[NSNotificationCenter defaultCenter]
+ //     addObserver:self
+ //     selector:@selector(volumeChanged:)
+ //     name:@"AVSystemController_SystemVolumeDidChangeNotification"
+ //     object:nil];
 
 
 	[self hideWindow];
@@ -37,6 +41,7 @@ AudioQueueRef lstAudioQueue;
 
 
 -(void) configureUI{
+	NSLog(@"configureUI");
 	self.windowLevel = UIWindowLevelStatusBar;
 	[self setHidden:NO];
 	[self setAlpha:1.0];
@@ -57,7 +62,7 @@ AudioQueueRef lstAudioQueue;
 } 
 
 - (void)volumeChanged:(NSNotification *)notification{
-	NSLog(@"???");
+	// NSLog(@"???");
 	[self cancelAutoHide];
 	[self showWindow];
 	[self autoHide];
@@ -88,8 +93,8 @@ BOOL loadPref(){
 }
 BOOL is_enabled_app(){
 	NSString* bundleIdentifier=[[NSBundle mainBundle] bundleIdentifier];
-	if([bundleIdentifier isEqualToString:@"com.bilibili.priconne"])return YES;
-	if([bundleIdentifier isEqualToString:@"com.github.GBA4iOS.brend0n"])return YES;
+	// if([bundleIdentifier isEqualToString:@"com.bilibili.priconne"])return YES;
+	// if([bundleIdentifier isEqualToString:@"com.github.GBA4iOS.brend0n"])return YES;
 	// return YES;
 
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"];
@@ -170,6 +175,7 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 	// return ret;
 	// NSLog(@"%u",ioData -> mNumberBuffers);
 	// for (UInt32 i = 1; i < MIN(2,ioData->mNumberBuffers); i++){
+	// NSLog(@"inRefCon: %p",inRefCon);
 	if(!hudview) return ret;
 	CGFloat curScale=[hudview curScale];
 	for (UInt32 i = 0; i < ioData -> mNumberBuffers; i++){
@@ -209,7 +215,9 @@ void showHUDWindow(){
 		        // [window makeKeyAndVisible];
 		        hudview=[[VMHUDView alloc] initWithFrame:CGRectMake((sWidth-hudWidth)/2.,(sHeight-hudHeight)/2.,hudWidth,hudHeight)];
 		        [hudview setVolumeChangedCallBlock:^{
-		        	AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,[hudview curScale]);
+		        	if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,[hudview curScale]);
+		        	[lstAVPlayer setVolume:[hudview curScale]];
+		        	[lstAVAudioPlayer setVolume:[hudview curScale]];
 		        }];
 				[hudWindow addSubview:hudview];
 			};
@@ -279,7 +287,9 @@ void hookIfReady(){
 			NSLog(@"	outputCallback:%ld",*(long*)inData);
 			hookIfReady();
 		// }
-		
+		AURenderCallbackStruct *callbackSt=(AURenderCallbackStruct*)inData;
+
+		NSLog(@"context: %p",callbackSt->inputProcRefCon);
 	}
 	else if(inID==kAudioUnitProperty_StreamFormat){//8
 		NSLog(@"kAudioUnitProperty_StreamFormat: %ld",(long)inUnit);
@@ -312,15 +322,37 @@ void hookIfReady(){
 	// }
 	// return %orig;
 }
+
+/*
+	kAudioQueueParam_Volume         = 1,
+    kAudioQueueParam_PlayRate       = 2,
+    kAudioQueueParam_Pitch          = 3,
+    kAudioQueueParam_VolumeRampTime = 4,
+    kAudioQueueParam_Pan            = 13
+*/
+%hookf(OSStatus ,AudioQueueSetParameter,AudioQueueRef inAQ, AudioQueueParameterID inParamID, AudioQueueParameterValue inValue){
+	showHUDWindow();
+	lstAudioQueue=inAQ;
+	NSLog(@"%p %u %lf",(void*)inAQ,inParamID,inValue);
+	if(hudview) {
+		if(inParamID==kAudioQueueParam_Volume){
+			return %orig(inAQ,inParamID,[hudview curScale]);
+		}
+	}
+
+	return %orig(inAQ,inParamID,inValue);
+}
 %end
 %group SB
 %hook  SBVolumeHardwareButton
 - (void)volumeDecreasePress:(id)arg1{
 	%orig;
+	NSLog(@"volumeDecreasePress: %@",arg1);
 	notify_post("com.brend0n.volumemixer/volumePressed");
 }
 - (void)volumeIncreasePress:(id)arg1{
 	%orig;
+	NSLog(@"volumeIncreasePress: %@",arg1);
 	notify_post("com.brend0n.volumemixer/volumePressed");
 }
 %end
@@ -337,7 +369,8 @@ void hookIfReady(){
 // %end
 %hook SpringBoard
 
-- (void)_ringerChanged:(struct __IOHIDEvent *)arg1{
+- (void)_ringerChanged:(id)arg1{
+	NSLog(@"_ringerChanged: %@",arg1);
 	notify_post("com.brend0n.volumemixer/volumePressed");
 	%orig;
 }
@@ -347,6 +380,11 @@ void hookIfReady(){
 // }
 %end
 %end//sb
+
+
+
+
+
 %group test
 %hookf(ALCdevice*,alcOpenDevice ,const ALCchar *devicename){
 	NSLog(@"openal!!!");
@@ -357,48 +395,37 @@ void hookIfReady(){
 	NSLog(@"openal!!!");
 	%orig;
 }
-%hookf(OSStatus,AudioQueueAllocateBuffer,AudioQueueRef inAQ, UInt32 inBufferByteSize, AudioQueueBufferRef *outBuffer ){
-	NSLog(@"AudioQueueAllocateBuffer!!!");
-	return %orig(inAQ,inBufferByteSize,outBuffer);
-}
-/*
-	kAudioQueueParam_Volume         = 1,
-    kAudioQueueParam_PlayRate       = 2,
-    kAudioQueueParam_Pitch          = 3,
-    kAudioQueueParam_VolumeRampTime = 4,
-    kAudioQueueParam_Pan            = 13
-*/
+// %hookf(OSStatus,AudioQueueAllocateBuffer,AudioQueueRef inAQ, UInt32 inBufferByteSize, AudioQueueBufferRef *outBuffer ){
+// 	NSLog(@"AudioQueueAllocateBuffer!!!");
+// 	return %orig(inAQ,inBufferByteSize,outBuffer);
+// }
 
-%hookf(OSStatus ,AudioQueueSetParameter,AudioQueueRef inAQ, AudioQueueParameterID inParamID, AudioQueueParameterValue inValue){
-	showHUDWindow();
-	lstAudioQueue=inAQ;
-	NSLog(@"%p %u %lf",(void*)inAQ,inParamID,inValue);
-	if(hudview) {
-		if(inParamID==kAudioQueueParam_Volume){
-			return %orig(inAQ,inParamID,[hudview curScale]);
-		}
-	}
-
-	return %orig(inAQ,inParamID,inValue);
-}
 %hook AVAudioPlayer
 -(id)alloc{
-	NSLog(@"AVAudioPlayer");
+	NSLog(@"AVAudioPlayer alloc");
 	return %orig;
 }
 -(void)play{
-	NSLog(@"AVAudioPlayer");
+	NSLog(@"AVAudioPlayer play %@",self);
+	lstAVAudioPlayer=self;
+	[self setVolume:[hudview curScale]];
 	return %orig;
 }
 %end
 %hook AVPlayer
 -(void)play{
-	NSLog(@"AVPlayer");
+	NSLog(@"AVPlayer play %@",self);
+	lstAVPlayer=self;
+	[self setVolume:[hudview curScale]];
+	return %orig;
+}
+-(void)setVolume:(float)volume{
+	NSLog(@"setVolume: %f",volume);
 	return %orig;
 }
 
 -(id)alloc{
-	NSLog(@"AVPlayer");
+	NSLog(@"AVPlayer alloc");
 	return %orig;
 }
 %end
@@ -429,5 +456,9 @@ void hookIfReady(){
 	int token = 0;
 	notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token, dispatch_get_main_queue(), ^(int token) {
 		[hudWindow volumeChanged:nil];
+	});
+	int token2 = 0;
+	notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token2, dispatch_get_main_queue(), ^(int token) {
+		NSLog(@"testttt");
 	});
 }
