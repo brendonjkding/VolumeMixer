@@ -46,7 +46,7 @@
     NSArray *sortedDisplayIdentifiers;
     NSDictionary *applications = [[ALApplicationList sharedApplicationList] applicationsFilteredUsingPredicate:nil
       onlyVisible:YES titleSortedIdentifiers:&sortedDisplayIdentifiers];
-    NSLog(@"app count:%lu",[applications count]);
+    // NSLog(@"app count:%lu",[applications count]);
 
     PSSpecifier* spec;
     for(id displayIdentifier in applications){
@@ -88,7 +88,7 @@
     NSString *path = [NSString stringWithFormat:@"/User/Library/Preferences/%@.plist", specifier.properties[@"defaults"]];
     NSMutableDictionary *settings = [NSMutableDictionary dictionary];
     [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:path]];
-    NSMutableArray*apps=settings[_key];
+    NSMutableArray*apps=[settings[_key] mutableCopy];
     if(!apps) apps=[NSMutableArray new];
     NSString*displayIdentifier=specifier.properties[@"displayIdentifier"];
     if([value boolValue]&&![apps containsObject:displayIdentifier]){

@@ -1,0 +1,3 @@
+@interface VMHUDRootViewController:UIViewController
+
+@end

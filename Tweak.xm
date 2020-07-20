@@ -5,6 +5,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import "VMHUDView.h"
 #import "VMHUDWindow.h"
+#import "VMHUDRootViewController.h"
 #import <OpenAL/OpenAL.h>
 
 %config(generator=MobileSubstrate)
@@ -15,75 +16,8 @@ VMHUDWindow*hudWindow;
 AudioQueueRef lstAudioQueue;
 AVPlayer* lstAVPlayer;
 AVAudioPlayer* lstAVAudioPlayer;
+extern NSString*prefPath;
 
-@implementation VMHUDWindow
-
-- (id)initWithFrame:(CGRect)frame{
-	self=[super initWithFrame:frame];
-	[self configureUI];
-
-	// [[NSNotificationCenter defaultCenter]
- //     addObserver:self
- //     selector:@selector(volumeChanged:)
- //     name:@"AVSystemController_SystemVolumeDidChangeNotification"
- //     object:nil];
-
-
-	[self hideWindow];
-
-	return self;
-}
-// -(id)initWithWindowScene:(UIWindowScene *)windowScene{
-// 	self=[super initWithWindowScene:windowScene];
-// 	[self configureUI];
-// 	return self;
-// }
-
-
--(void) configureUI{
-	NSLog(@"configureUI");
-	self.windowLevel = UIWindowLevelStatusBar;
-	[self setHidden:NO];
-	[self setAlpha:1.0];
-	[self setBackgroundColor:[UIColor clearColor]];
-	// [self makeKeyAndVisible];
-}
--(void) hideWindow{
-	[self setHidden:YES];
-}
--(void) showWindow{
-	[self setHidden:NO];
-}
--(void) cancelAutoHide{
-	[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(hideWindow) object:nil];
-}
--(void) autoHide{
-	[self performSelector:@selector(hideWindow) withObject:nil afterDelay:2];
-} 
-
-- (void)volumeChanged:(NSNotification *)notification{
-	// NSLog(@"???");
-	[self cancelAutoHide];
-	[self showWindow];
-	[self autoHide];
-}
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    UIView *hitTestView = [super hitTest:point withEvent:event];
-    // NSLog(@"%@",[hitTestView class]);
-    if(hitTestView ==self||hitTestView==[self rootViewController].view){
-    	return nil;
-    }
-    return hitTestView;
-    // if (hitTestView == button||[hitTestView superview]==button) 
-    // {
-    //     return hitTestView;
-    // }
-    // else
-    // {
-    //     return nil;
-    // }
-}
-@end
 BOOL loadPref(){
 	NSLog(@"loadPref..........");
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"];
@@ -148,7 +82,7 @@ static int volume_adjust(T  * in_buf, T  * out_buf, double in_vol)
 }
 
 VMHUDView* hudview;
-
+float g_curScale=1;
 // typedef OSStatus(*orig_t)(void*,AudioUnitRenderActionFlags*,const AudioTimeStamp*,UInt32,UInt32,AudioBufferList*);
 static OSStatus (*orig_outputCallback32)(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
 		const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData);
@@ -176,8 +110,8 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 	// NSLog(@"%u",ioData -> mNumberBuffers);
 	// for (UInt32 i = 1; i < MIN(2,ioData->mNumberBuffers); i++){
 	// NSLog(@"inRefCon: %p",inRefCon);
-	if(!hudview) return ret;
-	CGFloat curScale=[hudview curScale];
+	// if(!hudview) return ret;
+	CGFloat curScale=g_curScale;
 	for (UInt32 i = 0; i < ioData -> mNumberBuffers; i++){
 		auto *buf = (unsigned char*)ioData->mBuffers[i].mData;
 
@@ -200,8 +134,10 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 void *outputCallback;
 UInt32 mFormatFlags;
 
-
 void showHUDWindow(){
+
+}
+void showHUDWindowSB(){
 	static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
     	NSLog(@"showing");
@@ -212,14 +148,14 @@ void showHUDWindow(){
 		    	CGFloat hudWidth=47.*sWidth/(750./2.);
 		    	CGFloat hudHeight=148.*sHeight/(1334./2.);
 		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
-		        // [window makeKeyAndVisible];
-		        hudview=[[VMHUDView alloc] initWithFrame:CGRectMake((sWidth-hudWidth)/2.,(sHeight-hudHeight)/2.,hudWidth,hudHeight)];
-		        [hudview setVolumeChangedCallBlock:^{
-		        	if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,[hudview curScale]);
-		        	[lstAVPlayer setVolume:[hudview curScale]];
-		        	[lstAVAudioPlayer setVolume:[hudview curScale]];
-		        }];
-				[hudWindow addSubview:hudview];
+		        VMHUDRootViewController*rootViewController=[VMHUDRootViewController new];
+		        [hudWindow setRootViewController:rootViewController];
+		        [hudWindow makeKeyAndVisible];
+		  //       hudview=[[VMHUDView alloc] initWithFrame:CGRectMake((sWidth-hudWidth)/2.,(sHeight-hudHeight)/2.,hudWidth,hudHeight)];
+		  //       [hudview setVolumeChangedCallBlock:^{
+		  //       	
+		  //       }];
+				// [hudWindow addSubview:hudview];
 			};
 		if ([NSThread isMainThread]) blockForMain();
 		else dispatch_async(dispatch_get_main_queue(), blockForMain);
@@ -260,7 +196,7 @@ void hookIfReady(){
 
 	});
 }
-
+#pragma mark hook
 %group hook
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
 
@@ -336,14 +272,25 @@ void hookIfReady(){
 	NSLog(@"%p %u %lf",(void*)inAQ,inParamID,inValue);
 	if(hudview) {
 		if(inParamID==kAudioQueueParam_Volume){
-			return %orig(inAQ,inParamID,[hudview curScale]);
+			return %orig(inAQ,inParamID,g_curScale);
 		}
 	}
 
 	return %orig(inAQ,inParamID,inValue);
 }
 %end
+#pragma mark SB
 %group SB
+%hook SpringBoard
+-(void) applicationDidFinishLaunching:(id)application{
+	%orig;
+	NSLog(@"applicationDidFinishLaunching");
+	// [QQLyricMessagingCenter sharedInstance];
+
+	showHUDWindowSB();
+    
+}
+%end
 %hook  SBVolumeHardwareButton
 - (void)volumeDecreasePress:(id)arg1{
 	%orig;
@@ -384,7 +331,7 @@ void hookIfReady(){
 
 
 
-
+#pragma mark test
 %group test
 %hookf(ALCdevice*,alcOpenDevice ,const ALCchar *devicename){
 	NSLog(@"openal!!!");
@@ -401,14 +348,14 @@ void hookIfReady(){
 // }
 
 %hook AVAudioPlayer
--(id)alloc{
++(instancetype)alloc{
 	NSLog(@"AVAudioPlayer alloc");
 	return %orig;
 }
 -(void)play{
 	NSLog(@"AVAudioPlayer play %@",self);
 	lstAVAudioPlayer=self;
-	[self setVolume:[hudview curScale]];
+	[self setVolume:g_curScale];
 	return %orig;
 }
 %end
@@ -416,7 +363,7 @@ void hookIfReady(){
 -(void)play{
 	NSLog(@"AVPlayer play %@",self);
 	lstAVPlayer=self;
-	[self setVolume:[hudview curScale]];
+	[self setVolume:g_curScale];
 	return %orig;
 }
 -(void)setVolume:(float)volume{
@@ -424,7 +371,7 @@ void hookIfReady(){
 	return %orig;
 }
 
--(id)alloc{
++(instancetype)alloc{
 	NSLog(@"AVPlayer alloc");
 	return %orig;
 }
@@ -438,27 +385,82 @@ void hookIfReady(){
 	return %orig;
 }
 %end//test
+void registerApp(){
+	//send bundleid
+	NSString*bundleID=[[NSBundle mainBundle] bundleIdentifier];
+	NSData*bundleIDData=[NSKeyedArchiver archivedDataWithRootObject:bundleID];
+	[[UIPasteboard generalPasteboard] setValue:bundleIDData forPasteboardType:@"com.brend0n.volumemixer/bundleID"];
+	notify_post("com.brend0n.qqmusicdesktoplyrics/register");
 
+	// int token = 0;
+	// notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token, dispatch_get_main_queue(), ^(int token) {
+	// 	[hudWindow volumeChanged:nil];
+	// });
+	// int token2 = 0;
+	// notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token2, dispatch_get_main_queue(), ^(int token) {
+	// 	NSLog(@"testttt");
+	// });
+	int token3 = 0;
+
+	//receive volume
+	NSString*appNotify=[NSString stringWithFormat:@"com.brend0n.volumemixer/%@/setVolume",bundleID];
+	NSLog(@"registerd: %@",appNotify);
+	notify_register_dispatch([appNotify UTF8String], &token3, dispatch_get_main_queue(), ^(int token) {
+		// NSLog(@"setVolume");
+		NSData*scaleData=[[UIPasteboard generalPasteboard] dataForPasteboardType:@"com.brend0n.volumemixer"];
+		
+		if(scaleData){
+			NSNumber*scaleNumber= [NSKeyedUnarchiver unarchiveObjectWithData:scaleData];
+			// NSLog(@"%@",scaleNumber);
+
+			g_curScale=[scaleNumber doubleValue];
+
+			if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
+        	[lstAVPlayer setVolume:g_curScale];
+        	[lstAVAudioPlayer setVolume:g_curScale];
+		}
+	});
+}
+#pragma mark ctor
+///System/Library/PrivateFrameworks/SpringBoard.framework/SpringBoard
 %ctor{
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]){
-		%init(SB);
 		NSLog(@"SB");
+		%init(SB);
+
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+				// if([[UIApplication sharedApplication] keyWindow]){
+				// showHUDWindowSB();
+		      	
+	 		});
+#if TARGET_OS_SIMULATOR
+	NSArray* bundles = @[
+        @"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot/System/Library/PrivateFrameworks/SpringBoard.framework/SpringBoard",
+        @"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/Library/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot/System/Library/PrivateFrameworks/SpringBoard.framework/SpringBoard"
+    ];
+
+	
+
+	for (NSString* bundlePath in bundles)
+	{
+		NSBundle* bundle = [NSBundle bundleWithPath:bundlePath];
+		if (!bundle.loaded)
+			[bundle load];
+	}
+#endif
+		
 	}
 	if(!is_enabled_app()) return;
+	
 	// if(!loadPref()) return;
 	NSLog(@"ctor: VolumeMixer");
 
 	%init(hook);
+	if(![[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]) registerApp();
+	NSLog(@"registerApp End");
 #if DEBUG
 	%init(test);
 	NSLog(@"test");
 #endif
-	int token = 0;
-	notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token, dispatch_get_main_queue(), ^(int token) {
-		[hudWindow volumeChanged:nil];
-	});
-	int token2 = 0;
-	notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token2, dispatch_get_main_queue(), ^(int token) {
-		NSLog(@"testttt");
-	});
+	
 }

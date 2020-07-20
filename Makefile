@@ -13,9 +13,9 @@ endif
 
 TWEAK_NAME = VolumeMixer
 
-VolumeMixer_FILES = Tweak.xm VMHUDView.mm
+VolumeMixer_FILES = Tweak.xm VMHUDView.mm VMHUDWindow.mm VMHUDRootViewController.mm
 VolumeMixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -std=c++11
-VolumeMixer_LIBRARIES = substrate
+VolumeMixer_LIBRARIES = substrate applist applist-sim
 
 SUBPROJECTS += volumemixer
 
@@ -41,7 +41,7 @@ PREF_FOLDER_NAME = $(shell echo $(BUNDLE_NAME) | tr A-Z a-z)
 endif
 
 ifneq (,$(filter x86_64 i386,$(ARCHS)))
-setup:: clean all
+setup::  all
 	@rm -f /opt/simject/$(TWEAK_NAME).dylib
 	@cp -v $(THEOS_OBJ_DIR)/$(TWEAK_NAME).dylib /opt/simject/$(TWEAK_NAME).dylib
 	@codesign -f -s - /opt/simject/$(TWEAK_NAME).dylib
