@@ -1,10 +1,10 @@
 Package: com.brend0n.volumemixer
 Name: VolumeMixer
-Depends: mobilesubstrate
-Version: 0.0.1~alpha10
+Depends: mobilesubstrate, libactivator (>= 1.8.3), preferenceloader,applist
+Version: 0.0.1~alpha12
 Architecture: iphoneos-arm
 Description: add volume control for individual app
- Note: This package is in early development, now only support some games, music players.
+ Note: This package is in early development, NOT all apps are supported.
 Maintainer: Brend0n <brendonjkding@126.com>
 Author: Brend0n <brendonjkding@126.com>
 Section: Tweaks

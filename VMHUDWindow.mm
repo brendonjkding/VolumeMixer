@@ -3,6 +3,7 @@
 
 - (id)initWithFrame:(CGRect)frame{
 	self=[super initWithFrame:frame];
+	if(!self)return self;
 	[self configureUI];
 
 	// [[NSNotificationCenter defaultCenter]
@@ -29,7 +30,8 @@
 	[self setHidden:NO];
 	[self setAlpha:1.0];
 	[self setBackgroundColor:[UIColor clearColor]];
-	// [self makeKeyAndVisible];
+	[self makeKeyAndVisible];
+	[self hideWindow];
 }
 -(void) hideWindow{
 	[self setHidden:YES];

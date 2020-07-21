@@ -1,12 +1,17 @@
 #import <notify.h>
 #import <substrate.h>
+#import <libactivator/libactivator.h>
+
 #import <AudioUnit/AudioUnit.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
+#import <OpenAL/OpenAL.h>
+
 #import "VMHUDView.h"
 #import "VMHUDWindow.h"
 #import "VMHUDRootViewController.h"
-#import <OpenAL/OpenAL.h>
+
+
 
 %config(generator=MobileSubstrate)
 
@@ -43,21 +48,6 @@ static int volume_adjust(T  * in_buf, T  * out_buf, double in_vol)
 {
     double tmp;
 
-    // in_vol[0, 100]
-//    float vol = in_vol - 98;
-//
-//    if(-98<vol && vol<0)
-//        vol = 1/(vol*(-1));
-//    else if(0<=vol && vol<=1)
-//        vol = 1;
-//    /*
-//    else if(1<=vol && vol<=2)
-//        vol = vol;
-//    */
-//    else if(vol<=-98)
-//        vol = 0;
-//    else if(vol>=2)
-//        vol = 40;  //这个值可以根据你的实际情况去调整
     double vol=in_vol;
 
     tmp = (*in_buf)*vol; // 上面所有关于vol的判断，其实都是为了此处*in_buf乘以一个倍数，你可以根据自己的需要去修改
@@ -149,13 +139,8 @@ void showHUDWindowSB(){
 		    	CGFloat hudHeight=148.*sHeight/(1334./2.);
 		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
 		        VMHUDRootViewController*rootViewController=[VMHUDRootViewController new];
+		        [rootViewController configure];
 		        [hudWindow setRootViewController:rootViewController];
-		        [hudWindow makeKeyAndVisible];
-		  //       hudview=[[VMHUDView alloc] initWithFrame:CGRectMake((sWidth-hudWidth)/2.,(sHeight-hudHeight)/2.,hudWidth,hudHeight)];
-		  //       [hudview setVolumeChangedCallBlock:^{
-		  //       	
-		  //       }];
-				// [hudWindow addSubview:hudview];
 			};
 		if ([NSThread isMainThread]) blockForMain();
 		else dispatch_async(dispatch_get_main_queue(), blockForMain);
@@ -279,8 +264,124 @@ void hookIfReady(){
 	return %orig(inAQ,inParamID,inValue);
 }
 %end
+
+#pragma mark LA
+#if !(TARGET_OS_SIMULATOR)
+@interface VolumeMixerListener : NSObject <LAListener>
+
+@end 
+
+
+
+@implementation VolumeMixerListener
+
+- (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
+{
+	NSLog(@"test");
+	[hudWindow isHidden]?[hudWindow showWindow]:[hudWindow hideWindow];
+}
+
+
++ (void)load
+{
+	@autoreleasepool 
+	{
+		// Register listener
+		if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]) 
+			[[LAActivator sharedInstance] registerListener:[self new] forName:@"com.brend0n.volumemixer"];
+	}
+}
+- (NSString *)activator:(LAActivator *)activator requiresLocalizedGroupForListenerName:(NSString *)listenerName
+{
+	return @"VolumeMixer";
+}
+- (NSString *)activator:(LAActivator *)activator requiresLocalizedTitleForListenerName:(NSString *)listenerName
+{
+    return @"Show Volume Mixer";
+}
+
+- (NSString *)activator:(LAActivator *)activator requiresLocalizedDescriptionForListenerName:(NSString *)listenerName
+{
+    return @"Volume control for individual app";
+}
+
+- (UIImage *)activator:(LAActivator *)activator requiresSmallIconForListenerName:(NSString *)listenerName scale:(CGFloat)scale
+{
+	__block NSBundle *preferenceBundle = nil;
+	static dispatch_once_t once;
+    dispatch_once(&once, ^{
+		preferenceBundle = [NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle/"];
+	});
+
+	UIImage *icon = [UIImage imageNamed:@"icon" inBundle:preferenceBundle compatibleWithTraitCollection:nil];
+
+	return icon;
+}
+
+- (NSArray *)activator:(LAActivator *)activator requiresCompatibleEventModesForListenerWithName:(NSString *)listenerName
+{
+    //It does not work well on lock screen on iOS10.
+    return @[@"springboard", @"application"];
+   
+    
+}
+
+@end
+#endif
+
+
+#pragma mark SIM
+%group SBSIM
+%hook UIStatusBarWindow
+
+- (instancetype)initWithFrame:(CGRect)frame {
+	NSLog(@"UIStatusBarWindow hooked...");
+    id ret = %orig;
+    
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(vm_tap:)];
+    [ret addGestureRecognizer:tap];
+
+
+    return ret;
+}
+%new
+- (void)vm_tap:(UITapGestureRecognizer *)sender {
+	if (sender.state == UIGestureRecognizerStateEnded){
+		NSLog(@"tap");
+		// if([hudWindow isHidden]) [hudWindow showWindow];
+		// else [hudWindow hideWindow];
+		[hudWindow isHidden]?[hudWindow showWindow]:[hudWindow hideWindow];
+	}
+}
+%end
+
+@interface SBMainDisplaySceneLayoutStatusBarView:UIView
+@end
+%hook SBMainDisplaySceneLayoutStatusBarView
+- (void)_addStatusBarIfNeeded {
+	%orig;
+	NSLog(@"SBMainDisplaySceneLayoutStatusBarView hooked...");
+	UIView *statusBar = [self valueForKey:@"_statusBar"];
+
+	UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(vm_tap:)];
+	tap.numberOfTapsRequired=2;
+    [statusBar addGestureRecognizer:tap];
+}
+%new
+- (void)vm_tap:(UITapGestureRecognizer *)sender {
+
+	if (sender.state == UIGestureRecognizerStateEnded){
+		NSLog(@"inapp tap");
+		[hudWindow isHidden]?[hudWindow showWindow]:[hudWindow hideWindow];
+	}
+
+}
+%end
+%end//SBSIM
+
 #pragma mark SB
 %group SB
+
 %hook SpringBoard
 -(void) applicationDidFinishLaunching:(id)application{
 	%orig;
@@ -429,27 +530,19 @@ void registerApp(){
 		%init(SB);
 
 		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-				// if([[UIApplication sharedApplication] keyWindow]){
 				// showHUDWindowSB();
 		      	
 	 		});
+		// int token = 0;
+		// notify_register_dispatch("com.brend0n.volumemixer/changeWindow", &token, dispatch_get_main_queue(), ^(int token) {
+  //   		[hudWindow isHidden]?[hudWindow showWindow]:[hudWindow hideWindow];
+		// });
 #if TARGET_OS_SIMULATOR
-	NSArray* bundles = @[
-        @"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot/System/Library/PrivateFrameworks/SpringBoard.framework/SpringBoard",
-        @"/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/Library/CoreSimulator/Profiles/Runtimes/iOS.simruntime/Contents/Resources/RuntimeRoot/System/Library/PrivateFrameworks/SpringBoard.framework/SpringBoard"
-    ];
-
-	
-
-	for (NSString* bundlePath in bundles)
-	{
-		NSBundle* bundle = [NSBundle bundleWithPath:bundlePath];
-		if (!bundle.loaded)
-			[bundle load];
-	}
+		%init(SBSIM);	
 #endif
-		
 	}
+
+
 	if(!is_enabled_app()) return;
 	
 	// if(!loadPref()) return;
@@ -462,5 +555,5 @@ void registerApp(){
 	%init(test);
 	NSLog(@"test");
 #endif
-	
+
 }

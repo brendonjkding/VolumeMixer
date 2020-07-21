@@ -1,11 +1,8 @@
 #import "VMHUDView.h"
 #import "VMHUDWindow.h"
 #import <objc/runtime.h>
+#import "MTMaterialView.h"
 
-@interface MTMaterialView
-+(id)materialViewWithRecipe:(NSInteger)arg1 configuration:(NSInteger)arg2 initialWeighting:(CGFloat)arg3;
-+(id)materialViewWithRecipe:(NSInteger)arg1 options:(NSInteger)arg2 initialWeighting:(CGFloat)arg3;
-@end
 @interface VMHUDView  (){
     CGPoint _originalPoint;//之前的位置
 }
@@ -44,7 +41,7 @@
 		if (!bundle.loaded)
 			[bundle load];
 	}
-    id mtBgView,mtSliderView;
+    MTMaterialView* mtBgView,*mtSliderView;
     if(@available(iOS 13.0, *)) {
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 configuration:2 initialWeighting:1];
         mtSliderView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 configuration:3 initialWeighting:1] ;
@@ -87,7 +84,7 @@
         CGFloat newY=MIN(MAX(_clippingView.frame.origin.y+offsetY,0),_clippingView.frame.size.height);
         CGFloat scale=1.-newY/_clippingView.frame.size.height;
         // NSLog(@"Scale:%lf",scale);
-        if(fabs(scale-_curScale)>1/16){
+        if(fabs(scale-_curScale)>1/8){
         	_curScale=scale;
             // NSLog(@"newScale:%lf",_curScale);
             _volumeChangedCallBlock();
