@@ -255,11 +255,11 @@ void hookIfReady(){
 	showHUDWindow();
 	lstAudioQueue=inAQ;
 	NSLog(@"%p %u %lf",(void*)inAQ,inParamID,inValue);
-	if(hudview) {
-		if(inParamID==kAudioQueueParam_Volume){
-			return %orig(inAQ,inParamID,g_curScale);
-		}
+
+	if(inParamID==kAudioQueueParam_Volume){
+		return %orig(inAQ,inParamID,g_curScale);
 	}
+	
 
 	return %orig(inAQ,inParamID,inValue);
 }
@@ -456,25 +456,28 @@ void hookIfReady(){
 -(void)play{
 	NSLog(@"AVAudioPlayer play %@",self);
 	lstAVAudioPlayer=self;
+	%orig;
 	[self setVolume:g_curScale];
-	return %orig;
+}
+-(void)setVolume:(float)volume{
+	NSLog(@"AVAudioPlayer setVolume: %f",volume);
+	return %orig(g_curScale);
 }
 %end
 %hook AVPlayer
--(void)play{
-	NSLog(@"AVPlayer play %@",self);
-	lstAVPlayer=self;
-	[self setVolume:g_curScale];
-	return %orig;
-}
--(void)setVolume:(float)volume{
-	NSLog(@"setVolume: %f",volume);
-	return %orig;
-}
-
 +(instancetype)alloc{
 	NSLog(@"AVPlayer alloc");
 	return %orig;
+}
+-(void)play{
+	NSLog(@"AVPlayer play %@",self);
+	lstAVPlayer=self;
+	%orig;
+	[self setVolume:g_curScale];
+}
+-(void)setVolume:(float)volume{
+	NSLog(@"AVPlayer setVolume: %f",volume);
+	return %orig(g_curScale);
 }
 %end
 %hookf(OSStatus, AudioFileOpenWithCallbacks,void *inClientData, AudioFile_ReadProc inReadFunc, AudioFile_WriteProc inWriteFunc, AudioFile_GetSizeProc inGetSizeFunc, AudioFile_SetSizeProc inSetSizeFunc, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){

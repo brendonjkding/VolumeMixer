@@ -46,7 +46,7 @@ NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.qqmusicdesktoply
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 configuration:1 initialWeighting:1];
     }
     else{
-
+    	mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 options:128 initialWeighting:1];
     }
     mtBgView.layer.cornerRadius = 10.;
 	_collectionView.backgroundView =mtBgView;

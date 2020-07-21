@@ -2,6 +2,25 @@
 #import <Preferences/PSSpecifier.h>
 #import <AppList/AppList.h>
 
+@interface PSControlTableCell : PSTableCell
+@end
+@interface PSSwitchTableCell : PSControlTableCell
+- (id)initWithStyle:(int)style reuseIdentifier:(id)identifier specifier:(PSSpecifier*)specifier;
+@end
+@interface APPSwitchTableCell:PSSwitchTableCell
+@end
+@implementation APPSwitchTableCell
+-(id)initWithStyle:(int)style reuseIdentifier:(id)identifier specifier:(PSSpecifier*)specifier { //init method
+  self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:identifier specifier:specifier]; //call the super init method
+  if (self) {
+    // [((UISwitch *)[self control]) setOnTintColor:[UIColor redColor]]; //change the switch color
+    self.detailTextLabel.text=specifier.properties[@"detail"];
+  }
+  return self;
+}
+
+@end
+
 
 @interface VMAPPListController()<UISearchControllerDelegate,UISearchBarDelegate,UISearchResultsUpdating>
 
@@ -65,6 +84,7 @@
       [spec setProperty:icon forKey:@"iconImage"];
       [spec setProperty:_defaults forKey:@"defaults"];
       [spec setProperty:displayIdentifier forKey:@"detail"];
+      [spec setProperty:NSClassFromString(@"APPSwitchTableCell") forKey:@"cellClass"];
       
       [_specifiers addObject:spec];
         
