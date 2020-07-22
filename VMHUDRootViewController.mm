@@ -5,6 +5,22 @@
 #import <objc/runtime.h>
 #import <notify.h>
 #import <AppList/AppList.h>
+@interface FBProcessState
+-(int)taskState;
+-(BOOL)isRunning;
+@end
+@interface SBApplication : NSObject
+- (BOOL)isRunning;
+- (FBProcessState *)processState;
+@end
+@interface SBApplicationController : NSObject
++ (id)sharedInstance;
+- (SBApplication*)applicationWithBundleIdentifier:(NSString*)bundleIdentifier;
+@end
+
+
+
+
 
 NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.qqmusicdesktoplyrics.plist";
 
@@ -51,7 +67,19 @@ NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.qqmusicdesktoply
     mtBgView.layer.cornerRadius = 10.;
 	_collectionView.backgroundView =mtBgView;
 }
-
+-(void)reloadRunningApp{
+	dispatch_async(dispatch_get_main_queue(), ^{
+	        for(int i=[_bundleIDs count]-1;i+1;i--){
+	        	SBApplication *app=[[objc_getClass("SBApplicationController") sharedInstance] applicationWithBundleIdentifier:_bundleIDs[i]];
+	        	FBProcessState *processState=[app processState];
+				if(!processState){
+					[_bundleIDs removeObjectAtIndex:i];
+					[_hudViews removeObjectAtIndex:i];
+				}
+	        }
+	        [_collectionView reloadData];
+		});
+}
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
     return [_hudViews count];
@@ -130,7 +158,7 @@ NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.qqmusicdesktoply
 	    		notify_post([appNotify UTF8String]);
 	    	}];
 		    
-	        [self.collectionView reloadData];
+	        [_collectionView reloadData];
 		});
     	
 	});

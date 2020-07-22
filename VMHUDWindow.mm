@@ -37,6 +37,7 @@
 	[self setHidden:YES];
 }
 -(void) showWindow{
+	[self.rootViewController performSelector:@selector(reloadRunningApp)];
 	[self setHidden:NO];
 }
 -(void) cancelAutoHide{
