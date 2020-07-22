@@ -11,6 +11,7 @@
 #import "VMHUDWindow.h"
 #import "VMHUDRootViewController.h"
 #import "VMIPCCenter.h"
+#import "VMHookInfo.h"
 
 
 %config(generator=MobileSubstrate)
@@ -21,6 +22,8 @@ VMHUDWindow*hudWindow;
 AudioQueueRef lstAudioQueue;
 AVPlayer* lstAVPlayer;
 AVAudioPlayer* lstAVAudioPlayer;
+NSMutableDictionary* origCallbacks;
+NSMutableDictionary* hookInfos;
 
 BOOL loadPref(){
 	NSLog(@"loadPref..........");
@@ -64,7 +67,7 @@ static int volume_adjust(T  * in_buf, T  * out_buf, double in_vol)
 
 VMHUDView* hudview;
 float g_curScale=1;
-// typedef OSStatus(*orig_t)(void*,AudioUnitRenderActionFlags*,const AudioTimeStamp*,UInt32,UInt32,AudioBufferList*);
+typedef OSStatus(*orig_t)(void*,AudioUnitRenderActionFlags*,const AudioTimeStamp*,UInt32,UInt32,AudioBufferList*);
 static OSStatus (*orig_outputCallback32)(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
 		const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData);
 static OSStatus (*orig_outputCallback64)(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
@@ -76,12 +79,18 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 	//
 	OSStatus ret;
 	//if there is multiple audio unit, what will happen......
-	if(sizeof(T)==2){
-		ret=orig_outputCallback32(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
-	}
-	else{
-		ret=orig_outputCallback64(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
-	}
+	void*inRefConKey=inRefCon;
+	if(!inRefConKey) inRefConKey=(void*)-1;
+	orig_t orig=(orig_t) [origCallbacks[[NSString stringWithFormat:@"%ld",(long)inRefConKey]] longValue];
+	// NSLog(@"%p",orig);
+	ret= orig(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
+	// if(sizeof(T)==2){
+	// 	ret=orig_outputCallback32(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
+	// }
+	// else{
+	// 	ret=orig_outputCallback64(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
+	// }
+
 	// NSLog(@"orig_outputCallback");
 	if(*ioActionFlags==kAudioUnitRenderAction_OutputIsSilence){
 		return ret;
@@ -112,12 +121,9 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
     
 	return ret;
 }
-void *outputCallback;
-UInt32 mFormatFlags;
 
-void showHUDWindow(){
 
-}
+
 void showHUDWindowSB(){
 	static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -139,39 +145,7 @@ void showHUDWindowSB(){
     });
 }
 
-void hookIfReady(){
-	/*
-		kAudioFormatFlagIsFloat                     = (1U << 0),     // 0x1
-	    kAudioFormatFlagIsBigEndian                 = (1U << 1),     // 0x2
-	    kAudioFormatFlagIsSignedInteger             = (1U << 2),     // 0x4
-	    kAudioFormatFlagIsPacked                    = (1U << 3),     // 0x8
-	    kAudioFormatFlagIsAlignedHigh               = (1U << 4),     // 0x10
-	    kAudioFormatFlagIsNonInterleaved            = (1U << 5),     // 0x20
-	    kAudioFormatFlagIsNonMixable                = (1U << 6),     // 0x40
-	    kAudioFormatFlagsAreAllClear                = 0x80000000,
-    */
-	if(mFormatFlags){
-		static int cs=0,cf=0;
-		if(mFormatFlags&kAudioFormatFlagIsFloat){
-			MSHookFunction((void *)outputCallback, (void *)my_outputCallback<float>, (void **)&orig_outputCallback64);
-			NSLog(@"%d: hook float",cf++);
-		}
-		else{
-			MSHookFunction((void *)outputCallback, (void *)my_outputCallback<short>, (void **)&orig_outputCallback32);
-			NSLog(@"%d: hook short",cs++);
-		}
 
-		showHUDWindow();
-		
-		mFormatFlags=0;
-		return;
-	}
-	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-	// if([[UIApplication sharedApplication] keyWindow]){
-		hookIfReady();
-
-	});
-}
 #pragma mark hook
 %group hook
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
@@ -190,18 +164,27 @@ void hookIfReady(){
 		kAudioUnitScope_Input		= 1,
 		kAudioUnitScope_Output		= 2,
 	*/
-	//assume RenderCallback is set after StreamFormat
+	//assume one thread
+	NSString*key=[NSString stringWithFormat:@"%ld",(long)inUnit];
+	VMHookInfo*info=hookInfos[key];
+	if(!info)info=[VMHookInfo new];
 	if(inID==kAudioUnitProperty_SetRenderCallback){//23
 		NSLog(@"kAudioUnitProperty_SetRenderCallback: %ld",(long)inUnit);	
 		NSLog(@"	AudioUnitScope:%u",inScope);
 		// if(inScope&kAudioUnitScope_Input){
-			outputCallback=(void*)*(long*)inData;
-			NSLog(@"	outputCallback:%ld",*(long*)inData);
-			hookIfReady();
+			void *outputCallback=(void*)*(long*)inData;
+			NSLog(@"	outputCallback:%p",outputCallback);
+			// hookIfReady();
 		// }
 		AURenderCallbackStruct *callbackSt=(AURenderCallbackStruct*)inData;
+		void* inRefCon=callbackSt->inputProcRefCon;
+		if(!inRefCon) inRefCon=(void*)-1;
+		NSLog(@"context: %p",inRefCon);
 
-		NSLog(@"context: %p",callbackSt->inputProcRefCon);
+		
+		[info setOutputCallback:outputCallback];
+		[info setInRefCon:inRefCon];
+		[info hookIfReady];
 	}
 	else if(inID==kAudioUnitProperty_StreamFormat){//8
 		NSLog(@"kAudioUnitProperty_StreamFormat: %ld",(long)inUnit);
@@ -211,14 +194,17 @@ void hookIfReady(){
 	    	UInt32 mFormatID=((AudioStreamBasicDescription*)inData)->mFormatID;
 			// NSLog(@"FormatID: %u",mFormatID);
 			if(mFormatID!=kAudioFormatLinearPCM) {
-				return ret;
 				NSLog(@"not pcm");
+				return ret;
 			}
-			mFormatFlags=((AudioStreamBasicDescription*)inData)->mFormatFlags;	
+			UInt32 mFormatFlags=((AudioStreamBasicDescription*)inData)->mFormatFlags;	
 			NSLog(@"	mFormatFlags: %u",mFormatFlags);
 		// }
+		[info setMFormatFlags:mFormatFlags];
+		[info hookIfReady];
 
 	}	
+	[hookInfos setObject:info forKey:key];
 	return ret;
 
 
@@ -243,7 +229,6 @@ void hookIfReady(){
     kAudioQueueParam_Pan            = 13
 */
 %hookf(OSStatus ,AudioQueueSetParameter,AudioQueueRef inAQ, AudioQueueParameterID inParamID, AudioQueueParameterValue inValue){
-	showHUDWindow();
 	lstAudioQueue=inAQ;
 	NSLog(@"%p %u %lf",(void*)inAQ,inParamID,inValue);
 
@@ -461,8 +446,13 @@ void registerApp(){
     	[lstAVAudioPlayer setVolume:g_curScale];
 	}];
 }
+void initTemplate(){
+	my_outputCallback<short>;
+	my_outputCallback<float>;
+}
 #pragma mark ctor
 %ctor{
+	
 	if(!is_enabled_app()) return;
 	NSLog(@"ctor: VolumeMixer");
 
@@ -476,6 +466,8 @@ void registerApp(){
 	else {
 		%init(hook);
 		registerApp();
+		origCallbacks=[NSMutableDictionary new];
+		hookInfos=[NSMutableDictionary new];
 	}
 
 #if DEBUG

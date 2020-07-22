@@ -13,9 +13,13 @@ endif
 
 TWEAK_NAME = VolumeMixer
 
-VolumeMixer_FILES = Tweak.xm VMHUDView.mm VMHUDWindow.mm VMHUDRootViewController.mm VMIPCCenter.mm VolumeMixerLAListener.mm
-VolumeMixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -std=c++11
-VolumeMixer_LIBRARIES = substrate applist applist-sim activator mryipc mryipc-sim
+VolumeMixer_FILES = Tweak.xm VMHUDView.mm VMHUDWindow.mm VMHUDRootViewController.mm VMIPCCenter.mm VolumeMixerLAListener.mm VMHookInfo.mm
+VolumeMixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -std=c++11
+ifdef SIMULATOR
+VolumeMixer_LIBRARIES = applist-sim mryipc-sim substrate
+else
+VolumeMixer_LIBRARIES = applist mryipc activator
+endif
 
 SUBPROJECTS += volumemixer
 
@@ -24,8 +28,8 @@ include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
 after-install::
-# 	install.exec "killall -9 priconne" ||true
-# 	install.exec "killall -9 GBA4iOS" ||true
+	install.exec "killall -9 priconne" ||true
+	install.exec "killall -9 GBA4iOS" ||true
 # 	install.exec "killall -9 Sample" ||true
 # 	install.exec "killall -9 ProductName" ||true
 # 	install.exec "killall -9 NewHLDDZ" ||true

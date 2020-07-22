@@ -20,11 +20,6 @@
 @end
 
 
-
-
-
-// NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.qqmusicdesktoplyrics.plist";
-
 @interface VMHUDRootViewController()<UICollectionViewDelegate,UICollectionViewDataSource>
 @property (strong, nonatomic) UICollectionView *collectionView;
 @property (strong, nonatomic) NSMutableArray* hudViews;
@@ -159,7 +154,7 @@
 	    		// NSData*scaleData=[NSKeyedArchiver archivedDataWithRootObject:[NSNumber numberWithDouble:[weakHUDView curScale]]];
 	    		// [[UIPasteboard generalPasteboard] setData:scaleData forPasteboardType:@"com.brend0n.volumemixer"];
 	    		// notify_post([appNotify UTF8String]);
-	    		
+
 	    		NSNumber *scaleNumber=[NSNumber numberWithDouble:[weakHUDView curScale]];
 	    		[center callExternalMethod:@selector(setVolume:)withArguments:@{@"curScale" : scaleNumber} completion:^(id ret){}];
 	    	}];
