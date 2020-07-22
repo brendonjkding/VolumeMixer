@@ -33,11 +33,14 @@
 // 	[super viewWillAppear:YES];
 // 	NSLog(@"%d",animated);
 // }
--(void)configure{
+-(instancetype)init{
+	self= [super init];
+	if(!self)return self;
 	[self registerNotify];
 	_hudViews=[NSMutableArray new];
 	_bundleIDs=[NSMutableArray new];
 	[self loadFrameWorks];
+	return self;
 }
 -(void)loadView{
 	[super loadView];

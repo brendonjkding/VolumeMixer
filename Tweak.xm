@@ -17,11 +17,14 @@
 %config(generator=MobileSubstrate)
 
 BOOL enabled;
-UInt32 mFormatID=0;
+
 VMHUDWindow*hudWindow;
+VMHUDView* hudview;
+float g_curScale=1;
 AudioQueueRef lstAudioQueue;
 AVPlayer* lstAVPlayer;
 AVAudioPlayer* lstAVAudioPlayer;
+
 NSMutableDictionary* origCallbacks;
 NSMutableDictionary* hookInfos;
 
@@ -35,8 +38,6 @@ BOOL loadPref(){
 BOOL is_enabled_app(){
 	NSString* bundleIdentifier=[[NSBundle mainBundle] bundleIdentifier];
 	if([bundleIdentifier isEqualToString:@"com.apple.springboard"])return YES;
-	// if([bundleIdentifier isEqualToString:@"com.github.GBA4iOS.brend0n"])return YES;
-	// return YES;
 
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"];
 	NSArray *apps=prefs?prefs[@"apps"]:nil;
@@ -52,7 +53,7 @@ static int volume_adjust(T  * in_buf, T  * out_buf, double in_vol)
 
     double vol=in_vol;
 
-    tmp = (*in_buf)*vol; // 上面所有关于vol的判断，其实都是为了此处*in_buf乘以一个倍数，你可以根据自己的需要去修改
+    tmp = (*in_buf)*vol; 
 
     // 下面的code主要是为了溢出判断
     double maxValue=pow(2.,sizeof(T)*8.0-1.0)-1.0;
@@ -65,8 +66,7 @@ static int volume_adjust(T  * in_buf, T  * out_buf, double in_vol)
     return 0;
 }
 
-VMHUDView* hudview;
-float g_curScale=1;
+
 typedef OSStatus(*orig_t)(void*,AudioUnitRenderActionFlags*,const AudioTimeStamp*,UInt32,UInt32,AudioBufferList*);
 static OSStatus (*orig_outputCallback32)(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
 		const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData);
@@ -78,29 +78,16 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 {
 	//
 	OSStatus ret;
-	//if there is multiple audio unit, what will happen......
 	void*inRefConKey=inRefCon;
 	if(!inRefConKey) inRefConKey=(void*)-1;
 	orig_t orig=(orig_t) [origCallbacks[[NSString stringWithFormat:@"%ld",(long)inRefConKey]] longValue];
-	// NSLog(@"%p",orig);
 	ret= orig(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
-	// if(sizeof(T)==2){
-	// 	ret=orig_outputCallback32(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
-	// }
-	// else{
-	// 	ret=orig_outputCallback64(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
-	// }
 
-	// NSLog(@"orig_outputCallback");
+
 	if(*ioActionFlags==kAudioUnitRenderAction_OutputIsSilence){
 		return ret;
 	}
-	// NSLog(@"%lu",sizeof(T));
-	// return ret;
-	// NSLog(@"%u",ioData -> mNumberBuffers);
-	// for (UInt32 i = 1; i < MIN(2,ioData->mNumberBuffers); i++){
-	// NSLog(@"inRefCon: %p",inRefCon);
-	// if(!hudview) return ret;
+
 	CGFloat curScale=g_curScale;
 	for (UInt32 i = 0; i < ioData -> mNumberBuffers; i++){
 		auto *buf = (unsigned char*)ioData->mBuffers[i].mData;
@@ -108,11 +95,6 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 		uint bytes = ioData->mBuffers[i].mDataByteSize;
 		
 
-	    // static int volume=0;
-	//    abort();
-	    // for(UInt32 j=0;j<bytes;j+=2){
-	    //     volume_adjust((short*)(buf+j), (short*)(buf+j), (float)((25)%100));
-	    // }
 	    for(UInt32 j=0;j<bytes;j+=sizeof(T)){
 	        volume_adjust((T*)(buf+j), (T*)(buf+j), curScale);
 	    }
@@ -136,7 +118,6 @@ void showHUDWindowSB(){
 		    	CGFloat hudHeight=148.*sHeight/(1334./2.);
 		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
 		        VMHUDRootViewController*rootViewController=[VMHUDRootViewController new];
-		        [rootViewController configure];
 		        [hudWindow setRootViewController:rootViewController];
 			};
 		if ([NSThread isMainThread]) blockForMain();
@@ -165,8 +146,8 @@ void showHUDWindowSB(){
 		kAudioUnitScope_Output		= 2,
 	*/
 	//assume one thread
-	NSString*key=[NSString stringWithFormat:@"%ld",(long)inUnit];
-	VMHookInfo*info=hookInfos[key];
+	NSString*unitKey=[NSString stringWithFormat:@"%ld",(long)inUnit];
+	VMHookInfo*info=hookInfos[unitKey];
 	if(!info)info=[VMHookInfo new];
 	if(inID==kAudioUnitProperty_SetRenderCallback){//23
 		NSLog(@"kAudioUnitProperty_SetRenderCallback: %ld",(long)inUnit);	
@@ -204,7 +185,7 @@ void showHUDWindowSB(){
 		[info hookIfReady];
 
 	}	
-	[hookInfos setObject:info forKey:key];
+	[hookInfos setObject:info forKey:unitKey];
 	return ret;
 
 
@@ -239,7 +220,44 @@ void showHUDWindowSB(){
 
 	return %orig(inAQ,inParamID,inValue);
 }
+
+#pragma mark AVAudioPlayer
+%hook AVAudioPlayer
++(instancetype)alloc{
+	NSLog(@"AVAudioPlayer alloc");
+	return %orig;
+}
+-(void)play{
+	NSLog(@"AVAudioPlayer play %@",self);
+	lstAVAudioPlayer=self;
+	%orig;
+	[self setVolume:g_curScale];
+}
+-(void)setVolume:(float)volume{
+	NSLog(@"AVAudioPlayer setVolume: %f",volume);
+	return %orig(g_curScale);
+}
 %end
+
+#pragma mark AVPlayer
+%hook AVPlayer
++(instancetype)alloc{
+	NSLog(@"AVPlayer alloc");
+	return %orig;
+}
+-(void)play{
+	NSLog(@"AVPlayer play %@",self);
+	lstAVPlayer=self;
+	%orig;
+	[self setVolume:g_curScale];
+}
+-(void)setVolume:(float)volume{
+	NSLog(@"AVPlayer setVolume: %f",volume);
+	return %orig(g_curScale);
+}
+%end
+
+%end //hook
 
 
 #pragma mark SIM
@@ -298,8 +316,6 @@ void showHUDWindowSB(){
 -(void) applicationDidFinishLaunching:(id)application{
 	%orig;
 	NSLog(@"applicationDidFinishLaunching");
-	// [QQLyricMessagingCenter sharedInstance];
-
 	showHUDWindowSB();
     
 }
@@ -349,40 +365,7 @@ void showHUDWindowSB(){
 // 	NSLog(@"AudioQueueAllocateBuffer!!!");
 // 	return %orig(inAQ,inBufferByteSize,outBuffer);
 // }
-#pragma mark AVAudioPlayer
-%hook AVAudioPlayer
-+(instancetype)alloc{
-	NSLog(@"AVAudioPlayer alloc");
-	return %orig;
-}
--(void)play{
-	NSLog(@"AVAudioPlayer play %@",self);
-	lstAVAudioPlayer=self;
-	%orig;
-	[self setVolume:g_curScale];
-}
--(void)setVolume:(float)volume{
-	NSLog(@"AVAudioPlayer setVolume: %f",volume);
-	return %orig(g_curScale);
-}
-%end
-#pragma mark AVPlayer
-%hook AVPlayer
-+(instancetype)alloc{
-	NSLog(@"AVPlayer alloc");
-	return %orig;
-}
--(void)play{
-	NSLog(@"AVPlayer play %@",self);
-	lstAVPlayer=self;
-	%orig;
-	[self setVolume:g_curScale];
-}
--(void)setVolume:(float)volume{
-	NSLog(@"AVPlayer setVolume: %f",volume);
-	return %orig(g_curScale);
-}
-%end
+
 %hookf(OSStatus, AudioFileOpenWithCallbacks,void *inClientData, AudioFile_ReadProc inReadFunc, AudioFile_WriteProc inWriteFunc, AudioFile_GetSizeProc inGetSizeFunc, AudioFile_SetSizeProc inSetSizeFunc, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
 	NSLog(@"AudioFileOpenWithCallbacks");
 	return %orig;
@@ -421,22 +404,6 @@ void registerApp(){
 	//receive volume
 	NSString*appNotify=[NSString stringWithFormat:@"com.brend0n.volumemixer/%@/setVolume",bundleID];
 	NSLog(@"registerd: %@",appNotify);
-	// int token3 = 0;
-	// notify_register_dispatch([appNotify UTF8String], &token3, dispatch_get_main_queue(), ^(int token) {
-	// 	// NSLog(@"setVolume");
-	// 	NSData*scaleData=[[UIPasteboard generalPasteboard] dataForPasteboardType:@"com.brend0n.volumemixer"];
-		
-	// 	if(scaleData){
-	// 		NSNumber*scaleNumber= [NSKeyedUnarchiver unarchiveObjectWithData:scaleData];
-	// 		// NSLog(@"%@",scaleNumber);
-
-	// 		g_curScale=[scaleNumber doubleValue];
-
-	// 		if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
- //        	[lstAVPlayer setVolume:g_curScale];
- //        	[lstAVAudioPlayer setVolume:g_curScale];
-	// 	}
-	// });
 	VMIPCCenter*center=[[VMIPCCenter alloc] initWithName:appNotify];
 	[center setVolumeChangedCallBlock:^(double curScale){
 		g_curScale=curScale;
@@ -452,7 +419,6 @@ void initTemplate(){
 }
 #pragma mark ctor
 %ctor{
-	
 	if(!is_enabled_app()) return;
 	NSLog(@"ctor: VolumeMixer");
 
