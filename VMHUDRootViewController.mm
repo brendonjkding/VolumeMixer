@@ -5,6 +5,7 @@
 #import <objc/runtime.h>
 #import <notify.h>
 #import <AppList/AppList.h>
+#import <MRYIPCCenter/MRYIPCCenter.h>
 @interface FBProcessState
 -(int)taskState;
 -(BOOL)isRunning;
@@ -22,12 +23,13 @@
 
 
 
-NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.qqmusicdesktoplyrics.plist";
+// NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.qqmusicdesktoplyrics.plist";
 
 @interface VMHUDRootViewController()<UICollectionViewDelegate,UICollectionViewDataSource>
 @property (strong, nonatomic) UICollectionView *collectionView;
 @property (strong, nonatomic) NSMutableArray* hudViews;
 @property (strong, nonatomic) NSMutableArray* bundleIDs;
+@property (strong, nonatomic) NSMutableArray* centers ;
 @end
 #define kSliderAndIconInterval 12.
 #define kCollectionViewItemInset 10.
@@ -75,6 +77,7 @@ NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.qqmusicdesktoply
 				if(!processState){
 					[_bundleIDs removeObjectAtIndex:i];
 					[_hudViews removeObjectAtIndex:i];
+					[_centers removeObjectAtIndex:i];
 				}
 	        }
 	        [_collectionView reloadData];
@@ -146,16 +149,19 @@ NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.qqmusicdesktoply
     	if([_bundleIDs containsObject:bundleID])return ;  	
     	dispatch_async(dispatch_get_main_queue(), ^{
 	        [_bundleIDs addObject:bundleID];
+	        MRYIPCCenter* center = [MRYIPCCenter centerNamed:appNotify];
+	        [_centers addObject:center];
 	    	__block VMHUDView* hudView=[[VMHUDView alloc] initWithFrame:CGRectMake(0,0,47,148)];
 	    	[_hudViews addObject:hudView];
 	    	__weak VMHUDView*weakHUDView=hudView;
 	    	[hudView setVolumeChangedCallBlock:^{
 	    		//send volume
-	    		NSData*scaleData=[NSKeyedArchiver archivedDataWithRootObject:[NSNumber numberWithDouble:[weakHUDView curScale]]];
-	    		[[UIPasteboard generalPasteboard] setData:scaleData forPasteboardType:@"com.brend0n.volumemixer"];
+	    		// NSData*scaleData=[NSKeyedArchiver archivedDataWithRootObject:[NSNumber numberWithDouble:[weakHUDView curScale]]];
+	    		// [[UIPasteboard generalPasteboard] setData:scaleData forPasteboardType:@"com.brend0n.volumemixer"];
+	    		// notify_post([appNotify UTF8String]);
 	    		
-	    		// NSLog(@"%@",appNotify);
-	    		notify_post([appNotify UTF8String]);
+	    		NSNumber *scaleNumber=[NSNumber numberWithDouble:[weakHUDView curScale]];
+	    		[center callExternalMethod:@selector(setVolume:)withArguments:@{@"curScale" : scaleNumber} completion:^(id ret){}];
 	    	}];
 		    
 	        [_collectionView reloadData];

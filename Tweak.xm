@@ -1,7 +1,7 @@
 #import <notify.h>
 #import <substrate.h>
-#import <libactivator/libactivator.h>
 
+#import <cmath>
 #import <AudioUnit/AudioUnit.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
@@ -10,7 +10,7 @@
 #import "VMHUDView.h"
 #import "VMHUDWindow.h"
 #import "VMHUDRootViewController.h"
-
+#import "VMIPCCenter.h"
 
 
 %config(generator=MobileSubstrate)
@@ -21,7 +21,6 @@ VMHUDWindow*hudWindow;
 AudioQueueRef lstAudioQueue;
 AVPlayer* lstAVPlayer;
 AVAudioPlayer* lstAVAudioPlayer;
-extern NSString*prefPath;
 
 BOOL loadPref(){
 	NSLog(@"loadPref..........");
@@ -32,7 +31,7 @@ BOOL loadPref(){
 }
 BOOL is_enabled_app(){
 	NSString* bundleIdentifier=[[NSBundle mainBundle] bundleIdentifier];
-	// if([bundleIdentifier isEqualToString:@"com.bilibili.priconne"])return YES;
+	if([bundleIdentifier isEqualToString:@"com.apple.springboard"])return YES;
 	// if([bundleIdentifier isEqualToString:@"com.github.GBA4iOS.brend0n"])return YES;
 	// return YES;
 
@@ -53,18 +52,10 @@ static int volume_adjust(T  * in_buf, T  * out_buf, double in_vol)
     tmp = (*in_buf)*vol; // 上面所有关于vol的判断，其实都是为了此处*in_buf乘以一个倍数，你可以根据自己的需要去修改
 
     // 下面的code主要是为了溢出判断
-    if(sizeof(T)==2){
-    	if(tmp > 32767)
-        tmp = 32767;
-    	else if(tmp < -32768)
-        tmp = -32768;
-    }
-    else{
-    	if(tmp > 4294967296)
-        tmp = 4294967296;
-    	else if(tmp < -4294967296)
-        tmp = -4294967296;
-    }
+    double maxValue=pow(2.,sizeof(T)*8.0-1.0)-1.0;
+    double minValue=pow(2.,sizeof(T)*8.0-1.0)*-1.0;
+    tmp=MIN(tmp,maxValue);
+    tmp=MAX(tmp,minValue);
     
     *out_buf = tmp;
 
@@ -265,70 +256,6 @@ void hookIfReady(){
 }
 %end
 
-#pragma mark LA
-#if !(TARGET_OS_SIMULATOR)
-@interface VolumeMixerListener : NSObject <LAListener>
-
-@end 
-
-
-
-@implementation VolumeMixerListener
-
-- (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
-{
-	NSLog(@"test");
-	[hudWindow isHidden]?[hudWindow showWindow]:[hudWindow hideWindow];
-}
-
-
-+ (void)load
-{
-	@autoreleasepool 
-	{
-		// Register listener
-		if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]) 
-			[[LAActivator sharedInstance] registerListener:[self new] forName:@"com.brend0n.volumemixer"];
-	}
-}
-- (NSString *)activator:(LAActivator *)activator requiresLocalizedGroupForListenerName:(NSString *)listenerName
-{
-	return @"VolumeMixer";
-}
-- (NSString *)activator:(LAActivator *)activator requiresLocalizedTitleForListenerName:(NSString *)listenerName
-{
-    return @"Show Volume Mixer";
-}
-
-- (NSString *)activator:(LAActivator *)activator requiresLocalizedDescriptionForListenerName:(NSString *)listenerName
-{
-    return @"Volume control for individual app";
-}
-
-- (UIImage *)activator:(LAActivator *)activator requiresSmallIconForListenerName:(NSString *)listenerName scale:(CGFloat)scale
-{
-	__block NSBundle *preferenceBundle = nil;
-	static dispatch_once_t once;
-    dispatch_once(&once, ^{
-		preferenceBundle = [NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle/"];
-	});
-
-	UIImage *icon = [UIImage imageNamed:@"icon" inBundle:preferenceBundle compatibleWithTraitCollection:nil];
-
-	return icon;
-}
-
-- (NSArray *)activator:(LAActivator *)activator requiresCompatibleEventModesForListenerWithName:(NSString *)listenerName
-{
-    //It does not work well on lock screen on iOS10.
-    return @[@"springboard", @"application"];
-   
-    
-}
-
-@end
-#endif
-
 
 #pragma mark SIM
 %group SBSIM
@@ -404,17 +331,7 @@ void hookIfReady(){
 	notify_post("com.brend0n.volumemixer/volumePressed");
 }
 %end
-// %hook MTMaterialView
-// +(id)materialViewWithRecipe:(NSInteger)arg1 configuration:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
-// 	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
-// 	return %orig;
-// }
-// +(id)materialViewWithRecipe:(NSInteger)arg1 options:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
-// 	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
-// 	return %orig;
 
-// }
-// %end
 %hook SpringBoard
 
 - (void)_ringerChanged:(id)arg1{
@@ -447,7 +364,7 @@ void hookIfReady(){
 // 	NSLog(@"AudioQueueAllocateBuffer!!!");
 // 	return %orig(inAQ,inBufferByteSize,outBuffer);
 // }
-
+#pragma mark AVAudioPlayer
 %hook AVAudioPlayer
 +(instancetype)alloc{
 	NSLog(@"AVAudioPlayer alloc");
@@ -464,6 +381,7 @@ void hookIfReady(){
 	return %orig(g_curScale);
 }
 %end
+#pragma mark AVPlayer
 %hook AVPlayer
 +(instancetype)alloc{
 	NSLog(@"AVPlayer alloc");
@@ -488,6 +406,18 @@ void hookIfReady(){
 	NSLog(@"AudioFileOpenURL");
 	return %orig;
 }
+#pragma mark MTMaterialView
+// %hook MTMaterialView
+// +(id)materialViewWithRecipe:(NSInteger)arg1 configuration:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
+// 	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
+// 	return %orig;
+// }
+// +(id)materialViewWithRecipe:(NSInteger)arg1 options:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
+// 	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
+// 	return %orig;
+
+// }
+// %end
 %end//test
 void registerApp(){
 	//send bundleid
@@ -500,63 +430,56 @@ void registerApp(){
 	// notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token, dispatch_get_main_queue(), ^(int token) {
 	// 	[hudWindow volumeChanged:nil];
 	// });
-	// int token2 = 0;
-	// notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token2, dispatch_get_main_queue(), ^(int token) {
-	// 	NSLog(@"testttt");
-	// });
-	int token3 = 0;
+
+
 
 	//receive volume
 	NSString*appNotify=[NSString stringWithFormat:@"com.brend0n.volumemixer/%@/setVolume",bundleID];
 	NSLog(@"registerd: %@",appNotify);
-	notify_register_dispatch([appNotify UTF8String], &token3, dispatch_get_main_queue(), ^(int token) {
-		// NSLog(@"setVolume");
-		NSData*scaleData=[[UIPasteboard generalPasteboard] dataForPasteboardType:@"com.brend0n.volumemixer"];
+	// int token3 = 0;
+	// notify_register_dispatch([appNotify UTF8String], &token3, dispatch_get_main_queue(), ^(int token) {
+	// 	// NSLog(@"setVolume");
+	// 	NSData*scaleData=[[UIPasteboard generalPasteboard] dataForPasteboardType:@"com.brend0n.volumemixer"];
 		
-		if(scaleData){
-			NSNumber*scaleNumber= [NSKeyedUnarchiver unarchiveObjectWithData:scaleData];
-			// NSLog(@"%@",scaleNumber);
+	// 	if(scaleData){
+	// 		NSNumber*scaleNumber= [NSKeyedUnarchiver unarchiveObjectWithData:scaleData];
+	// 		// NSLog(@"%@",scaleNumber);
 
-			g_curScale=[scaleNumber doubleValue];
+	// 		g_curScale=[scaleNumber doubleValue];
 
-			if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
-        	[lstAVPlayer setVolume:g_curScale];
-        	[lstAVAudioPlayer setVolume:g_curScale];
-		}
-	});
+	// 		if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
+ //        	[lstAVPlayer setVolume:g_curScale];
+ //        	[lstAVAudioPlayer setVolume:g_curScale];
+	// 	}
+	// });
+	VMIPCCenter*center=[[VMIPCCenter alloc] initWithName:appNotify];
+	[center setVolumeChangedCallBlock:^(double curScale){
+		g_curScale=curScale;
+
+		if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
+    	[lstAVPlayer setVolume:g_curScale];
+    	[lstAVAudioPlayer setVolume:g_curScale];
+	}];
 }
 #pragma mark ctor
-///System/Library/PrivateFrameworks/SpringBoard.framework/SpringBoard
 %ctor{
+	if(!is_enabled_app()) return;
+	NSLog(@"ctor: VolumeMixer");
+
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]){
-		NSLog(@"SB");
 		%init(SB);
 
-		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-				// showHUDWindowSB();
-		      	
-	 		});
-		// int token = 0;
-		// notify_register_dispatch("com.brend0n.volumemixer/changeWindow", &token, dispatch_get_main_queue(), ^(int token) {
-  //   		[hudWindow isHidden]?[hudWindow showWindow]:[hudWindow hideWindow];
-		// });
 #if TARGET_OS_SIMULATOR
 		%init(SBSIM);	
 #endif
+	}	
+	else {
+		%init(hook);
+		registerApp();
 	}
 
-
-	if(!is_enabled_app()) return;
-	
-	// if(!loadPref()) return;
-	NSLog(@"ctor: VolumeMixer");
-
-	%init(hook);
-	if(![[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]) registerApp();
-	NSLog(@"registerApp End");
 #if DEBUG
 	%init(test);
-	NSLog(@"test");
 #endif
 
 }
