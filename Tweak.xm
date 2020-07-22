@@ -6,6 +6,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 #import <OpenAL/OpenAL.h>
+#import <WebKit/WebKit.h>
 
 #import "VMHUDView.h"
 #import "VMHUDWindow.h"
@@ -25,8 +26,8 @@ AudioQueueRef lstAudioQueue;
 AVPlayer* lstAVPlayer;
 AVAudioPlayer* lstAVAudioPlayer;
 
-NSMutableDictionary* origCallbacks;
-NSMutableDictionary* hookInfos;
+NSMutableDictionary<NSString*,NSNumber*> *origCallbacks;
+NSMutableDictionary<NSString*,VMHookInfo*> *hookInfos;
 
 BOOL loadPref(){
 	NSLog(@"loadPref..........");
@@ -352,6 +353,21 @@ void showHUDWindowSB(){
 
 #pragma mark test
 %group test
+// ExceptionOr<void> HTMLMediaElement::setVolume(double volume)
+// https://github.com/WebKit/webkit/blob/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/html/HTMLMediaElement.cpp#L3608
+// https://github.com/WebKit/webkit/tree/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/html
+
+// void MediaPlayer::setVolume(double volume)
+// https://github.com/WebKit/webkit/blob/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/platform/graphics/MediaPlayer.cpp#L838
+// https://github.com/WebKit/webkit/blob/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/platform/graphics/MediaPlayer.h
+// https://github.com/WebKit/webkit/blob/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/platform/graphics/MediaPlayerPrivate.h#L130
+// https://github.com/WebKit/webkit/tree/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/platform/graphics
+// long (*orig__ZN7WebCore16HTMLMediaElement9setVolumeEd)(long,double);
+// long my__ZN7WebCore16HTMLMediaElement9setVolumeEd(long arg1,double arg2){
+// 	NSLog(@"__ZN7WebCore16HTMLMediaElement9setVolumeEd");
+// 	return orig__ZN7WebCore16HTMLMediaElement9setVolumeEd(arg1,arg2);
+// }
+
 %hookf(ALCdevice*,alcOpenDevice ,const ALCchar *devicename){
 	NSLog(@"openal!!!");
 	return %orig;
@@ -386,6 +402,16 @@ void showHUDWindowSB(){
 
 // }
 // %end
+// #pragma mark web
+// NSMutableArray<WKWebView*>*webViews;
+// %hook WKWebView
+// +(instancetype)alloc{
+// 	id ret=%orig;
+// 	NSLog(@"WKWebView");
+// 	[webViews addObject:ret];
+// 	return ret;
+// }
+// %end
 %end//test
 void registerApp(){
 	//send bundleid
@@ -411,6 +437,22 @@ void registerApp(){
 		if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
     	[lstAVPlayer setVolume:g_curScale];
     	[lstAVAudioPlayer setVolume:g_curScale];
+    	for(WKWebView*webView in webViews){
+    		[webView evaluateJavaScript:
+	    			[NSString stringWithFormat:@""
+		    			"var videos=document.getElementsByTagName('video');"
+						"for(var i = 0; i < videos.length; i++) {"
+						"	var video=videos[i];"
+						"	video.volume=%lf;"
+						// "	alert(video.volume);"
+						// "	video.pause();"
+						"}"
+						, g_curScale
+					]
+				 completionHandler: ^(id _Nullable obj, NSError * _Nullable error){
+				 	// NSLog(@"%@",error);
+				 }];
+    	}
 	}];
 }
 void initTemplate(){
@@ -419,6 +461,13 @@ void initTemplate(){
 }
 #pragma mark ctor
 %ctor{
+
+	// void*ad=((void *)MSFindSymbol(NULL, "__ZN7WebCore16HTMLMediaElement9setVolumeEd"));
+	// NSLog(@"ad:%p",ad);
+	// MSHookFunction(ad, (void *)my__ZN7WebCore16HTMLMediaElement9setVolumeEd, (void **)&orig__ZN7WebCore16HTMLMediaElement9setVolumeEd);
+		      	
+
+
 	if(!is_enabled_app()) return;
 	NSLog(@"ctor: VolumeMixer");
 
@@ -434,10 +483,14 @@ void initTemplate(){
 		registerApp();
 		origCallbacks=[NSMutableDictionary new];
 		hookInfos=[NSMutableDictionary new];
+		webViews=[NSMutableArray new];
 	}
 
 #if DEBUG
 	%init(test);
+	
+	
+	
 #endif
 
 }

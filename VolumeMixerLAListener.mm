@@ -6,7 +6,6 @@ extern VMHUDWindow*hudWindow;
 
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
-	NSLog(@"test");
 	[hudWindow isHidden]?[hudWindow showWindow]:[hudWindow hideWindow];
 }
 

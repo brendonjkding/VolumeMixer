@@ -20,6 +20,8 @@ VolumeMixer_LIBRARIES = applist-sim mryipc-sim substrate
 else
 VolumeMixer_LIBRARIES = applist mryipc activator
 endif
+# VolumeMixer_FRAMEWORKS = WebKit
+# VolumeMixer_PRIVATE_FRAMEWORKS = WebCore
 
 SUBPROJECTS += volumemixer
 
@@ -37,6 +39,7 @@ after-install::
 	install.exec "killall -9 Preferences" ||true
 	install.exec "killall -9 neteasemusic" ||true
 	install.exec "killall -9 QQMusic" ||true
+	install.exec "killall -9 MobileSafari" ||true
 
 ifdef SIMULATOR
 include $(THEOS)/makefiles/locatesim.mk
