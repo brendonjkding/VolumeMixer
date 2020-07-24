@@ -16,7 +16,6 @@
 	else [self showWindow];
 }
 -(void) configureUI{
-	NSLog(@"configureUI");
 	self.windowLevel = UIWindowLevelStatusBar;
 	[self makeKeyAndVisible];
 	[self setAlpha:0.0];

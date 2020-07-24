@@ -68,15 +68,21 @@
     mtBgView.layer.masksToBounds = YES;
 	_collectionView.backgroundView =mtBgView;
 
-	UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap:)];
-	tap.delegate=self;
-    [self.view addGestureRecognizer:tap];
+
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
+    longPress.delegate=self;
+    [self.view addGestureRecognizer:longPress];
+    longPress.minimumPressDuration=0;
+
+
 }
-- (void)tap:(UITapGestureRecognizer *)tap{
-    if (tap.state == UIGestureRecognizerStateEnded){
+- (void)longPress:(UILongPressGestureRecognizer *)longPress{
+	if (longPress.state == UIGestureRecognizerStateBegan){
     	[(VMHUDWindow*)[self.view superview] hideWindow];
     }
+
 }
+
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch{
 	return touch.view==self.view;
  }

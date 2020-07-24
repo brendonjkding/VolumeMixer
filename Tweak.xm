@@ -28,8 +28,7 @@ AVAudioPlayer* lstAVAudioPlayer;
 
 NSMutableDictionary<NSString*,NSNumber*> *origCallbacks;
 NSMutableDictionary<NSString*,VMHookInfo*> *hookInfos;
-
-NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist";
+NSMutableDictionary<NSString*,NSNumber*> *hookedCallbacks;
 
 BOOL loadPref(){
 	NSLog(@"loadPref..........");
@@ -87,7 +86,7 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 	ret= orig(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
 
 
-	if(*ioActionFlags==kAudioUnitRenderAction_OutputIsSilence){
+	if(unlikely(*ioActionFlags==kAudioUnitRenderAction_OutputIsSilence)){
 		return ret;
 	}
 
@@ -146,7 +145,7 @@ BOOL isWindowShowing;
 -(unsigned)contextIdAtPosition:(CGPoint)arg1 excludingContextIds:(id)arg2  { 
 	// NSLog(@"contextIdAtPosition:(CGPoint){%g, %g} excludingContextIds:(id)%@  start",arg1.x,arg1.y,arg2);
 	unsigned r=%orig;
-	if(isWindowShowing&&hudWindowContextId) {
+	if(unlikely(isWindowShowing&&hudWindowContextId)) {
 		return hudWindowContextId;
 	}
 	// NSLog(@" = %u", r); 
@@ -154,14 +153,14 @@ BOOL isWindowShowing;
 }
 %end
 void BBLoadPref(){
-	NSLog(@"loadPref");
+	NSLog(@"loadPref...");
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
 	hudWindowContextId=prefs?[prefs[@"hudWindowContextId"] unsignedIntValue]:0;
 	NSLog(@"%u",hudWindowContextId);
 }
 void windowDidShow(){
 	isWindowShowing=!isWindowShowing;
-	NSLog(@"windowDidShow");
+	// NSLog(@"windowDidShow");
 }
 %end
 #pragma mark hook
@@ -197,7 +196,7 @@ void windowDidShow(){
 		AURenderCallbackStruct *callbackSt=(AURenderCallbackStruct*)inData;
 		void* inRefCon=callbackSt->inputProcRefCon;
 		if(!inRefCon) inRefCon=(void*)-1;
-		NSLog(@"context: %p",inRefCon);
+		NSLog(@"	context: %p",inRefCon);
 
 		
 		[info setOutputCallback:outputCallback];
@@ -248,7 +247,7 @@ void windowDidShow(){
 */
 %hookf(OSStatus ,AudioQueueSetParameter,AudioQueueRef inAQ, AudioQueueParameterID inParamID, AudioQueueParameterValue inValue){
 	lstAudioQueue=inAQ;
-	NSLog(@"%p %u %lf",(void*)inAQ,inParamID,inValue);
+	// NSLog(@"%p %u %lf",(void*)inAQ,inParamID,inValue);
 
 	if(inParamID==kAudioQueueParam_Volume){
 		return %orig(inAQ,inParamID,g_curScale);
@@ -361,12 +360,12 @@ void windowDidShow(){
 %hook  SBVolumeHardwareButton
 - (void)volumeDecreasePress:(id)arg1{
 	%orig;
-	NSLog(@"volumeDecreasePress: %@",arg1);
+	// NSLog(@"volumeDecreasePress: %@",arg1);
 	notify_post("com.brend0n.volumemixer/volumePressed");
 }
 - (void)volumeIncreasePress:(id)arg1{
 	%orig;
-	NSLog(@"volumeIncreasePress: %@",arg1);
+	// NSLog(@"volumeIncreasePress: %@",arg1);
 	notify_post("com.brend0n.volumemixer/volumePressed");
 }
 %end
@@ -374,7 +373,7 @@ void windowDidShow(){
 %hook SpringBoard
 
 - (void)_ringerChanged:(id)arg1{
-	NSLog(@"_ringerChanged: %@",arg1);
+	// NSLog(@"_ringerChanged: %@",arg1);
 	notify_post("com.brend0n.volumemixer/volumePressed");
 	%orig;
 }
@@ -467,6 +466,7 @@ NSMutableArray<WKWebView*>*webViews;
 // %end
 %end//test
 void registerApp(){
+	//todo: use rocketbootstrap or mryipc
 	//send bundleid
 	NSString*bundleID=[[NSBundle mainBundle] bundleIdentifier];
 	NSData*bundleIDData=[NSKeyedArchiver archivedDataWithRootObject:bundleID];
@@ -552,6 +552,7 @@ void initTemplate(){
 		origCallbacks=[NSMutableDictionary new];
 		hookInfos=[NSMutableDictionary new];
 		webViews=[NSMutableArray new];
+		hookedCallbacks=[NSMutableDictionary new];
 	}
 
 #if DEBUG

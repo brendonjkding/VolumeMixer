@@ -5,7 +5,8 @@
 template<class T>
 extern OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
 		const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData);
-extern NSMutableDictionary* origCallbacks;
+extern NSMutableDictionary<NSString*,NSNumber*> *origCallbacks;
+extern NSMutableDictionary<NSString*,NSNumber*> *hookedCallbacks;
 
 @implementation VMHookInfo
 -(void)hookIfReady{
@@ -20,19 +21,43 @@ extern NSMutableDictionary* origCallbacks;
 	    kAudioFormatFlagsAreAllClear                = 0x80000000,
     */
 	static int cs=0,cf=0;
-	if(!_hooked&&_outputCallback&&_mFormatFlags&&_inRefCon){
-		NSLog(@"???");
-		if(_mFormatFlags&kAudioFormatFlagIsFloat){
-			MSHookFunction((void *)_outputCallback, (void *)my_outputCallback<float>, (void **)&_orig_outputCallback);
-			NSLog(@"%d: hook float",cf++);
+	//different callback hooked to same my but need different orig, use inrefcon to differ
+	
+	if(!_hooked && _outputCallback && _mFormatFlags && _inRefCon){
+		//only hook once
+		NSString*outputCallbackString=[NSString stringWithFormat:@"%ld",(long)_outputCallback];
+		NSLog(@"checking: %@",outputCallbackString);
+		if(!hookedCallbacks[outputCallbackString]){
+			NSLog(@"before hook");
+			if(_mFormatFlags&kAudioFormatFlagIsFloat){
+				MSHookFunction((void *)_outputCallback, (void *)my_outputCallback<float>, (void **)&_orig_outputCallback);
+				NSLog(@"%d: hook float",cf++);
+			}
+			else{
+				MSHookFunction((void *)_outputCallback, (void *)my_outputCallback<short>, (void **)&_orig_outputCallback);
+				NSLog(@"%d: hook short",cs++);
+			}
+
+
+			hookedCallbacks[outputCallbackString]=[NSNumber numberWithLong:(long)_orig_outputCallback];
+			NSLog(@"saved: %@",hookedCallbacks[outputCallbackString]);
+
+			//to do: what if one callback has multiple inrefcon. complete
+			NSString*key=[NSString stringWithFormat:@"%ld",(long)_inRefCon];
+			origCallbacks[key]=[NSNumber numberWithLong:(long)_orig_outputCallback];
+
+			// _hooked=YES;
+			//to do: what if callback of one unit is set multiple times. complete
+			_outputCallback=0;
+			_mFormatFlags=0;
+			_inRefCon=0;
 		}
 		else{
-			MSHookFunction((void *)_outputCallback, (void *)my_outputCallback<short>, (void **)&_orig_outputCallback);
-			NSLog(@"%d: hook short",cs++);
+			NSString*key=[NSString stringWithFormat:@"%ld",(long)_inRefCon];
+			origCallbacks[key]=hookedCallbacks[outputCallbackString];
+			NSLog(@"cached: %@",hookedCallbacks[outputCallbackString]);
 		}
-		_hooked=YES;
-		NSString*key=[NSString stringWithFormat:@"%ld",(long)_inRefCon];
-		origCallbacks[key]=[NSNumber numberWithLong:(long)_orig_outputCallback];
+		
 	}
 }
 @end
