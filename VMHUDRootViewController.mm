@@ -169,6 +169,7 @@
 	        MRYIPCCenter* center = [MRYIPCCenter centerNamed:appNotify];
 	        [_centers addObject:center];
 	    	__block VMHUDView* hudView=[[VMHUDView alloc] initWithFrame:CGRectMake(0,0,47,148)];
+	    	[hudView setBundleID:bundleID];
 	    	[_hudViews addObject:hudView];
 	    	__weak VMHUDView*weakHUDView=hudView;
 	    	[hudView setVolumeChangedCallBlock:^{
@@ -180,6 +181,7 @@
 	    		NSNumber *scaleNumber=[NSNumber numberWithDouble:[weakHUDView curScale]];
 	    		[center callExternalMethod:@selector(setVolume:)withArguments:@{@"curScale" : scaleNumber} completion:^(id ret){}];
 	    	}];
+	    	[hudView initScale];
 		    
 	        [_collectionView reloadData];
 		});

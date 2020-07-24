@@ -67,8 +67,34 @@
     [self addGestureRecognizer:longPress];
     longPress.minimumPressDuration=0;
 
+    
+
 	return self;
 
+}
+-(void)initScale{
+    NSNumber*scaleNumber=[self readConf];
+    if(scaleNumber){
+        double scale=[scaleNumber doubleValue];
+        [_clippingView setFrame:CGRectMake(_clippingView.frame.origin.x,
+                                            _clippingView.frame.size.height*(1.-scale),
+                                            _clippingView.frame.size.width,
+                                            _clippingView.frame.size.height
+            )];
+        _curScale=scale;
+        _volumeChangedCallBlock();
+    }
+}
+-(NSNumber*)readConf{
+    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+    if(!prefs)prefs=[NSMutableDictionary new];
+    return prefs[_bundleID];
+}
+-(void)saveConf:(NSNumber*)scale{
+    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+    if(!prefs)prefs=[NSMutableDictionary new];
+    prefs[_bundleID]=scale;
+    [prefs writeToFile:prefPath atomically:YES];
 }
 - (void)longPress:(UILongPressGestureRecognizer *)longPress{
     //获取当前位置
@@ -106,6 +132,7 @@
             [(VMHUDWindow*)[self superview] autoHide];
         [_feedback impactOccurred];
         _feedback=nil;
+        [self saveConf:[NSNumber numberWithDouble:1.-_clippingView.frame.origin.y/_clippingView.frame.size.height]];
     }
 }
 @end
