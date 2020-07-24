@@ -125,7 +125,8 @@ void showHUDWindowSB(){
 		        VMHUDRootViewController*rootViewController=[VMHUDRootViewController new];
 		        [hudWindow setRootViewController:rootViewController];
 		        unsigned contextId=[hudWindow _contextId];
-				// hudWindowContextId=contextId;
+		        NSLog(@"%u",contextId);
+
 			    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
 			    if(!prefs) prefs=[NSMutableDictionary new];
 			    prefs[@"hudWindowContextId"]=[NSNumber numberWithUnsignedInt:contextId];
@@ -139,12 +140,15 @@ void showHUDWindowSB(){
 }
 #pragma mark BB
 unsigned hudWindowContextId=0;
+BOOL isWindowShowing;
 %group BBHook
 %hook CAWindowServerDisplay
 -(unsigned)contextIdAtPosition:(CGPoint)arg1 excludingContextIds:(id)arg2  { 
 	// NSLog(@"contextIdAtPosition:(CGPoint){%g, %g} excludingContextIds:(id)%@  start",arg1.x,arg1.y,arg2);
 	unsigned r=%orig;
-	if(r!=hudWindowContextId) notify_post("com.brend0n.volumemixer/hideWindow");
+	if(isWindowShowing&&hudWindowContextId) {
+		return hudWindowContextId;
+	}
 	// NSLog(@" = %u", r); 
 	return r; 
 }
@@ -154,6 +158,10 @@ void BBLoadPref(){
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
 	hudWindowContextId=prefs?[prefs[@"hudWindowContextId"] unsignedIntValue]:0;
 	NSLog(@"%u",hudWindowContextId);
+}
+void windowDidShow(){
+	isWindowShowing=!isWindowShowing;
+	NSLog(@"windowDidShow");
 }
 %end
 #pragma mark hook
@@ -290,7 +298,7 @@ void BBLoadPref(){
 
 
 #pragma mark SIM
-%group SBSIM
+%group SIM
 %hook UIStatusBarWindow
 
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -309,7 +317,7 @@ void BBLoadPref(){
 		NSLog(@"tap");
 		// if([hudWindow isHidden]) [hudWindow showWindow];
 		// else [hudWindow hideWindow];
-		[hudWindow isHidden]?[hudWindow showWindow]:[hudWindow hideWindow];
+		[hudWindow changeVisibility];
 	}
 }
 %end
@@ -331,7 +339,7 @@ void BBLoadPref(){
 
 	if (sender.state == UIGestureRecognizerStateEnded){
 		NSLog(@"inapp tap");
-		[hudWindow isHidden]?[hudWindow showWindow]:[hudWindow hideWindow];
+		[hudWindow changeVisibility];
 	}
 
 }
@@ -517,6 +525,9 @@ void initTemplate(){
 		notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
 			BBLoadPref();
 		});
+		notify_register_dispatch("com.brend0n.volumemixer/windowDidShow", &token, dispatch_get_main_queue(), ^(int token) {
+			windowDidShow();
+		});
 		return;
 	}
 
@@ -528,11 +539,11 @@ void initTemplate(){
 		int token=0;
 		notify_register_dispatch("com.brend0n.volumemixer/hideWindow", &token, dispatch_get_main_queue(), ^(int token) {
 			[hudWindow hideWindow];
-			// NSLog(@"got");
+			NSLog(@"com.brend0n.volumemixer/hideWindow");
 		});
-		return;
+		
 #if TARGET_OS_SIMULATOR
-		%init(SBSIM);	
+		%init(SIM);	
 #endif
 	}	
 	else {

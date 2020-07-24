@@ -6,6 +6,7 @@
 @interface VMHUDView  (){
     CGPoint _originalPoint;//之前的位置
 }
+@property (strong, nonatomic) UIImpactFeedbackGenerator*feedback;
 @end
 @implementation VMHUDView
 -(instancetype)initWithFrame:(CGRect)frame{
@@ -62,20 +63,23 @@
 	[mtSliderView setFrame:self.bounds];
 	[_clippingView addSubview:mtSliderView];
 
-	UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
-    [self addGestureRecognizer:pan];
+	UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
+    [self addGestureRecognizer:longPress];
+    longPress.minimumPressDuration=0;
 
 	return self;
 
 }
-- (void)pan:(UIPanGestureRecognizer *)pan{
+- (void)longPress:(UILongPressGestureRecognizer *)longPress{
     //获取当前位置
-    CGPoint currentPosition = [pan locationInView:self];
-    if (pan.state == UIGestureRecognizerStateBegan) {
+    CGPoint currentPosition = [longPress locationInView:self];
+    if (longPress.state == UIGestureRecognizerStateBegan) {
         _originalPoint = currentPosition;
         if([[self superview] respondsToSelector:@selector(cancelAutoHide)])
             [(VMHUDWindow*)[self superview] cancelAutoHide];
-    }else if(pan.state == UIGestureRecognizerStateChanged){
+        _feedback=[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+        [_feedback impactOccurred];
+    }else if(longPress.state == UIGestureRecognizerStateChanged){
         //偏移量(当前坐标 - 起始坐标 = 偏移量)
         // CGFloat offsetX = currentPosition.x - _originalPoint.x;
         CGFloat offsetY = currentPosition.y - _originalPoint.y;
@@ -97,9 +101,11 @@
         									_clippingView.frame.size.height)];
 
 
-    }else if (pan.state == UIGestureRecognizerStateEnded){
+    }else if (longPress.state == UIGestureRecognizerStateEnded){
         if([[self superview] respondsToSelector:@selector(autoHide)])
             [(VMHUDWindow*)[self superview] autoHide];
+        [_feedback impactOccurred];
+        _feedback=nil;
     }
 }
 @end

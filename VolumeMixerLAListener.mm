@@ -6,7 +6,7 @@ extern VMHUDWindow*hudWindow;
 
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
-	[hudWindow isHidden]?[hudWindow showWindow]:[hudWindow hideWindow];
+	[hudWindow changeVisibility];
 }
 
 

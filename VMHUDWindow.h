@@ -2,6 +2,6 @@
 -(void) cancelAutoHide;
 -(void) autoHide;
 - (void)volumeChanged:(NSNotification *)notification;
+-(void)changeVisibility;
 -(void) hideWindow;
--(void) showWindow;
 @end
