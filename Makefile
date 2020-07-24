@@ -38,7 +38,7 @@ after-install::
 # 	install.exec "killall -9 fatego" ||true
 	install.exec "killall -9 Preferences" ||true
 	install.exec "killall -9 neteasemusic" ||true
-	install.exec "killall -9 QQMusic" ||true
+# 	install.exec "killall -9 QQMusic" ||true
 	install.exec "killall -9 MobileSafari" ||true
 
 ifdef SIMULATOR

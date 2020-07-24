@@ -1,0 +1,10 @@
+declare -a cydia
+cydia=($CYDIA)
+
+
+if [[ ${CYDIA+@} ]]; then
+        eval "echo 'finish:reload' >&${cydia[0]}"
+else
+        killall -9 SpringBoard >/dev/null 2>&1
+        killall -9 backboardd >/dev/null 2>&1
+fi

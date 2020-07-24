@@ -29,6 +29,8 @@ AVAudioPlayer* lstAVAudioPlayer;
 NSMutableDictionary<NSString*,NSNumber*> *origCallbacks;
 NSMutableDictionary<NSString*,VMHookInfo*> *hookInfos;
 
+NSString*prefPath=@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist";
+
 BOOL loadPref(){
 	NSLog(@"loadPref..........");
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"];
@@ -106,7 +108,9 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 }
 
 
-
+@interface UIWindow()
+-(unsigned)_contextId;
+@end
 void showHUDWindowSB(){
 	static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -120,14 +124,38 @@ void showHUDWindowSB(){
 		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
 		        VMHUDRootViewController*rootViewController=[VMHUDRootViewController new];
 		        [hudWindow setRootViewController:rootViewController];
+		        unsigned contextId=[hudWindow _contextId];
+				// hudWindowContextId=contextId;
+			    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+			    if(!prefs) prefs=[NSMutableDictionary new];
+			    prefs[@"hudWindowContextId"]=[NSNumber numberWithUnsignedInt:contextId];
+			    [prefs writeToFile:prefPath atomically:YES];
+			    notify_post("com.brend0n.volumemixer/loadPref");
 			};
 		if ([NSThread isMainThread]) blockForMain();
 		else dispatch_async(dispatch_get_main_queue(), blockForMain);
     	
     });
 }
-
-
+#pragma mark BB
+unsigned hudWindowContextId=0;
+%group BBHook
+%hook CAWindowServerDisplay
+-(unsigned)contextIdAtPosition:(CGPoint)arg1 excludingContextIds:(id)arg2  { 
+	// NSLog(@"contextIdAtPosition:(CGPoint){%g, %g} excludingContextIds:(id)%@  start",arg1.x,arg1.y,arg2);
+	unsigned r=%orig;
+	if(r!=hudWindowContextId) notify_post("com.brend0n.volumemixer/hideWindow");
+	// NSLog(@" = %u", r); 
+	return r; 
+}
+%end
+void BBLoadPref(){
+	NSLog(@"loadPref");
+	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+	hudWindowContextId=prefs?[prefs[@"hudWindowContextId"] unsignedIntValue]:0;
+	NSLog(@"%u",hudWindowContextId);
+}
+%end
 #pragma mark hook
 %group hook
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
@@ -318,6 +346,7 @@ void showHUDWindowSB(){
 	%orig;
 	NSLog(@"applicationDidFinishLaunching");
 	showHUDWindowSB();
+
     
 }
 %end
@@ -381,13 +410,29 @@ void showHUDWindowSB(){
 // 	NSLog(@"AudioQueueAllocateBuffer!!!");
 // 	return %orig(inAQ,inBufferByteSize,outBuffer);
 // }
+AudioFile_ReadProc orig_inReadFunc;
+static OSStatus my_inReadFunc(
+								void *		inClientData,
+								SInt64		inPosition, 
+								UInt32		requestCount,
+								void *		buffer, 
+								UInt32 *	actualCount){
+	NSLog(@"AudioFile test");
+	return orig_inReadFunc(inClientData,inPosition,requestCount,buffer,actualCount);
+}
 
 %hookf(OSStatus, AudioFileOpenWithCallbacks,void *inClientData, AudioFile_ReadProc inReadFunc, AudioFile_WriteProc inWriteFunc, AudioFile_GetSizeProc inGetSizeFunc, AudioFile_SetSizeProc inSetSizeFunc, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
 	NSLog(@"AudioFileOpenWithCallbacks");
+	// MSHookFunction((void *)inReadFunc, (void *)my_inReadFunc, (void **)&orig_inReadFunc);
 	return %orig;
 }
+
 %hookf(OSStatus ,AudioFileOpenURL,CFURLRef inFileRef, AudioFilePermissions inPermissions, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
 	NSLog(@"AudioFileOpenURL");
+	return %orig;
+}
+%hookf(OSStatus, AudioFileStreamOpen, void *inClientData, AudioFileStream_PropertyListenerProc inPropertyListenerProc, AudioFileStream_PacketsProc inPacketsProc, AudioFileTypeID inFileTypeHint, AudioFileStreamID  _Nullable *outAudioFileStream){
+	NSLog(@"AudioFileStreamOpen");
 	return %orig;
 }
 #pragma mark MTMaterialView
@@ -402,8 +447,8 @@ void showHUDWindowSB(){
 
 // }
 // %end
-// #pragma mark web
-// NSMutableArray<WKWebView*>*webViews;
+#pragma mark web
+NSMutableArray<WKWebView*>*webViews;
 // %hook WKWebView
 // +(instancetype)alloc{
 // 	id ret=%orig;
@@ -466,14 +511,26 @@ void initTemplate(){
 	// NSLog(@"ad:%p",ad);
 	// MSHookFunction(ad, (void *)my__ZN7WebCore16HTMLMediaElement9setVolumeEd, (void **)&orig__ZN7WebCore16HTMLMediaElement9setVolumeEd);
 		      	
-
+	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.backboardd"]){
+		%init(BBHook);
+		int token=0;
+		notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
+			BBLoadPref();
+		});
+		return;
+	}
 
 	if(!is_enabled_app()) return;
 	NSLog(@"ctor: VolumeMixer");
 
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]){
 		%init(SB);
-
+		int token=0;
+		notify_register_dispatch("com.brend0n.volumemixer/hideWindow", &token, dispatch_get_main_queue(), ^(int token) {
+			[hudWindow hideWindow];
+			// NSLog(@"got");
+		});
+		return;
 #if TARGET_OS_SIMULATOR
 		%init(SBSIM);	
 #endif

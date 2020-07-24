@@ -20,7 +20,7 @@
 @end
 
 
-@interface VMHUDRootViewController()<UICollectionViewDelegate,UICollectionViewDataSource>
+@interface VMHUDRootViewController()<UICollectionViewDelegate,UICollectionViewDataSource,UIGestureRecognizerDelegate>
 @property (strong, nonatomic) UICollectionView *collectionView;
 @property (strong, nonatomic) NSMutableArray* hudViews;
 @property (strong, nonatomic) NSMutableArray* bundleIDs;
@@ -65,8 +65,21 @@
     	mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 options:128 initialWeighting:1];
     }
     mtBgView.layer.cornerRadius = 10.;
+    mtBgView.layer.masksToBounds = YES;
 	_collectionView.backgroundView =mtBgView;
+
+	UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tap:)];
+	tap.delegate=self;
+    [self.view addGestureRecognizer:tap];
 }
+- (void)tap:(UITapGestureRecognizer *)tap{
+    if (tap.state == UIGestureRecognizerStateEnded){
+    	[(VMHUDWindow*)[self.view superview] hideWindow];
+    }
+}
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch{
+	return touch.view==self.view;
+ }
 -(void)reloadRunningApp{
 	dispatch_async(dispatch_get_main_queue(), ^{
 	        for(int i=[_bundleIDs count]-1;i+1;i--){

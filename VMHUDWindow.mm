@@ -1,4 +1,5 @@
 #import "VMHUDWindow.h"
+#import "VMHUDRootViewController.h"
 @implementation VMHUDWindow
 
 - (id)initWithFrame:(CGRect)frame{
@@ -12,7 +13,6 @@
  //     name:@"AVSystemController_SystemVolumeDidChangeNotification"
  //     object:nil];
 
-
 	[self hideWindow];
 
 	return self;
@@ -22,7 +22,6 @@
 // 	[self configureUI];
 // 	return self;
 // }
-
 
 -(void) configureUI{
 	NSLog(@"configureUI");
@@ -56,7 +55,7 @@
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     UIView *hitTestView = [super hitTest:point withEvent:event];
     // NSLog(@"%@",[hitTestView class]);
-    if(hitTestView ==self||hitTestView==[self rootViewController].view){
+    if((hitTestView ==self||hitTestView==[self rootViewController].view)&&[self isHidden]){
     	return nil;
     }
     return hitTestView;
