@@ -28,6 +28,8 @@
 @end
 #define kSliderAndIconInterval 12.
 #define kCollectionViewItemInset 10.
+#define kHudWidth 47.
+#define kHudHeight 148.
 @implementation VMHUDRootViewController
 -(instancetype)init{
 	self= [super init];
@@ -44,7 +46,7 @@
 	UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
     layout.minimumLineSpacing = 1;
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
-    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, 148+ALApplicationIconSizeSmall+kSliderAndIconInterval+2*kCollectionViewItemInset) collectionViewLayout:layout];
+    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, kHudHeight+ALApplicationIconSizeSmall+kSliderAndIconInterval+2*kCollectionViewItemInset) collectionViewLayout:layout];
     _collectionView.showsHorizontalScrollIndicator = NO;
     _collectionView.delegate = self;
     _collectionView.dataSource = self;
@@ -103,9 +105,6 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"UICollectionViewCell" forIndexPath:indexPath];
-    // UIImageView *imageView = [[UIImageView alloc] initWithFrame:cell.bounds];
-    // imageView.image = [UIImage imageNamed:@"2623743-21d547b5c37a8f8e"];
-    // [cell addSubview:imageView];
     for(UIView*view in [cell subviews]){
     	[view removeFromSuperview];
     }
@@ -129,7 +128,7 @@
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    return CGSizeMake(100,148+ALApplicationIconSizeSmall+kSliderAndIconInterval);
+    return CGSizeMake(100,kHudHeight+ALApplicationIconSizeSmall+kSliderAndIconInterval);
 }
 
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section {
@@ -164,7 +163,7 @@
 	        [_bundleIDs addObject:bundleID];
 	        MRYIPCCenter* center = [MRYIPCCenter centerNamed:appNotify];
 	        [_centers addObject:center];
-	    	__block VMHUDView* hudView=[[VMHUDView alloc] initWithFrame:CGRectMake(0,0,47,148)];
+	    	__block VMHUDView* hudView=[[VMHUDView alloc] initWithFrame:CGRectMake(0,0,kHudWidth,kHudHeight)];
 	    	[hudView setBundleID:bundleID];
 	    	[_hudViews addObject:hudView];
 	    	__weak VMHUDView*weakHUDView=hudView;

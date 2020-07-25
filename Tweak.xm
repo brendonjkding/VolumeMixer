@@ -72,10 +72,6 @@ static int volume_adjust(T  * in_buf, T  * out_buf, double in_vol)
 
 
 typedef OSStatus(*orig_t)(void*,AudioUnitRenderActionFlags*,const AudioTimeStamp*,UInt32,UInt32,AudioBufferList*);
-static OSStatus (*orig_outputCallback32)(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
-		const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData);
-static OSStatus (*orig_outputCallback64)(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
-		const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData);
 template<class T>
 OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
 		const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData)
@@ -118,10 +114,7 @@ void showHUDWindowSB(){
     	NSLog(@"showing");
     	void(^blockForMain)(void) = ^{
 				CGRect bounds=[UIScreen mainScreen].bounds;
-		    	CGFloat sWidth=MIN(bounds.size.width,bounds.size.height);
-		    	CGFloat sHeight=MAX(bounds.size.width,bounds.size.height);
-		    	CGFloat hudWidth=47.*sWidth/(750./2.);
-		    	CGFloat hudHeight=148.*sHeight/(1334./2.);
+
 		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
 		        VMHUDRootViewController*rootViewController=[VMHUDRootViewController new];
 		        [hudWindow setRootViewController:rootViewController];
@@ -181,7 +174,6 @@ void BBLoadPref(){
 }
 -(void)windowDidShow{
 	isWindowShowing=1;
-	// NSLog(@"windowDidShow");
 }
 -(void)windowDidHide{
 	isWindowShowing=0;
@@ -451,16 +443,17 @@ void BBLoadPref(){
 // 	NSLog(@"AudioQueueAllocateBuffer!!!");
 // 	return %orig(inAQ,inBufferByteSize,outBuffer);
 // }
-AudioFile_ReadProc orig_inReadFunc;
-static OSStatus my_inReadFunc(
-								void *		inClientData,
-								SInt64		inPosition, 
-								UInt32		requestCount,
-								void *		buffer, 
-								UInt32 *	actualCount){
-	NSLog(@"AudioFile test");
-	return orig_inReadFunc(inClientData,inPosition,requestCount,buffer,actualCount);
-}
+// to do: wechat?
+// AudioFile_ReadProc orig_inReadFunc;
+// static OSStatus my_inReadFunc(
+// 								void *		inClientData,
+// 								SInt64		inPosition, 
+// 								UInt32		requestCount,
+// 								void *		buffer, 
+// 								UInt32 *	actualCount){
+// 	NSLog(@"AudioFile test");
+// 	return orig_inReadFunc(inClientData,inPosition,requestCount,buffer,actualCount);
+// }
 
 %hookf(OSStatus, AudioFileOpenWithCallbacks,void *inClientData, AudioFile_ReadProc inReadFunc, AudioFile_WriteProc inWriteFunc, AudioFile_GetSizeProc inGetSizeFunc, AudioFile_SetSizeProc inSetSizeFunc, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
 	NSLog(@"AudioFileOpenWithCallbacks");
@@ -500,7 +493,22 @@ NSMutableArray<WKWebView*>*webViews;
 // %end
 
 %end//test
+#pragma mark ungrouped
+%hook AppDelegate
+- (void)applicationWillEnterForeground:(UIApplication *)application{
+	NSLog(@"applicationWillEnterForeground:");
+	%orig;
+	// NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+ //    if(!prefs)prefs=[NSMutableDictionary new];
+ //    NSNumber*scaleNumber=prefs[[[NSBundle mainBundle] bundleIdentifier]];
+ //    if(scaleNumber){
+ //        double scale=[scaleNumber doubleValue];
+ //        setScale(scale);
+ //    }
+}
+%end
 void setScale(double curScale){
+	NSLog(@"setScale");
 	g_curScale=curScale;
 
 	if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
@@ -568,9 +576,21 @@ void registerApp(){
 	}];
 }
 void initTemplate(){
-	my_outputCallback<short>;
-	my_outputCallback<float>;
+	(void)my_outputCallback<short>;
+	(void)my_outputCallback<float>;
 }
+void hookdelegate(){
+	Class delegateClass=[[[UIApplication sharedApplication] delegate] class];
+	if(delegateClass){
+		%init(AppDelegate=delegateClass);
+		return;
+	}
+			
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+		hookdelegate();
+	});
+}
+
 #pragma mark ctor
 %ctor{
 
@@ -585,7 +605,7 @@ void initTemplate(){
 			BBLoadPref();
 		});
 		
-		[[VMBBTimer alloc] init];
+		(void)[VMBBTimer new];
 		return;
 	}
 
@@ -599,6 +619,10 @@ void initTemplate(){
 			[hudWindow hideWindow];
 			NSLog(@"com.brend0n.volumemixer/hideWindow");
 		});
+		notify_register_dispatch("com.apple.springboard.lockstate", &token, dispatch_get_main_queue(), ^(int token) {
+			[hudWindow hideWindow];
+			NSLog(@"locked");
+		});
 		
 #if TARGET_OS_SIMULATOR
 		%init(SIM);	
@@ -611,6 +635,8 @@ void initTemplate(){
 		hookInfos=[NSMutableDictionary new];
 		webViews=[NSMutableArray new];
 		hookedCallbacks=[NSMutableDictionary new];
+		// hookdelegate();
+		
 	}
 
 #if DEBUG
