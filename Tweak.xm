@@ -158,10 +158,33 @@ void BBLoadPref(){
 	hudWindowContextId=prefs?[prefs[@"hudWindowContextId"] unsignedIntValue]:0;
 	NSLog(@"%u",hudWindowContextId);
 }
-void windowDidShow(){
-	isWindowShowing=!isWindowShowing;
+
+@interface VMBBTimer:NSObject
+@end
+@implementation VMBBTimer
+-(instancetype)init{
+	self=[super init];
+	if(!self)return self;
+	int token=0;
+	notify_register_dispatch("com.brend0n.volumemixer/windowDidShow", &token, dispatch_get_main_queue(), ^(int token) {
+		[self windowDidShow];
+		[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(windowDidHide) object:nil];
+    	[self performSelector:@selector(windowDidHide) withObject:nil afterDelay:5];
+	});
+	notify_register_dispatch("com.brend0n.volumemixer/windowDidHide", &token, dispatch_get_main_queue(), ^(int token) {
+		[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(windowDidHide) object:nil];
+	    [self windowDidHide];
+	});
+	return self;
+}
+-(void)windowDidShow{
+	isWindowShowing=1;
 	// NSLog(@"windowDidShow");
 }
+-(void)windowDidHide{
+	isWindowShowing=0;
+}
+@end
 %end
 #pragma mark hook
 %group hook
@@ -525,9 +548,8 @@ void initTemplate(){
 		notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
 			BBLoadPref();
 		});
-		notify_register_dispatch("com.brend0n.volumemixer/windowDidShow", &token, dispatch_get_main_queue(), ^(int token) {
-			windowDidShow();
-		});
+		
+		[[VMBBTimer alloc] init];
 		return;
 	}
 

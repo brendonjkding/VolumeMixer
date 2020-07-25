@@ -29,10 +29,6 @@
 #define kSliderAndIconInterval 12.
 #define kCollectionViewItemInset 10.
 @implementation VMHUDRootViewController
-// - (void)viewWillAppear:(BOOL)animated{
-// 	[super viewWillAppear:YES];
-// 	NSLog(@"%d",animated);
-// }
 -(instancetype)init{
 	self= [super init];
 	if(!self)return self;

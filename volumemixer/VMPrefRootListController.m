@@ -55,11 +55,36 @@
 -(void)showInfo{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
   self.navigationItem.backBarButtonItem = backItem; 
-  [self.navigationController pushViewController:[[BDInfoListController alloc] init] animated:TRUE];
+  [self.navigationController pushViewController:[[BDInfoListController alloc] init] animated:YES];
 }
--(void)selectApp{
+-(void)selectApp_{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
   self.navigationItem.backBarButtonItem = backItem; 
-  [self.navigationController pushViewController:[[VMAPPListController alloc] init] animated:TRUE];
+  [self.navigationController pushViewController:[[VMAPPListController alloc] init] animated:YES];
+}
+#define prefPath @"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"
+-(void)selectApp{
+  NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+  if(prefs) {
+    [self selectApp_];
+    return;
+  }
+
+  UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"提示" message:@"本插件处于测试阶段，我已了解可能发生bug" preferredStyle:UIAlertControllerStyleAlert];
+
+  UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"否" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {}];
+
+  UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"是" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      NSMutableDictionary *prefs=[NSMutableDictionary new];
+      [prefs writeToFile:prefPath atomically:YES];
+      [self selectApp_];
+    });
+  }];
+
+  [alertController addAction:cancelAction];
+  [alertController addAction:okAction];
+  [self presentViewController:alertController animated:YES completion:nil];
+  
 }
 @end
