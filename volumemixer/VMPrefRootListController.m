@@ -66,8 +66,12 @@
 -(void)selectApp{
   NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
   if(prefs) {
-    [self selectApp_];
-    return;
+    NSString*key=prefs[@"didShowAlert"];
+    if(key){
+      [self selectApp_];
+      return;  
+    }
+    
   }
 
   UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"提示" message:@"本插件处于测试阶段，我已了解可能发生bug" preferredStyle:UIAlertControllerStyleAlert];
@@ -76,7 +80,9 @@
 
   UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"是" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSMutableDictionary *prefs=[NSMutableDictionary new];
+      NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+      if(!prefs) prefs=[NSMutableDictionary new];
+      prefs[@"didShowAlert"]=@YES;
       [prefs writeToFile:prefPath atomically:YES];
       [self selectApp_];
     });

@@ -30,6 +30,8 @@ NSMutableDictionary<NSString*,NSNumber*> *origCallbacks;
 NSMutableDictionary<NSString*,VMHookInfo*> *hookInfos;
 NSMutableDictionary<NSString*,NSNumber*> *hookedCallbacks;
 
+void setScale(double curScale);
+
 BOOL loadPref(){
 	NSLog(@"loadPref..........");
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"];
@@ -301,8 +303,10 @@ void BBLoadPref(){
 #pragma mark AVPlayer
 %hook AVPlayer
 +(instancetype)alloc{
-	NSLog(@"AVPlayer alloc");
-	return %orig;
+	id ret=%orig;
+	lstAVPlayer=ret;
+	NSLog(@"AVPlayer alloc %@",ret);
+	return ret;
 }
 -(void)play{
 	NSLog(@"AVPlayer play %@",self);
@@ -318,7 +322,7 @@ void BBLoadPref(){
 
 %end //hook
 
-
+#if TARGET_OS_SIMULATOR
 #pragma mark SIM
 %group SIM
 %hook UIStatusBarWindow
@@ -367,6 +371,7 @@ void BBLoadPref(){
 }
 %end
 %end//SBSIM
+#endif
 
 #pragma mark SB
 %group SB
@@ -426,7 +431,13 @@ void BBLoadPref(){
 // 	NSLog(@"__ZN7WebCore16HTMLMediaElement9setVolumeEd");
 // 	return orig__ZN7WebCore16HTMLMediaElement9setVolumeEd(arg1,arg2);
 // }
-
+%hook MPAVController
+-(void)play{
+	%orig;
+	NSLog(@"play");
+	setScale(g_curScale);
+}
+%end
 %hookf(ALCdevice*,alcOpenDevice ,const ALCchar *devicename){
 	NSLog(@"openal!!!");
 	return %orig;
@@ -487,7 +498,52 @@ NSMutableArray<WKWebView*>*webViews;
 // 	return ret;
 // }
 // %end
+
 %end//test
+void setScale(double curScale){
+	g_curScale=curScale;
+
+	if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
+	[lstAVAudioPlayer setVolume:g_curScale]; 
+	[lstAVPlayer setVolume:g_curScale];
+
+	//credits to https://stackoverflow.com/questions/15569983/avplayer-volume-control
+	AVPlayerItem*mPlayerItem=[lstAVPlayer currentItem];
+	// NSLog(@"item: %@",mPlayerItem);
+	NSArray *audioTracks = mPlayerItem.asset.tracks;
+
+	// Change Volume of all the audio tracks
+	NSMutableArray *allAudioParams = [NSMutableArray array];
+	for (AVAssetTrack *track in audioTracks) {
+		AVMutableAudioMixInputParameters *audioInputParams =[AVMutableAudioMixInputParameters audioMixInputParameters];
+		[audioInputParams setVolume:g_curScale atTime:kCMTimeZero];
+		[audioInputParams setTrackID:[track trackID]];
+		[allAudioParams addObject:audioInputParams];
+	}
+	AVMutableAudioMix *audioZeroMix = [AVMutableAudioMix audioMix];
+	[audioZeroMix setInputParameters:allAudioParams];
+
+	[mPlayerItem setAudioMix:audioZeroMix]; // Change Volume of the player item
+
+    
+	//failed
+	for(WKWebView*webView in webViews){
+		[webView evaluateJavaScript:
+    			[NSString stringWithFormat:@""
+	    			"var videos=document.getElementsByTagName('video');"
+					"for(var i = 0; i < videos.length; i++) {"
+					"	var video=videos[i];"
+					"	video.volume=%lf;"
+					// "	alert(video.volume);"
+					// "	video.pause();"
+					"}"
+					, g_curScale
+				]
+			 completionHandler: ^(id _Nullable obj, NSError * _Nullable error){
+			 	// NSLog(@"%@",error);
+			 }];
+	}
+}
 void registerApp(){
 	//todo: use rocketbootstrap or mryipc
 	//send bundleid
@@ -508,27 +564,7 @@ void registerApp(){
 	NSLog(@"registerd: %@",appNotify);
 	VMIPCCenter*center=[[VMIPCCenter alloc] initWithName:appNotify];
 	[center setVolumeChangedCallBlock:^(double curScale){
-		g_curScale=curScale;
-
-		if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
-    	[lstAVPlayer setVolume:g_curScale];
-    	[lstAVAudioPlayer setVolume:g_curScale];
-    	for(WKWebView*webView in webViews){
-    		[webView evaluateJavaScript:
-	    			[NSString stringWithFormat:@""
-		    			"var videos=document.getElementsByTagName('video');"
-						"for(var i = 0; i < videos.length; i++) {"
-						"	var video=videos[i];"
-						"	video.volume=%lf;"
-						// "	alert(video.volume);"
-						// "	video.pause();"
-						"}"
-						, g_curScale
-					]
-				 completionHandler: ^(id _Nullable obj, NSError * _Nullable error){
-				 	// NSLog(@"%@",error);
-				 }];
-    	}
+		setScale(curScale);
 	}];
 }
 void initTemplate(){

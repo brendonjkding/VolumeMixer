@@ -20,6 +20,7 @@
 }
 -(void) configureUI{
 	self.windowLevel = UIWindowLevelStatusBar;
+	self.clipsToBounds= YES;
 	[self makeKeyAndVisible];
 	[self setAlpha:0.0];
 	[self setBackgroundColor:[UIColor clearColor]];
