@@ -1,12 +1,9 @@
 #import "VMHookInfo.h"
 #import <AudioUnit/AudioUnit.h>
 #import <substrate.h>
+#import "VMHookAudioUnit.hpp"
 
-template<class T>
-extern OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
-		const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData);
-extern NSMutableDictionary<NSString*,NSNumber*> *origCallbacks;
-extern NSMutableDictionary<NSString*,NSNumber*> *hookedCallbacks;
+NSMutableDictionary<NSString*,NSNumber*> *hookedCallbacks;
 
 @implementation VMHookInfo
 -(void)hookIfReady{

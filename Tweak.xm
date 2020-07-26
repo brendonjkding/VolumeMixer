@@ -2,7 +2,6 @@
 #import <substrate.h>
 
 #import <cmath>
-#import <AudioUnit/AudioUnit.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 #import <OpenAL/OpenAL.h>
@@ -13,7 +12,7 @@
 #import "VMHUDRootViewController.h"
 #import "VMIPCCenter.h"
 #import "VMHookInfo.h"
-
+#import "VMHookAudioUnit.hpp"
 
 %config(generator=MobileSubstrate)
 
@@ -21,14 +20,12 @@ BOOL enabled;
 
 VMHUDWindow*hudWindow;
 VMHUDView* hudview;
-float g_curScale=1;
+double g_curScale=1;
 AudioQueueRef lstAudioQueue;
 AVPlayer* lstAVPlayer;
 AVAudioPlayer* lstAVAudioPlayer;
 
-NSMutableDictionary<NSString*,NSNumber*> *origCallbacks;
 NSMutableDictionary<NSString*,VMHookInfo*> *hookInfos;
-NSMutableDictionary<NSString*,NSNumber*> *hookedCallbacks;
 
 void setScale(double curScale);
 
@@ -50,59 +47,10 @@ BOOL is_enabled_app(){
 
 	return NO;
 }
-template<class T>
-static int volume_adjust(T  * in_buf, T  * out_buf, double in_vol)
-{
-    double tmp;
-
-    double vol=in_vol;
-
-    tmp = (*in_buf)*vol; 
-
-    // 下面的code主要是为了溢出判断
-    double maxValue=pow(2.,sizeof(T)*8.0-1.0)-1.0;
-    double minValue=pow(2.,sizeof(T)*8.0-1.0)*-1.0;
-    tmp=MIN(tmp,maxValue);
-    tmp=MAX(tmp,minValue);
-    
-    *out_buf = tmp;
-
-    return 0;
-}
 
 
-typedef OSStatus(*orig_t)(void*,AudioUnitRenderActionFlags*,const AudioTimeStamp*,UInt32,UInt32,AudioBufferList*);
-template<class T>
-OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
-		const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData)
-{
-	//
-	OSStatus ret;
-	void*inRefConKey=inRefCon;
-	if(!inRefConKey) inRefConKey=(void*)-1;
-	orig_t orig=(orig_t) [origCallbacks[[NSString stringWithFormat:@"%ld",(long)inRefConKey]] longValue];
-	ret= orig(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
 
 
-	if(unlikely(*ioActionFlags==kAudioUnitRenderAction_OutputIsSilence)){
-		return ret;
-	}
-
-	CGFloat curScale=g_curScale;
-	for (UInt32 i = 0; i < ioData -> mNumberBuffers; i++){
-		auto *buf = (unsigned char*)ioData->mBuffers[i].mData;
-
-		uint bytes = ioData->mBuffers[i].mDataByteSize;
-		
-
-	    for(UInt32 j=0;j<bytes;j+=sizeof(T)){
-	        volume_adjust((T*)(buf+j), (T*)(buf+j), curScale);
-	    }
-	}
-	
-    
-	return ret;
-}
 
 
 @interface UIWindow()
@@ -311,6 +259,13 @@ void BBLoadPref(){
 	return %orig(g_curScale);
 }
 %end
+%hook MPAVController
+-(void)play{
+	%orig;
+	NSLog(@"play");
+	setScale(g_curScale);
+}
+%end
 
 %end //hook
 
@@ -423,13 +378,7 @@ void BBLoadPref(){
 // 	NSLog(@"__ZN7WebCore16HTMLMediaElement9setVolumeEd");
 // 	return orig__ZN7WebCore16HTMLMediaElement9setVolumeEd(arg1,arg2);
 // }
-%hook MPAVController
--(void)play{
-	%orig;
-	NSLog(@"play");
-	setScale(g_curScale);
-}
-%end
+
 %hookf(ALCdevice*,alcOpenDevice ,const ALCchar *devicename){
 	NSLog(@"openal!!!");
 	return %orig;
@@ -508,8 +457,8 @@ NSMutableArray<WKWebView*>*webViews;
 }
 %end
 void setScale(double curScale){
-	NSLog(@"setScale");
 	g_curScale=curScale;
+	auCurScale=g_curScale;
 
 	if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
 	[lstAVAudioPlayer setVolume:g_curScale]; 
@@ -575,10 +524,7 @@ void registerApp(){
 		setScale(curScale);
 	}];
 }
-void initTemplate(){
-	(void)my_outputCallback<short>;
-	(void)my_outputCallback<float>;
-}
+
 void hookdelegate(){
 	Class delegateClass=[[[UIApplication sharedApplication] delegate] class];
 	if(delegateClass){
