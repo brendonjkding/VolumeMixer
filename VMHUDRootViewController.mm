@@ -118,7 +118,9 @@
     VMHUDView* hudView=_hudViews[indexPath.row];
     [cell setFrame:CGRectMake(cell.frame.origin.x,cell.frame.origin.y,hudView.frame.size.width,hudView.frame.size.height)];
     [cell addSubview:hudView];
-    UIImage *icon = [[ALApplicationList sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall forDisplayIdentifier:_bundleIDs[indexPath.row]];
+    UIImage *icon;
+    if(![_bundleIDs[indexPath.row] isEqualToString:kWebKitBundleId])icon=[[ALApplicationList sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall forDisplayIdentifier:_bundleIDs[indexPath.row]];
+    else icon=[UIImage imageNamed:@"WebKitIcon" inBundle:[NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle"] compatibleWithTraitCollection:nil];
     UIImageView* imageView=[[UIImageView alloc] initWithImage:icon];
     [cell addSubview:imageView];
     [imageView setFrame:CGRectMake(
