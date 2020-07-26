@@ -194,6 +194,16 @@ void BBLoadPref(){
 
 	return %orig(inAQ,inParamID,inValue);
 }
+%hookf(OSStatus, AudioQueuePrime,AudioQueueRef inAQ, UInt32 inNumberOfFramesToPrepare, UInt32 *outNumberOfFramesPrepared){
+	lstAudioQueue=inAQ;
+	AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
+	return %orig;
+}
+%hookf(void,AudioServicesPlaySystemSound,SystemSoundID inSystemSoundID){
+	NSLog(@"AudioServicesPlaySystemSound");
+	if(!g_curScale) return;
+	return %orig;
+}
 
 #pragma mark AVAudioPlayer
 %hook AVAudioPlayer
@@ -367,11 +377,11 @@ void showHUDWindowSB(){
 // 	return orig_inReadFunc(inClientData,inPosition,requestCount,buffer,actualCount);
 // }
 
-%hookf(OSStatus, AudioFileOpenWithCallbacks,void *inClientData, AudioFile_ReadProc inReadFunc, AudioFile_WriteProc inWriteFunc, AudioFile_GetSizeProc inGetSizeFunc, AudioFile_SetSizeProc inSetSizeFunc, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
-	NSLog(@"AudioFileOpenWithCallbacks");
-	// MSHookFunction((void *)inReadFunc, (void *)my_inReadFunc, (void **)&orig_inReadFunc);
-	return %orig;
-}
+// %hookf(OSStatus, AudioFileOpenWithCallbacks,void *inClientData, AudioFile_ReadProc inReadFunc, AudioFile_WriteProc inWriteFunc, AudioFile_GetSizeProc inGetSizeFunc, AudioFile_SetSizeProc inSetSizeFunc, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
+// 	NSLog(@"AudioFileOpenWithCallbacks");
+// 	// MSHookFunction((void *)inReadFunc, (void *)my_inReadFunc, (void **)&orig_inReadFunc);
+// 	return %orig;
+// }
 
 %hookf(OSStatus ,AudioFileOpenURL,CFURLRef inFileRef, AudioFilePermissions inPermissions, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
 	NSLog(@"AudioFileOpenURL");
