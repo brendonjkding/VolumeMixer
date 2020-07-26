@@ -1,5 +1,6 @@
 #import <notify.h>
 #import <substrate.h>
+#import <MRYIPCCenter/MRYIPCCenter.h>
 
 #import <cmath>
 #import <AudioToolbox/AudioToolbox.h>
@@ -28,6 +29,8 @@ AVAudioPlayer* lstAVAudioPlayer;
 NSMutableDictionary<NSString*,VMHookInfo*> *hookInfos;
 
 void setScale(double curScale);
+void registerApp();
+void initScale();
 
 BOOL loadPref(){
 	NSLog(@"loadPref..........");
@@ -38,9 +41,10 @@ BOOL loadPref(){
 }
 BOOL is_enabled_app(){
 	NSString* bundleIdentifier=[[NSBundle mainBundle] bundleIdentifier];
-	if([bundleIdentifier isEqualToString:@"com.apple.springboard"])return YES;
+	if(unlikely([bundleIdentifier isEqualToString:kSpringBoardBundleId]))return YES;
+	if(unlikely([bundleIdentifier isEqualToString:kWebKitBundleId]))return YES;
 
-	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"];
+	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
 	NSArray *apps=prefs?prefs[@"apps"]:nil;
 	if(!apps) return NO;
 	if([apps containsObject:bundleIdentifier]) return YES;
@@ -48,38 +52,6 @@ BOOL is_enabled_app(){
 	return NO;
 }
 
-
-
-
-
-
-@interface UIWindow()
--(unsigned)_contextId;
-@end
-void showHUDWindowSB(){
-	static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-    	NSLog(@"showing");
-    	void(^blockForMain)(void) = ^{
-				CGRect bounds=[UIScreen mainScreen].bounds;
-
-		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
-		        VMHUDRootViewController*rootViewController=[VMHUDRootViewController new];
-		        [hudWindow setRootViewController:rootViewController];
-		        unsigned contextId=[hudWindow _contextId];
-		        NSLog(@"%u",contextId);
-
-			    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
-			    if(!prefs) prefs=[NSMutableDictionary new];
-			    prefs[@"hudWindowContextId"]=[NSNumber numberWithUnsignedInt:contextId];
-			    [prefs writeToFile:prefPath atomically:YES];
-			    notify_post("com.brend0n.volumemixer/loadPref");
-			};
-		if ([NSThread isMainThread]) blockForMain();
-		else dispatch_async(dispatch_get_main_queue(), blockForMain);
-    	
-    });
-}
 #pragma mark BB
 unsigned hudWindowContextId=0;
 BOOL isWindowShowing;
@@ -97,7 +69,7 @@ BOOL isWindowShowing;
 %end
 void BBLoadPref(){
 	NSLog(@"loadPref...");
-	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
 	hudWindowContextId=prefs?[prefs[@"hudWindowContextId"] unsignedIntValue]:0;
 	NSLog(@"%u",hudWindowContextId);
 }
@@ -131,7 +103,7 @@ void BBLoadPref(){
 #pragma mark hook
 %group hook
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
-
+	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
 	// method 1:
 	OSStatus ret=%orig;
 	// inID
@@ -211,6 +183,7 @@ void BBLoadPref(){
     kAudioQueueParam_Pan            = 13
 */
 %hookf(OSStatus ,AudioQueueSetParameter,AudioQueueRef inAQ, AudioQueueParameterID inParamID, AudioQueueParameterValue inValue){
+	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
 	lstAudioQueue=inAQ;
 	// NSLog(@"%p %u %lf",(void*)inAQ,inParamID,inValue);
 
@@ -225,14 +198,23 @@ void BBLoadPref(){
 #pragma mark AVAudioPlayer
 %hook AVAudioPlayer
 +(instancetype)alloc{
-	NSLog(@"AVAudioPlayer alloc");
-	return %orig;
+	id ret=%orig;
+	lstAVAudioPlayer=ret;
+	NSLog(@"AVAudioPlayer alloc %@",ret);
+	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
+	return ret;
 }
 -(void)play{
 	NSLog(@"AVAudioPlayer play %@",self);
 	lstAVAudioPlayer=self;
-	%orig;
 	[self setVolume:g_curScale];
+	%orig;
+}
+-(void)setRate:(float)rate{
+	NSLog(@"AVAudioPlayer setRate:%f",rate);
+	lstAVAudioPlayer=self;
+	[self setVolume:g_curScale];
+	%orig;
 }
 -(void)setVolume:(float)volume{
 	NSLog(@"AVAudioPlayer setVolume: %f",volume);
@@ -246,24 +228,24 @@ void BBLoadPref(){
 	id ret=%orig;
 	lstAVPlayer=ret;
 	NSLog(@"AVPlayer alloc %@",ret);
+	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
 	return ret;
 }
 -(void)play{
 	NSLog(@"AVPlayer play %@",self);
 	lstAVPlayer=self;
-	%orig;
 	[self setVolume:g_curScale];
+	%orig;
+}
+-(void)setRate:(float)rate{
+	NSLog(@"AVPlayer setRate:%f",rate);
+	if(rate)lstAVPlayer=self;
+	[self setVolume:g_curScale];
+	%orig;
 }
 -(void)setVolume:(float)volume{
 	NSLog(@"AVPlayer setVolume: %f",volume);
 	return %orig(g_curScale);
-}
-%end
-%hook MPAVController
--(void)play{
-	%orig;
-	NSLog(@"play");
-	setScale(g_curScale);
 }
 %end
 
@@ -309,7 +291,6 @@ void BBLoadPref(){
 }
 %new
 - (void)vm_tap:(UITapGestureRecognizer *)sender {
-
 	if (sender.state == UIGestureRecognizerStateEnded){
 		NSLog(@"inapp tap");
 		[hudWindow changeVisibility];
@@ -317,67 +298,49 @@ void BBLoadPref(){
 
 }
 %end
-%end//SBSIM
+%end//SIM
 #endif
 
 #pragma mark SB
-%group SB
+@interface UIWindow()
+-(unsigned)_contextId;
+@end
+void showHUDWindowSB(){
+	static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+    	void(^blockForMain)(void) = ^{
+				CGRect bounds=[UIScreen mainScreen].bounds;
 
+		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
+		        VMHUDRootViewController*rootViewController=[VMHUDRootViewController new];
+		        [hudWindow setRootViewController:rootViewController];
+		        unsigned contextId=[hudWindow _contextId];
+		        NSLog(@"%u",contextId);
+
+			    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
+			    if(!prefs) prefs=[NSMutableDictionary new];
+			    prefs[@"hudWindowContextId"]=[NSNumber numberWithUnsignedInt:contextId];
+			    [prefs writeToFile:kPrefPath atomically:YES];
+			    notify_post("com.brend0n.volumemixer/loadPref");
+			};
+		if ([NSThread isMainThread]) blockForMain();
+		else dispatch_async(dispatch_get_main_queue(), blockForMain);
+    	
+    });
+}
+%group SB
 %hook SpringBoard
 -(void) applicationDidFinishLaunching:(id)application{
 	%orig;
 	NSLog(@"applicationDidFinishLaunching");
-	showHUDWindowSB();
-
-    
+	showHUDWindowSB();    
 }
 %end
-%hook  SBVolumeHardwareButton
-- (void)volumeDecreasePress:(id)arg1{
-	%orig;
-	// NSLog(@"volumeDecreasePress: %@",arg1);
-	notify_post("com.brend0n.volumemixer/volumePressed");
-}
-- (void)volumeIncreasePress:(id)arg1{
-	%orig;
-	// NSLog(@"volumeIncreasePress: %@",arg1);
-	notify_post("com.brend0n.volumemixer/volumePressed");
-}
-%end
-
-%hook SpringBoard
-
-- (void)_ringerChanged:(id)arg1{
-	// NSLog(@"_ringerChanged: %@",arg1);
-	notify_post("com.brend0n.volumemixer/volumePressed");
-	%orig;
-}
-// - (BOOL)_handlePhysicalButtonEvent:(id)arg1{
-// 	NSLog(@"_handlePhysicalButtonEvent");
-// 	return %orig;
-// }
-%end
-%end//sb
-
-
+%end //SB
 
 
 #pragma mark test
 %group test
-// ExceptionOr<void> HTMLMediaElement::setVolume(double volume)
-// https://github.com/WebKit/webkit/blob/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/html/HTMLMediaElement.cpp#L3608
-// https://github.com/WebKit/webkit/tree/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/html
-
-// void MediaPlayer::setVolume(double volume)
-// https://github.com/WebKit/webkit/blob/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/platform/graphics/MediaPlayer.cpp#L838
-// https://github.com/WebKit/webkit/blob/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/platform/graphics/MediaPlayer.h
-// https://github.com/WebKit/webkit/blob/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/platform/graphics/MediaPlayerPrivate.h#L130
-// https://github.com/WebKit/webkit/tree/950143da027e80924b4bb86defa8a3f21fd3fb1e/Source/WebCore/platform/graphics
-// long (*orig__ZN7WebCore16HTMLMediaElement9setVolumeEd)(long,double);
-// long my__ZN7WebCore16HTMLMediaElement9setVolumeEd(long arg1,double arg2){
-// 	NSLog(@"__ZN7WebCore16HTMLMediaElement9setVolumeEd");
-// 	return orig__ZN7WebCore16HTMLMediaElement9setVolumeEd(arg1,arg2);
-// }
 
 %hookf(ALCdevice*,alcOpenDevice ,const ALCchar *devicename){
 	NSLog(@"openal!!!");
@@ -430,32 +393,17 @@ void BBLoadPref(){
 
 // }
 // %end
-#pragma mark web
-NSMutableArray<WKWebView*>*webViews;
-// %hook WKWebView
-// +(instancetype)alloc{
-// 	id ret=%orig;
-// 	NSLog(@"WKWebView");
-// 	[webViews addObject:ret];
-// 	return ret;
-// }
-// %end
 
 %end//test
-#pragma mark ungrouped
-%hook AppDelegate
-- (void)applicationWillEnterForeground:(UIApplication *)application{
-	NSLog(@"applicationWillEnterForeground:");
-	%orig;
-	// NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
- //    if(!prefs)prefs=[NSMutableDictionary new];
- //    NSNumber*scaleNumber=prefs[[[NSBundle mainBundle] bundleIdentifier]];
- //    if(scaleNumber){
- //        double scale=[scaleNumber doubleValue];
- //        setScale(scale);
- //    }
+
+void initScale(){
+	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
+    if(!prefs)prefs=[NSMutableDictionary new];
+    NSNumber *scaleNumber=prefs[[[NSBundle mainBundle] bundleIdentifier]];
+    if(scaleNumber){
+    	g_curScale=[scaleNumber doubleValue];
+    }
 }
-%end
 void setScale(double curScale){
 	g_curScale=curScale;
 	auCurScale=g_curScale;
@@ -463,87 +411,32 @@ void setScale(double curScale){
 	if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
 	[lstAVAudioPlayer setVolume:g_curScale]; 
 	[lstAVPlayer setVolume:g_curScale];
-
-	//credits to https://stackoverflow.com/questions/15569983/avplayer-volume-control
-	AVPlayerItem*mPlayerItem=[lstAVPlayer currentItem];
-	// NSLog(@"item: %@",mPlayerItem);
-	NSArray *audioTracks = mPlayerItem.asset.tracks;
-
-	// Change Volume of all the audio tracks
-	NSMutableArray *allAudioParams = [NSMutableArray array];
-	for (AVAssetTrack *track in audioTracks) {
-		AVMutableAudioMixInputParameters *audioInputParams =[AVMutableAudioMixInputParameters audioMixInputParameters];
-		[audioInputParams setVolume:g_curScale atTime:kCMTimeZero];
-		[audioInputParams setTrackID:[track trackID]];
-		[allAudioParams addObject:audioInputParams];
-	}
-	AVMutableAudioMix *audioZeroMix = [AVMutableAudioMix audioMix];
-	[audioZeroMix setInputParameters:allAudioParams];
-
-	[mPlayerItem setAudioMix:audioZeroMix]; // Change Volume of the player item
-
     
-	//failed
-	for(WKWebView*webView in webViews){
-		[webView evaluateJavaScript:
-    			[NSString stringWithFormat:@""
-	    			"var videos=document.getElementsByTagName('video');"
-					"for(var i = 0; i < videos.length; i++) {"
-					"	var video=videos[i];"
-					"	video.volume=%lf;"
-					// "	alert(video.volume);"
-					// "	video.pause();"
-					"}"
-					, g_curScale
-				]
-			 completionHandler: ^(id _Nullable obj, NSError * _Nullable error){
-			 	// NSLog(@"%@",error);
-			 }];
-	}
 }
 void registerApp(){
-	//todo: use rocketbootstrap or mryipc
-	//send bundleid
-	NSString*bundleID=[[NSBundle mainBundle] bundleIdentifier];
-	NSData*bundleIDData=[NSKeyedArchiver archivedDataWithRootObject:bundleID];
-	[[UIPasteboard generalPasteboard] setValue:bundleIDData forPasteboardType:@"com.brend0n.volumemixer/bundleID"];
-	notify_post("com.brend0n.qqmusicdesktoplyrics/register");
+	static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+    	//send bundleid
+		NSString*bundleID=[[NSBundle mainBundle] bundleIdentifier];
+		MRYIPCCenter *IDCenter=[MRYIPCCenter centerNamed:@"com.brend0n.volumemixer/register"];
 
-	// int token = 0;
-	// notify_register_dispatch("com.brend0n.volumemixer/volumePressed", &token, dispatch_get_main_queue(), ^(int token) {
-	// 	[hudWindow volumeChanged:nil];
-	// });
-
-
-
-	//receive volume
-	NSString*appNotify=[NSString stringWithFormat:@"com.brend0n.volumemixer/%@/setVolume",bundleID];
-	NSLog(@"registerd: %@",appNotify);
-	VMIPCCenter*center=[[VMIPCCenter alloc] initWithName:appNotify];
-	[center setVolumeChangedCallBlock:^(double curScale){
-		setScale(curScale);
-	}];
-}
-
-void hookdelegate(){
-	Class delegateClass=[[[UIApplication sharedApplication] delegate] class];
-	if(delegateClass){
-		%init(AppDelegate=delegateClass);
-		return;
-	}
+		int pid=[[NSProcessInfo processInfo] processIdentifier];
+		[IDCenter callExternalMethod:@selector(register:)withArguments:@{@"bundleID" : bundleID,@"pid":[NSNumber numberWithInt:pid]} completion:^(id ret){}];
 			
-	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-		hookdelegate();
-	});
+
+		NSString*appNotify=[NSString stringWithFormat:@"com.brend0n.volumemixer/%@~%d/setVolume",bundleID,pid];
+		//receive volume
+		VMIPCCenter*center=[[VMIPCCenter alloc] initWithName:appNotify];
+		[center setVolumeChangedCallBlock:^(double curScale){
+			setScale(curScale);
+		}];
+    });
+	
 }
+
 
 #pragma mark ctor
 %ctor{
-
-	// void*ad=((void *)MSFindSymbol(NULL, "__ZN7WebCore16HTMLMediaElement9setVolumeEd"));
-	// NSLog(@"ad:%p",ad);
-	// MSHookFunction(ad, (void *)my__ZN7WebCore16HTMLMediaElement9setVolumeEd, (void **)&orig__ZN7WebCore16HTMLMediaElement9setVolumeEd);
-		      	
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.backboardd"]){
 		%init(BBHook);
 		int token=0;
@@ -558,7 +451,7 @@ void hookdelegate(){
 	if(!is_enabled_app()) return;
 	NSLog(@"ctor: VolumeMixer");
 
-	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]){
+	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kSpringBoardBundleId]){
 		%init(SB);
 		int token=0;
 		notify_register_dispatch("com.brend0n.volumemixer/hideWindow", &token, dispatch_get_main_queue(), ^(int token) {
@@ -576,12 +469,11 @@ void hookdelegate(){
 	}	
 	else {
 		%init(hook);
-		registerApp();
+		if(![[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
+		initScale();
 		origCallbacks=[NSMutableDictionary new];
 		hookInfos=[NSMutableDictionary new];
-		webViews=[NSMutableArray new];
 		hookedCallbacks=[NSMutableDictionary new];
-		// hookdelegate();
 		
 	}
 

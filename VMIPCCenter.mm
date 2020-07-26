@@ -12,6 +12,7 @@
 	{
 		_center = [MRYIPCCenter centerNamed:name];
 		[_center addTarget:self action:@selector(setVolume:)];
+		[_center addTarget:self action:@selector(register:)];
 		NSLog(@"[MRYIPC] running server in %@", [NSProcessInfo processInfo].processName);
 	}
 	return self;
@@ -21,5 +22,9 @@
 {
 	double curScale=[args[@"curScale"] doubleValue];
 	_volumeChangedCallBlock(curScale);
+}
+-(void)register:(NSDictionary*)args
+{
+	_registerBlock(args);
 }
 @end

@@ -20,8 +20,6 @@ VolumeMixer_LIBRARIES = applist-sim mryipc-sim substrate
 else
 VolumeMixer_LIBRARIES = applist mryipc activator
 endif
-# VolumeMixer_FRAMEWORKS = WebKit
-# VolumeMixer_PRIVATE_FRAMEWORKS = WebCore
 
 SUBPROJECTS += volumemixer
 
@@ -33,7 +31,6 @@ after-install::
 	install.exec "killall -9 priconne" ||true
 	install.exec "killall -9 GBA4iOS" ||true
 # 	install.exec "killall -9 Sample" ||true
-# 	install.exec "killall -9 ProductName" ||true
 # 	install.exec "killall -9 NewHLDDZ" ||true
 # 	install.exec "killall -9 fatego" ||true
 	install.exec "killall -9 Preferences" ||true

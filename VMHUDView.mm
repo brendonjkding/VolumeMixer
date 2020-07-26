@@ -82,19 +82,18 @@
                                             _clippingView.frame.size.height
             )];
         _curScale=scale;
-        _volumeChangedCallBlock();
     }
 }
 -(NSNumber*)readConf{
-    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
     if(!prefs)prefs=[NSMutableDictionary new];
     return prefs[_bundleID];
 }
 -(void)saveConf:(NSNumber*)scale{
-    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
     if(!prefs)prefs=[NSMutableDictionary new];
     prefs[_bundleID]=scale;
-    [prefs writeToFile:prefPath atomically:YES];
+    [prefs writeToFile:kPrefPath atomically:YES];
 }
 - (void)longPress:(UILongPressGestureRecognizer *)longPress{
     //获取当前位置

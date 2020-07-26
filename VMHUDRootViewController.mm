@@ -2,10 +2,13 @@
 #import "VMHUDWindow.h"
 #import "VMHUDView.h"
 #import "MTMaterialView.h"
+#import "VMIPCCenter.h"
 #import <objc/runtime.h>
 #import <notify.h>
 #import <AppList/AppList.h>
 #import <MRYIPCCenter/MRYIPCCenter.h>
+#import <sys/types.h>
+#import <signal.h>
 @interface FBProcessState
 -(int)taskState;
 -(BOOL)isRunning;
@@ -22,9 +25,10 @@
 
 @interface VMHUDRootViewController()<UICollectionViewDelegate,UICollectionViewDataSource,UIGestureRecognizerDelegate>
 @property (strong, nonatomic) UICollectionView *collectionView;
-@property (strong, nonatomic) NSMutableArray* hudViews;
-@property (strong, nonatomic) NSMutableArray* bundleIDs;
-@property (strong, nonatomic) NSMutableArray* centers ;
+@property (strong, nonatomic) NSMutableArray<VMHUDView*> *hudViews;
+@property (strong, nonatomic) NSMutableArray<NSString*> *bundleIDs;
+@property (strong, nonatomic) NSMutableArray<NSNumber*> *pids;
+@property (strong, nonatomic) NSMutableArray<MRYIPCCenter*> *centers ;
 @end
 #define kSliderAndIconInterval 12.
 #define kCollectionViewItemInset 10.
@@ -37,6 +41,7 @@
 	[self registerNotify];
 	_hudViews=[NSMutableArray new];
 	_bundleIDs=[NSMutableArray new];
+	_pids=[NSMutableArray new];
 	[self loadFrameWorks];
 	return self;
 }
@@ -84,16 +89,18 @@
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch{
 	return touch.view==self.view;
  }
+-(void)removeDataAtIndex:(int)i{
+	[_bundleIDs removeObjectAtIndex:i];
+	[_hudViews removeObjectAtIndex:i];
+	[_centers removeObjectAtIndex:i];
+	[_pids removeObjectAtIndex:i];
+}
 -(void)reloadRunningApp{
 	dispatch_async(dispatch_get_main_queue(), ^{
 	        for(int i=[_bundleIDs count]-1;i+1;i--){
-	        	SBApplication *app=[[objc_getClass("SBApplicationController") sharedInstance] applicationWithBundleIdentifier:_bundleIDs[i]];
-	        	FBProcessState *processState=[app processState];
-				if(!processState){
-					[_bundleIDs removeObjectAtIndex:i];
-					[_hudViews removeObjectAtIndex:i];
-					[_centers removeObjectAtIndex:i];
-				}
+        		int pid=[_pids[i] intValue];
+				int error=kill(pid, 0);
+				if(error) [self removeDataAtIndex:i];
 	        }
 	        [_collectionView reloadData];
 		});
@@ -148,40 +155,38 @@
 }
 
 -(void) registerNotify{
-	int token=0;
 	//receive bundleID
-	notify_register_dispatch("com.brend0n.qqmusicdesktoplyrics/register", &token, dispatch_get_main_queue(), ^(int token) {
+	VMIPCCenter*IDCenter=[[VMIPCCenter alloc] initWithName:@"com.brend0n.volumemixer/register"];
+	[IDCenter setRegisterBlock:^(NSDictionary*args){
 		NSLog(@"registering...");
-    	NSData*bundleIDData=[[UIPasteboard generalPasteboard] valueForPasteboardType:@"com.brend0n.volumemixer/bundleID"];
-    	NSString*bundleID= [NSKeyedUnarchiver unarchiveObjectWithData:bundleIDData];
-    	NSString*appNotify=[NSString stringWithFormat:@"com.brend0n.volumemixer/%@/setVolume",bundleID];
-    	NSLog(@"bundleID:%@",bundleID);
+    	NSString* bundleID=args[@"bundleID"];
+    	NSNumber*pid=args[@"pid"];
+    	NSString*appNotify=[NSString stringWithFormat:@"com.brend0n.volumemixer/%@~%d/setVolume",bundleID,[pid intValue]];
     	NSLog(@"appNotify:%@",appNotify);
-    	if(!bundleID)return;
-    	if([_bundleIDs containsObject:bundleID])return ;  	
+ 		
+ 		// if([_bundleIDs containsObject:bundleID]&&![bundleID isEqualToString:kWebKitBundleId]) return;
     	dispatch_async(dispatch_get_main_queue(), ^{
+    		[self reloadRunningApp];
 	        [_bundleIDs addObject:bundleID];
+	        [_pids addObject:pid];
+
 	        MRYIPCCenter* center = [MRYIPCCenter centerNamed:appNotify];
 	        [_centers addObject:center];
+	    	
 	    	__block VMHUDView* hudView=[[VMHUDView alloc] initWithFrame:CGRectMake(0,0,kHudWidth,kHudHeight)];
-	    	[hudView setBundleID:bundleID];
-	    	[_hudViews addObject:hudView];
 	    	__weak VMHUDView*weakHUDView=hudView;
+	    	[hudView setBundleID:bundleID];
 	    	[hudView setVolumeChangedCallBlock:^{
 	    		//send volume
-	    		// NSData*scaleData=[NSKeyedArchiver archivedDataWithRootObject:[NSNumber numberWithDouble:[weakHUDView curScale]]];
-	    		// [[UIPasteboard generalPasteboard] setData:scaleData forPasteboardType:@"com.brend0n.volumemixer"];
-	    		// notify_post([appNotify UTF8String]);
-
 	    		NSNumber *scaleNumber=[NSNumber numberWithDouble:[weakHUDView curScale]];
 	    		[center callExternalMethod:@selector(setVolume:)withArguments:@{@"curScale" : scaleNumber} completion:^(id ret){}];
 	    	}];
 	    	[hudView initScale];
+	    	[_hudViews addObject:hudView];
 		    
 	        [_collectionView reloadData];
 		});
-    	
-	});
+	}];
 }
 -(void)loadFrameWorks{
 #if TARGET_OS_SIMULATOR
