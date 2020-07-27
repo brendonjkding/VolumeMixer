@@ -8,13 +8,13 @@
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>选择APP</string>
+			<string>CHOOSE_ENABLED_APP</string>
 		</dict>
         <dict>
                 <key>cell</key>
                 <string>PSButtonCell</string>
                 <key>label</key>
-                <string>选择APP</string>
+                <string>CHOOSE_ENABLED_APP</string>
                 <key>action</key>
                 <string>selectApp</string>
         </dict>
@@ -23,13 +23,13 @@
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>Activator</string>
+			<string>ACTIVATOR</string>
 		</dict>
         <dict>
 			<key>cell</key>
 			<string>PSLinkCell</string>
 			<key>label</key>
-			<string>Activation Methods</string>
+			<string>ACTIVATOR</string>
 			<key>isController</key>
 			<true/>
 			<key>bundle</key>
@@ -37,11 +37,11 @@
 			<key>activatorListener</key>
 			<string>com.brend0n.volumemixer</string>
 		</dict>
-		<!-- <dict>
+		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>开关</string>
+			<string>WEB_AUDIO</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -51,14 +51,14 @@
 			<key>defaults</key>
 			<string>com.brend0n.volumemixer</string>
 			<key>key</key>
-			<string>enabled</string>
+			<string>webEnabled</string>
 			<key>label</key>
-			<string>开关</string>
+			<string>ENABLED</string>
 			<key>PostNotification</key>
 			<string>com.brend0n.volumemixer/loadPref</string>
-		</dict> -->
+		</dict>
 	</array>
 	<key>title</key>
-	<string>volumemixer</string>
+	<string>VolumeMixer</string>
 </dict>
 </plist>

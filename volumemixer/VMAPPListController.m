@@ -63,12 +63,12 @@
 		_specifiers = [NSMutableArray arrayWithCapacity:256];
     // sort the apps by display name. displayIdentifiers is an autoreleased object.
     NSArray *sortedDisplayIdentifiers;
-    NSDictionary *applications = [[ALApplicationList sharedApplicationList] applicationsFilteredUsingPredicate:nil
+    NSDictionary *applications = [[ALApplicationList sharedApplicationList] applicationsFilteredUsingPredicate:[NSPredicate predicateWithFormat:@"isInternalApplication = FALSE"]
       onlyVisible:YES titleSortedIdentifiers:&sortedDisplayIdentifiers];
     // NSLog(@"app count:%lu",[applications count]);
 
     PSSpecifier* spec;
-    for(id displayIdentifier in applications){
+    for(id displayIdentifier in sortedDisplayIdentifiers){
       UIImage *icon = [[ALApplicationList sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall forDisplayIdentifier:displayIdentifier];
       NSString *displayName = applications[displayIdentifier];
       if(![displayIdentifier localizedStandardContainsString:_searchKey]&&![displayName localizedStandardContainsString:_searchKey]&&![_searchKey isEqualToString:@""]) continue;

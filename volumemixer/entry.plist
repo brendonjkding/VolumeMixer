@@ -15,7 +15,7 @@
 		<key>isController</key>
 		<true/>
 		<key>label</key>
-		<string>volumemixer</string>
+		<string>VolumeMixer</string>
 	</dict>
 </dict>
 </plist>

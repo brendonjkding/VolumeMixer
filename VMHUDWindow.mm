@@ -63,7 +63,7 @@
 }
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     UIView *hitTestView = [super hitTest:point withEvent:event];
-    // NSLog(@"%@",[hitTestView class]);
+    NSLog(@"%@",[hitTestView class]);
     if((hitTestView ==self||hitTestView==[self rootViewController].view)&&![self alpha]){
     	return nil;
     }

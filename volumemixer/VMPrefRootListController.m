@@ -3,6 +3,8 @@
 #include "BDInfoListController.h"
 #import <Preferences/PSSpecifier.h>
 
+#define VMNSLocalizedString(key) NSLocalizedStringFromTableInBundle((key),@"Root",[NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle"],nil)
+
 @implementation VMPrefRootListController
 
 - (NSArray *)specifiers {
@@ -11,7 +13,7 @@
 
         PSSpecifier* spec;
         
-        spec = [PSSpecifier preferenceSpecifierNamed:@"关于作者"
+        spec = [PSSpecifier preferenceSpecifierNamed:VMNSLocalizedString(@"ABOUT_AUTHOR")
                                               target:self
                                               set:Nil
                                               get:Nil
@@ -20,7 +22,7 @@
                                               edit:Nil];
         [spec setProperty:@"作者" forKey:@"label"];
         [_specifiers addObject:spec];
-        spec = [PSSpecifier preferenceSpecifierNamed:@"关于作者"
+        spec = [PSSpecifier preferenceSpecifierNamed:VMNSLocalizedString(@"ABOUT_AUTHOR")
                                               target:self
                                                  set:NULL
                                                  get:NULL
@@ -74,11 +76,11 @@
     
   }
 
-  UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"提示" message:@"本插件处于测试阶段，我已了解可能发生bug" preferredStyle:UIAlertControllerStyleAlert];
+  UIAlertController *alertController = [UIAlertController alertControllerWithTitle:VMNSLocalizedString(@"BETA_ALERT_TITLE") message:VMNSLocalizedString(@"BETA_ALERT") preferredStyle:UIAlertControllerStyleAlert];
 
-  UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"否" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {}];
+  UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_NO") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {}];
 
-  UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"是" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+  UIAlertAction *okAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_YES") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
     dispatch_async(dispatch_get_main_queue(), ^{
       NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
       if(!prefs) prefs=[NSMutableDictionary new];

@@ -4,7 +4,7 @@
 @implementation BDInfoListController
 -(void)loadView{
 	[super loadView];
-    self.navigationItem.title = @"作者";
+    self.navigationItem.title = @"Brend0n";
     
 }
 - (NSArray *)specifiers {

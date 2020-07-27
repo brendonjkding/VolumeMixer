@@ -18,6 +18,7 @@
 %config(generator=MobileSubstrate)
 
 BOOL enabled;
+BOOL webEnabled;
 
 VMHUDWindow*hudWindow;
 VMHUDView* hudview;
@@ -33,16 +34,16 @@ void registerApp();
 void initScale();
 
 BOOL loadPref(){
-	NSLog(@"loadPref..........");
+	// NSLog(@"loadPref..........");
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"];
-	if(!prefs) enabled=YES;
-	else enabled=[prefs[@"enabled"] boolValue];
+	if(!prefs) prefs=[NSMutableDictionary new];
+	webEnabled=prefs[@"webEnabled"]?[prefs[@"webEnabled"] boolValue]:YES;
 	return enabled;
 }
 BOOL is_enabled_app(){
 	NSString* bundleIdentifier=[[NSBundle mainBundle] bundleIdentifier];
 	if(unlikely([bundleIdentifier isEqualToString:kSpringBoardBundleId]))return YES;
-	if(unlikely([bundleIdentifier isEqualToString:kWebKitBundleId]))return YES;
+	if(unlikely([bundleIdentifier isEqualToString:kWebKitBundleId])&&webEnabled)return YES;
 
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
 	NSArray *apps=prefs?prefs[@"apps"]:nil;
@@ -195,6 +196,11 @@ void BBLoadPref(){
 	return %orig(inAQ,inParamID,inValue);
 }
 %hookf(OSStatus, AudioQueuePrime,AudioQueueRef inAQ, UInt32 inNumberOfFramesToPrepare, UInt32 *outNumberOfFramesPrepared){
+	lstAudioQueue=inAQ;
+	AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
+	return %orig;
+}
+%hookf(OSStatus, AudioQueueStart,AudioQueueRef inAQ, const AudioTimeStamp *inStartTime){
 	lstAudioQueue=inAQ;
 	AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
 	return %orig;
@@ -457,7 +463,7 @@ void registerApp(){
 		(void)[VMBBTimer new];
 		return;
 	}
-
+	loadPref();
 	if(!is_enabled_app()) return;
 	NSLog(@"ctor: VolumeMixer");
 

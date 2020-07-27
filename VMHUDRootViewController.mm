@@ -116,7 +116,7 @@
     	[view removeFromSuperview];
     }
     VMHUDView* hudView=_hudViews[indexPath.row];
-    [cell setFrame:CGRectMake(cell.frame.origin.x,cell.frame.origin.y,hudView.frame.size.width,hudView.frame.size.height)];
+    [cell setFrame:CGRectMake(cell.frame.origin.x,cell.frame.origin.y,hudView.frame.size.width,kHudHeight+ALApplicationIconSizeSmall+kSliderAndIconInterval)];
     [cell addSubview:hudView];
     UIImage *icon;
     if(![_bundleIDs[indexPath.row] isEqualToString:kWebKitBundleId])icon=[[ALApplicationList sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall forDisplayIdentifier:_bundleIDs[indexPath.row]];
