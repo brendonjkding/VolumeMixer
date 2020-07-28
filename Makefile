@@ -13,7 +13,7 @@ endif
 
 TWEAK_NAME = VolumeMixer
 
-VolumeMixer_FILES = Tweak.xm VMHUDView.mm VMHUDWindow.mm VMHUDRootViewController.mm VMIPCCenter.mm VolumeMixerLAListener.mm VMHookInfo.mm VMHookAudioUnit.mm
+VolumeMixer_FILES = Tweak.xm VMHUDView.mm VMHUDWindow.mm VMHUDRootViewController.mm VMIPCCenter.mm VMLAListener.mm VMHookInfo.mm VMHookAudioUnit.mm
 VolumeMixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -std=c++11 -include Prefix.pch
 ifdef SIMULATOR
 VolumeMixer_LIBRARIES = applist-sim mryipc-sim substrate

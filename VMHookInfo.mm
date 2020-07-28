@@ -25,7 +25,6 @@ NSMutableDictionary<NSString*,NSNumber*> *hookedCallbacks;
 		NSString*outputCallbackString=[NSString stringWithFormat:@"%ld",(long)_outputCallback];
 		NSLog(@"checking: %@",outputCallbackString);
 		if(!hookedCallbacks[outputCallbackString]){
-			NSLog(@"before hook");
 			if(_mFormatFlags&kAudioFormatFlagIsFloat){
 				MSHookFunction((void *)_outputCallback, (void *)my_outputCallback<float>, (void **)&_orig_outputCallback);
 				NSLog(@"%d: hook float",cf++);
