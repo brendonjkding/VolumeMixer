@@ -209,6 +209,14 @@ void BBLoadPref(){
 	return %orig;
 }
 
+void sendPid(){
+	int pid=[[NSProcessInfo processInfo] processIdentifier];
+	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
+    if(!prefs) prefs=[NSMutableDictionary new];
+    prefs[@"nowPlayingWebKitpid"]=[NSNumber numberWithInt:pid];
+    [prefs writeToFile:kPrefPath atomically:YES];
+	notify_post("com.brend0n.volumemixer/nowPlayingWebKitDidChange");
+}
 #pragma mark AVAudioPlayer
 %hook AVAudioPlayer
 +(instancetype)alloc{
@@ -221,12 +229,14 @@ void BBLoadPref(){
 -(void)play{
 	NSLog(@"AVAudioPlayer play %@",self);
 	lstAVAudioPlayer=self;
+	if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
 	[self setVolume:g_curScale];
 	%orig;
 }
 -(void)setRate:(float)rate{
 	NSLog(@"AVAudioPlayer setRate:%f",rate);
 	lstAVAudioPlayer=self;
+	if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
 	[self setVolume:g_curScale];
 	%orig;
 }
@@ -248,12 +258,16 @@ void BBLoadPref(){
 -(void)play{
 	NSLog(@"AVPlayer play %@",self);
 	lstAVPlayer=self;
+	if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
 	[self setVolume:g_curScale];
 	%orig;
 }
 -(void)setRate:(float)rate{
 	NSLog(@"AVPlayer setRate:%f",rate);
-	if(rate)lstAVPlayer=self;
+	if(rate){
+		lstAVPlayer=self;
+		if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
+	}
 	[self setVolume:g_curScale];
 	%orig;
 }

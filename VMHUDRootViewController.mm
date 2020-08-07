@@ -189,6 +189,19 @@
 	        [_collectionView reloadData];
 		});
 	}];
+	int token;
+	notify_register_dispatch("com.brend0n.volumemixer/nowPlayingWebKitDidChange", &token, dispatch_get_main_queue(), ^(int token) {
+			[self setNowPlayingWebKit];
+		});
+}
+-(void)setNowPlayingWebKit{
+	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
+	int pid=prefs?[prefs[@"nowPlayingWebKitpid"] intValue]:0;
+	NSLog(@"%d",pid);
+	if(pid){
+
+	}
+	
 }
 -(void)loadFrameWorks{
 #if TARGET_OS_SIMULATOR
