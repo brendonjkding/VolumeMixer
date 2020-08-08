@@ -277,6 +277,20 @@ void sendPid(){
 }
 %end
 
+#pragma mark AVAudioSession
+%hook AVAudioSession
+- (BOOL)setActive:(BOOL)active withOptions:(AVAudioSessionSetActiveOptions)options error:(NSError **)outError{
+  NSString* bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier]; 
+  if([bundleIdentifier isEqualToString:@"com.netease.cloudmusic"]||[bundleIdentifier isEqualToString:@"com.tencent.QQMusic"]){
+    [self setCategory:AVAudioSessionCategoryPlayback withOptions:0 error:outError];
+  }else{
+    [self setCategory:[self category] withOptions:AVAudioSessionCategoryOptionDuckOthers error:outError];
+  }
+  
+  return %orig;
+}
+%end
+
 %end //hook
 
 #if TARGET_OS_SIMULATOR
@@ -364,6 +378,19 @@ void showHUDWindowSB(){
 	showHUDWindowSB();    
 }
 %end
+
+%hook SBVolumeControl
+- (void)increaseVolume {
+	%orig;
+    [hudWindow changeVisibility];
+}
+
+- (void)decreaseVolume {
+	%orig;
+    [hudWindow changeVisibility];
+}
+%end
+
 %end //SB
 
 
