@@ -23,13 +23,27 @@
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>ACTIVATOR</string>
+			<string>SHOW_PANEL</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.brend0n.volumemixer</string>
+			<key>key</key>
+			<string>byVolumeButton</string>
+			<key>label</key>
+			<string>BY_VOLUME_BUTTON</string>
+			<key>PostNotification</key>
+			<string>com.brend0n.volumemixer/loadPref</string>
 		</dict>
         <dict>
 			<key>cell</key>
 			<string>PSLinkCell</string>
 			<key>label</key>
-			<string>ACTIVATOR</string>
+			<string>BY_ACTIVATOR</string>
 			<key>isController</key>
 			<true/>
 			<key>bundle</key>
@@ -54,6 +68,27 @@
 			<string>webEnabled</string>
 			<key>label</key>
 			<string>ENABLED</string>
+			<key>PostNotification</key>
+			<string>com.brend0n.volumemixer/loadPref</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.brend0n.volumemixer</string>
+			<key>key</key>
+			<string>audioMixEnabled</string>
+			<key>label</key>
+			<string>ENABLE_AUDIO_MIX</string>
 			<key>PostNotification</key>
 			<string>com.brend0n.volumemixer/loadPref</string>
 		</dict>

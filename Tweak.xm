@@ -18,6 +18,7 @@
 %config(generator=MobileSubstrate)
 
 BOOL enabled;
+BOOL byVolumeButton;
 
 VMHUDWindow*hudWindow;
 VMHUDView* hudview;
@@ -31,6 +32,12 @@ NSMutableDictionary<NSString*,VMHookInfo*> *hookInfos;
 void setScale(double curScale);
 void registerApp();
 void initScale();
+
+void loadPref(){
+	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
+	if(!prefs) prefs=[NSMutableDictionary new];
+	byVolumeButton=prefs[@"byVolumeButton"]?[prefs[@"byVolumeButton"] boolValue]:NO;
+}
 
 BOOL webEnabled(){
 	// NSLog(@"loadPref..........");
@@ -280,18 +287,24 @@ void sendPid(){
 #pragma mark AVAudioSession
 %hook AVAudioSession
 - (BOOL)setActive:(BOOL)active withOptions:(AVAudioSessionSetActiveOptions)options error:(NSError **)outError{
-  NSString* bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier]; 
-  if([bundleIdentifier isEqualToString:@"com.netease.cloudmusic"]||[bundleIdentifier isEqualToString:@"com.tencent.QQMusic"]){
-    [self setCategory:AVAudioSessionCategoryPlayback withOptions:0 error:outError];
-  }else{
-    [self setCategory:[self category] withOptions:AVAudioSessionCategoryOptionDuckOthers error:outError];
-  }
+	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
+	if(!prefs) prefs=[NSMutableDictionary new];
+	BOOL audioMixEnabled=prefs[@"audioMixEnabled"]?[prefs[@"audioMixEnabled"] boolValue]:NO;
+	if(!audioMixEnabled) return %orig;
+	NSString* bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier]; 
+	if([bundleIdentifier isEqualToString:@"com.netease.cloudmusic"]||[bundleIdentifier isEqualToString:@"com.tencent.QQMusic"]){
+	[self setCategory:AVAudioSessionCategoryPlayback withOptions:0 error:outError];
+	}else{
+	[self setCategory:[self category] withOptions:AVAudioSessionCategoryOptionDuckOthers error:outError];
+	}
   
   return %orig;
 }
 %end
 
 %end //hook
+
+
 
 #if TARGET_OS_SIMULATOR
 #pragma mark SIM
@@ -382,17 +395,15 @@ void showHUDWindowSB(){
 %hook SBVolumeControl
 - (void)increaseVolume {
 	%orig;
-    [hudWindow changeVisibility];
+	if(byVolumeButton) [hudWindow changeVisibility];
 }
 
 - (void)decreaseVolume {
 	%orig;
-    [hudWindow changeVisibility];
+    if(byVolumeButton) [hudWindow changeVisibility];
 }
 %end
-
 %end //SB
-
 
 #pragma mark test
 %group test
@@ -509,6 +520,7 @@ void registerApp(){
 
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kSpringBoardBundleId]){
 		%init(SB);
+		loadPref();
 		int token=0;
 		notify_register_dispatch("com.brend0n.volumemixer/hideWindow", &token, dispatch_get_main_queue(), ^(int token) {
 			[hudWindow hideWindow];
@@ -517,6 +529,9 @@ void registerApp(){
 		notify_register_dispatch("com.apple.springboard.lockstate", &token, dispatch_get_main_queue(), ^(int token) {
 			[hudWindow hideWindow];
 			NSLog(@"locked");
+		});
+		notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
+			loadPref();
 		});
 		
 #if TARGET_OS_SIMULATOR
