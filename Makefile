@@ -18,7 +18,7 @@ VolumeMixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-fun
 ifdef SIMULATOR
 VolumeMixer_LIBRARIES = applist-sim mryipc-sim substrate
 else
-VolumeMixer_LIBRARIES = applist mryipc activator
+VolumeMixer_LIBRARIES = applist mryipc
 endif
 
 SUBPROJECTS += volumemixer

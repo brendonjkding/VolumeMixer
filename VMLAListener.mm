@@ -1,6 +1,8 @@
 #if !(TARGET_OS_SIMULATOR)
 #import "VMLAListener.h"
 #import "VMHUDWindow.h"
+#import <objc/runtime.h>
+#import <dlfcn.h>
 extern VMHUDWindow*hudWindow;
 @implementation VolumeMixerLAListener
 
@@ -15,8 +17,11 @@ extern VMHUDWindow*hudWindow;
 	@autoreleasepool 
 	{
 		// Register listener
-		if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]) 
-			[[LAActivator sharedInstance] registerListener:[self new] forName:@"com.brend0n.volumemixer"];
+		if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.springboard"]) {
+			dlopen("/usr/lib/libactivator.dylib", RTLD_LAZY);
+			Class la = objc_getClass("LAActivator");
+			if (la)	[[la sharedInstance] registerListener:[self new] forName:@"com.brend0n.volumemixer"];
+		}
 	}
 }
 - (NSString *)activator:(LAActivator *)activator requiresLocalizedGroupForListenerName:(NSString *)listenerName
