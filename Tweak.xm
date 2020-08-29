@@ -291,12 +291,20 @@ void sendPid(){
 	if(!prefs) prefs=[NSMutableDictionary new];
 	BOOL audioMixEnabled=prefs[@"audioMixEnabled"]?[prefs[@"audioMixEnabled"] boolValue]:NO;
 	if(!audioMixEnabled) return %orig;
-	NSString* bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier]; 
-	if([bundleIdentifier isEqualToString:@"com.netease.cloudmusic"]||[bundleIdentifier isEqualToString:@"com.tencent.QQMusic"]){
-	[self setCategory:AVAudioSessionCategoryPlayback withOptions:0 error:outError];
-	}else{
-	[self setCategory:[self category] withOptions:AVAudioSessionCategoryOptionDuckOthers error:outError];
-	}
+	NSString *category=[self category];
+  NSString *bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier]; 
+  NSLog(@"mlyx AVAudio category %@, options %lu",category,options);
+
+  //听歌识曲
+  if([category isEqualToString:@"AVAudioSessionCategoryPlayAndRecord"]||[category isEqualToString:@"AVAudioSessionCategoryRecord"]){
+    return %orig;
+  }
+
+  if([bundleIdentifier isEqualToString:@"com.netease.cloudmusic"]||[bundleIdentifier isEqualToString:@"com.tencent.QQMusic"]||[bundleIdentifier isEqualToString:@"com.spotify.client"]){
+    [self setCategory:AVAudioSessionCategoryPlayback withOptions:0 error:outError];
+  }else{
+    [self setCategory:category withOptions:2 error:outError];
+  }
   
   return %orig;
 }

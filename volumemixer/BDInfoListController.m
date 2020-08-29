@@ -119,7 +119,7 @@
 }
 - (void)open_github{
   UIApplication *app = [UIApplication sharedApplication];
-  [app openURL:[NSURL URLWithString:@"https://github.com/brendonjkding"]];
+  [app openURL:[NSURL URLWithString:@"https://github.com/brendonjkding/VolumeMixer"]];
 }
 - (void)open_alipay{
   UIApplication *app = [UIApplication sharedApplication];
