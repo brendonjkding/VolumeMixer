@@ -53,8 +53,7 @@ extern VMHUDWindow*hudWindow;
 
 - (NSArray *)activator:(LAActivator *)activator requiresCompatibleEventModesForListenerWithName:(NSString *)listenerName
 {
-    //It does not work well on lock screen on iOS10.
-    return @[@"springboard", @"application"];
+    return @[@"springboard", @"application", @"lockscreen"];
    
     
 }

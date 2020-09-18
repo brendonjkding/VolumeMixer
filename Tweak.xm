@@ -11,7 +11,6 @@
 #import "VMHUDView.h"
 #import "VMHUDWindow.h"
 #import "VMHUDRootViewController.h"
-#import "VMIPCCenter.h"
 #import "VMHookInfo.h"
 #import "VMHookAudioUnit.hpp"
 
@@ -58,54 +57,6 @@ BOOL is_enabled_app(){
 	return NO;
 }
 
-#pragma mark BB
-unsigned hudWindowContextId=0;
-BOOL isWindowShowing;
-%group BBHook
-%hook CAWindowServerDisplay
--(unsigned)contextIdAtPosition:(CGPoint)arg1 excludingContextIds:(id)arg2  { 
-	// NSLog(@"contextIdAtPosition:(CGPoint){%g, %g} excludingContextIds:(id)%@  start",arg1.x,arg1.y,arg2);
-	unsigned r=%orig;
-	if(unlikely(isWindowShowing&&hudWindowContextId)) {
-		return hudWindowContextId;
-	}
-	// NSLog(@" = %u", r); 
-	return r; 
-}
-%end
-void BBLoadPref(){
-	NSLog(@"loadPref...");
-	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-	hudWindowContextId=prefs?[prefs[@"hudWindowContextId"] unsignedIntValue]:0;
-	NSLog(@"%u",hudWindowContextId);
-}
-
-@interface VMBBTimer:NSObject
-@end
-@implementation VMBBTimer
--(instancetype)init{
-	self=[super init];
-	if(!self)return self;
-	int token=0;
-	notify_register_dispatch("com.brend0n.volumemixer/windowDidShow", &token, dispatch_get_main_queue(), ^(int token) {
-		[self windowDidShow];
-		[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(windowDidHide) object:nil];
-    	[self performSelector:@selector(windowDidHide) withObject:nil afterDelay:5];
-	});
-	notify_register_dispatch("com.brend0n.volumemixer/windowDidHide", &token, dispatch_get_main_queue(), ^(int token) {
-		[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(windowDidHide) object:nil];
-	    [self windowDidHide];
-	});
-	return self;
-}
--(void)windowDidShow{
-	isWindowShowing=1;
-}
--(void)windowDidHide{
-	isWindowShowing=0;
-}
-@end
-%end
 #pragma mark hook
 %group hook
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
@@ -328,21 +279,16 @@ void sendPid(){
 %hook UIStatusBarWindow
 
 - (instancetype)initWithFrame:(CGRect)frame {
-	NSLog(@"UIStatusBarWindow hooked...");
     id ret = %orig;
     
     UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(vm_tap:)];
     [ret addGestureRecognizer:tap];
-
 
     return ret;
 }
 %new
 - (void)vm_tap:(UITapGestureRecognizer *)sender {
 	if (sender.state == UIGestureRecognizerStateEnded){
-		NSLog(@"tap");
-		// if([hudWindow isHidden]) [hudWindow showWindow];
-		// else [hudWindow hideWindow];
 		[hudWindow changeVisibility];
 	}
 }
@@ -353,7 +299,7 @@ void sendPid(){
 %hook SBMainDisplaySceneLayoutStatusBarView
 - (void)_addStatusBarIfNeeded {
 	%orig;
-	NSLog(@"SBMainDisplaySceneLayoutStatusBarView hooked...");
+
 	UIView *statusBar = [self valueForKey:@"_statusBar"];
 
 	UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(vm_tap:)];
@@ -363,7 +309,6 @@ void sendPid(){
 %new
 - (void)vm_tap:(UITapGestureRecognizer *)sender {
 	if (sender.state == UIGestureRecognizerStateEnded){
-		NSLog(@"inapp tap");
 		[hudWindow changeVisibility];
 	}
 
@@ -373,27 +318,15 @@ void sendPid(){
 #endif
 
 #pragma mark SB
-@interface UIWindow()
--(unsigned)_contextId;
-@end
 void showHUDWindowSB(){
 	static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
     	void(^blockForMain)(void) = ^{
 				CGRect bounds=[UIScreen mainScreen].bounds;
-
 		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
 		        VMHUDRootViewController*rootViewController=[VMHUDRootViewController new];
 		        [hudWindow setRootViewController:rootViewController];
-		        unsigned contextId=[hudWindow _contextId];
-		        NSLog(@"%u",contextId);
-
-			    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-			    if(!prefs) prefs=[NSMutableDictionary new];
-			    prefs[@"hudWindowContextId"]=[NSNumber numberWithUnsignedInt:contextId];
-			    [prefs writeToFile:kPrefPath atomically:YES];
-			    notify_post("com.brend0n.volumemixer/loadPref");
-			};
+		};
 		if ([NSThread isMainThread]) blockForMain();
 		else dispatch_async(dispatch_get_main_queue(), blockForMain);
     	
@@ -496,56 +429,55 @@ void setScale(double curScale){
 	[lstAVPlayer setVolume:g_curScale];
     
 }
+@interface VMAPPServer : NSObject
+-(instancetype)initWithName:(NSString* )name;
+@end
+@implementation VMAPPServer{
+	MRYIPCCenter* _center;
+}
+-(instancetype)initWithName:(NSString* )name
+{
+	if ((self = [super init]))
+	{
+		_center = [MRYIPCCenter centerNamed:name];
+		[_center addTarget:self action:@selector(setVolume:)];
+		NSLog(@"[MRYIPC] running server in %@", [NSProcessInfo processInfo].processName);
+	}
+	return self;
+}
+-(void)setVolume:(NSDictionary*)args{
+	double curScale=[args[@"curScale"] doubleValue];
+	setScale(curScale);
+}
+
+@end
+static VMAPPServer *appServer;
 void registerApp(){
 	static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
     	//send bundleid
 		NSString*bundleID=[[NSBundle mainBundle] bundleIdentifier];
-		MRYIPCCenter *IDCenter=[MRYIPCCenter centerNamed:@"com.brend0n.volumemixer/register"];
+		MRYIPCCenter *idClient=[MRYIPCCenter centerNamed:@"com.brend0n.volumemixer/register"];
 
 		int pid=[[NSProcessInfo processInfo] processIdentifier];
-		[IDCenter callExternalMethod:@selector(register:)withArguments:@{@"bundleID" : bundleID,@"pid":[NSNumber numberWithInt:pid]} completion:^(id ret){}];
-			
+		[idClient callExternalMethod:@selector(register:)withArguments:@{@"bundleID" : bundleID,@"pid":[NSNumber numberWithInt:pid]} completion:^(id ret){}];
 
 		NSString*appNotify=[NSString stringWithFormat:@"com.brend0n.volumemixer/%@~%d/setVolume",bundleID,pid];
-		//receive volume
-		VMIPCCenter*center=[[VMIPCCenter alloc] initWithName:appNotify];
-		[center setVolumeChangedCallBlock:^(double curScale){
-			setScale(curScale);
-		}];
+		appServer=[[VMAPPServer alloc] initWithName:appNotify];
     });
-	
 }
 
 
 #pragma mark ctor
 %ctor{
-	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"com.apple.backboardd"]){
-		%init(BBHook);
-		int token=0;
-		notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
-			BBLoadPref();
-		});
-		
-		(void)[VMBBTimer new];
-		return;
-	}
-
 	if(!is_enabled_app()) return;
 	NSLog(@"ctor: VolumeMixer");
 
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kSpringBoardBundleId]){
 		%init(SB);
 		loadPref();
-		int token=0;
-		notify_register_dispatch("com.brend0n.volumemixer/hideWindow", &token, dispatch_get_main_queue(), ^(int token) {
-			[hudWindow hideWindow];
-			NSLog(@"com.brend0n.volumemixer/hideWindow");
-		});
-		notify_register_dispatch("com.apple.springboard.lockstate", &token, dispatch_get_main_queue(), ^(int token) {
-			[hudWindow hideWindow];
-			NSLog(@"locked");
-		});
+		
+		int token;
 		notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
 			loadPref();
 		});

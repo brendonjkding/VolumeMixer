@@ -1,7 +1,8 @@
 #import "VMHUDView.h"
 #import "VMHUDWindow.h"
-#import <objc/runtime.h>
 #import "MTMaterialView.h"
+#import <objc/runtime.h>
+#import <MRYIPCCenter/MRYIPCCenter.h>
 
 @interface VMHUDView  (){
     CGPoint _originalPoint;//之前的位置
@@ -16,7 +17,6 @@
 	self.clipsToBounds = YES;
 	self.layer.cornerRadius = 14.;
     self.curScale=1.;
-    _volumeChangedCallBlock=^{};
 
 	// create blurred background for slider:
 	UIBlurEffect* blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleLight];
@@ -100,8 +100,6 @@
     CGPoint currentPosition = [longPress locationInView:self];
     if (longPress.state == UIGestureRecognizerStateBegan) {
         _originalPoint = currentPosition;
-        if([[self superview] respondsToSelector:@selector(cancelAutoHide)])
-            [(VMHUDWindow*)[self superview] cancelAutoHide];
         _feedback=[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
         [_feedback impactOccurred];
     }else if(longPress.state == UIGestureRecognizerStateChanged){
@@ -116,8 +114,7 @@
         if(fabs(scale-_curScale)>1/8){
         	_curScale=scale;
             // NSLog(@"newScale:%lf",_curScale);
-            _volumeChangedCallBlock();
-
+            [_client callExternalMethod:@selector(setVolume:)withArguments:@{@"curScale" : @(_curScale)} completion:^(id ret){}];
         }
 
         [_clippingView setFrame:CGRectMake(_clippingView.frame.origin.x,
@@ -127,8 +124,6 @@
 
 
     }else if (longPress.state == UIGestureRecognizerStateEnded){
-        if([[self superview] respondsToSelector:@selector(autoHide)])
-            [(VMHUDWindow*)[self superview] autoHide];
         [_feedback impactOccurred];
         _feedback=nil;
         [self saveConf:[NSNumber numberWithDouble:1.-_clippingView.frame.origin.y/_clippingView.frame.size.height]];

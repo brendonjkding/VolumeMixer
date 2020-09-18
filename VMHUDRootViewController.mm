@@ -2,51 +2,46 @@
 #import "VMHUDWindow.h"
 #import "VMHUDView.h"
 #import "MTMaterialView.h"
-#import "VMIPCCenter.h"
 #import <objc/runtime.h>
 #import <notify.h>
 #import <AppList/AppList.h>
 #import <MRYIPCCenter/MRYIPCCenter.h>
 #import <sys/types.h>
 #import <signal.h>
-@interface FBProcessState
--(int)taskState;
--(BOOL)isRunning;
-@end
-@interface SBApplication : NSObject
-- (BOOL)isRunning;
-- (FBProcessState *)processState;
-@end
-@interface SBApplicationController : NSObject
-+ (id)sharedInstance;
-- (SBApplication*)applicationWithBundleIdentifier:(NSString*)bundleIdentifier;
-@end
-
 
 @interface VMHUDRootViewController()<UICollectionViewDelegate,UICollectionViewDataSource,UIGestureRecognizerDelegate>
 @property (strong, nonatomic) UICollectionView *collectionView;
 @property (strong, nonatomic) NSMutableArray<VMHUDView*> *hudViews;
 @property (strong, nonatomic) NSMutableArray<NSString*> *bundleIDs;
 @property (strong, nonatomic) NSMutableArray<NSNumber*> *pids;
-@property (strong, nonatomic) NSMutableArray<MRYIPCCenter*> *centers ;
 @end
 #define kSliderAndIconInterval 12.
 #define kCollectionViewItemInset 10.
 #define kHudWidth 47.
 #define kHudHeight 148.
-@implementation VMHUDRootViewController
+@implementation VMHUDRootViewController{
+	MRYIPCCenter* _center;
+}
 -(instancetype)init{
 	self= [super init];
 	if(!self)return self;
-	[self registerNotify];
+
+	[self initServer];
+	[self loadFrameWorks];
+
 	_hudViews=[NSMutableArray new];
 	_bundleIDs=[NSMutableArray new];
 	_pids=[NSMutableArray new];
-	[self loadFrameWorks];
+
 	return self;
 }
 -(void)loadView{
 	[super loadView];
+
+	double maxWidth=MAX(self.view.frame.size.width,self.view.frame.size.height);
+	UILabel *_touchBlockView = [[UILabel alloc] initWithFrame:CGRectMake(-10,0,maxWidth+10,maxWidth)];
+    [self.view addSubview:_touchBlockView];
+    _touchBlockView.text=@"1";
 
 	UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
     layout.minimumLineSpacing = 1;
@@ -56,7 +51,7 @@
     _collectionView.delegate = self;
     _collectionView.dataSource = self;
     _collectionView.backgroundColor = [UIColor clearColor];
-    [_collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"UICollectionViewCell"];
+    [_collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"hudCell"];
     [self.view addSubview:_collectionView];
 	
 
@@ -77,33 +72,41 @@
     [self.view addGestureRecognizer:longPress];
     longPress.minimumPressDuration=0;
 
+    
 
+}
+// credits to https://twitter.com/aydenpanhuyzen/status/1205981139086782469
+- (BOOL)_canShowWhileLocked {
+    return YES;
 }
 - (void)longPress:(UILongPressGestureRecognizer *)longPress{
 	if (longPress.state == UIGestureRecognizerStateBegan){
+		NSLog(@"hideWindow: %@",longPress.view);
     	[(VMHUDWindow*)[self.view superview] hideWindow];
     }
-
 }
-
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch{
+	NSLog(@"touch view: %@",touch.view);
 	return touch.view==self.view;
  }
+
 -(void)removeDataAtIndex:(int)i{
 	[_bundleIDs removeObjectAtIndex:i];
+	[_hudViews[i] removeFromSuperview];
 	[_hudViews removeObjectAtIndex:i];
-	[_centers removeObjectAtIndex:i];
 	[_pids removeObjectAtIndex:i];
 }
 -(void)reloadRunningApp{
-	dispatch_async(dispatch_get_main_queue(), ^{
-	        for(int i=[_bundleIDs count]-1;i+1;i--){
-        		int pid=[_pids[i] intValue];
-				int error=kill(pid, 0);
-				if(error) [self removeDataAtIndex:i];
-	        }
-	        [_collectionView reloadData];
-		});
+	void(^blockForMain)(void) = ^{
+		for(int i=[_bundleIDs count]-1;i+1;i--){
+    		int pid=[_pids[i] intValue];
+			int error=kill(pid, 0);
+			if(error) [self removeDataAtIndex:i];
+        }
+        [_collectionView reloadData];
+	};
+	if ([NSThread isMainThread]) blockForMain();
+	else dispatch_async(dispatch_get_main_queue(), blockForMain);
 }
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
@@ -111,26 +114,28 @@
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
-    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"UICollectionViewCell" forIndexPath:indexPath];
-    for(UIView*view in [cell subviews]){
+    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"hudCell" forIndexPath:indexPath];
+    UIView*contentView=cell.contentView;
+    for(UIView*view in [contentView subviews]){
+    	// NSLog(@"view: %@",view);
     	[view removeFromSuperview];
     }
     VMHUDView* hudView=_hudViews[indexPath.row];
-    [cell setFrame:CGRectMake(cell.frame.origin.x,cell.frame.origin.y,hudView.frame.size.width,kHudHeight+ALApplicationIconSizeSmall+kSliderAndIconInterval)];
-    [cell addSubview:hudView];
+    [contentView setFrame:CGRectMake(contentView.frame.origin.x,contentView.frame.origin.y,hudView.frame.size.width,kHudHeight+ALApplicationIconSizeSmall+kSliderAndIconInterval)];
+    [contentView addSubview:hudView];
     UIImage *icon;
     if(![_bundleIDs[indexPath.row] isEqualToString:kWebKitBundleId])icon=[[ALApplicationList sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall forDisplayIdentifier:_bundleIDs[indexPath.row]];
     else icon=[UIImage imageNamed:@"WebKitIcon" inBundle:[NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle"] compatibleWithTraitCollection:nil];
     UIImageView* imageView=[[UIImageView alloc] initWithImage:icon];
-    [cell addSubview:imageView];
+    [contentView addSubview:imageView];
     [imageView setFrame:CGRectMake(
     	(hudView.frame.size.width-ALApplicationIconSizeSmall)/2.,
-	     cell.bounds.origin.y,
+	     contentView.bounds.origin.y,
 	    imageView.frame.size.width,
 	    imageView.frame.size.height)];
     [hudView setFrame:CGRectMake(
-    	cell.bounds.origin.x,
-	     cell.bounds.origin.y+ALApplicationIconSizeSmall+kSliderAndIconInterval,
+    	contentView.bounds.origin.x,
+	     contentView.bounds.origin.y+ALApplicationIconSizeSmall+kSliderAndIconInterval,
 	    hudView.frame.size.width,
 	    hudView.frame.size.height)];
     return cell;
@@ -156,44 +161,36 @@
     NSLog(@"didSelectItemAtIndexPath: %ld",indexPath.row);
 }
 
--(void) registerNotify{
-	//receive bundleID
-	VMIPCCenter*IDCenter=[[VMIPCCenter alloc] initWithName:@"com.brend0n.volumemixer/register"];
-	[IDCenter setRegisterBlock:^(NSDictionary*args){
-		NSLog(@"registering...");
-    	NSString* bundleID=args[@"bundleID"];
-    	NSNumber*pid=args[@"pid"];
-    	NSString*appNotify=[NSString stringWithFormat:@"com.brend0n.volumemixer/%@~%d/setVolume",bundleID,[pid intValue]];
-    	NSLog(@"appNotify:%@",appNotify);
- 		
- 		// if([_bundleIDs containsObject:bundleID]&&![bundleID isEqualToString:kWebKitBundleId]) return;
-    	dispatch_async(dispatch_get_main_queue(), ^{
-    		[self reloadRunningApp];
-	        [_bundleIDs addObject:bundleID];
-	        [_pids addObject:pid];
+-(void)initServer{
+	_center = [MRYIPCCenter centerNamed:@"com.brend0n.volumemixer/register"];
+	[_center addTarget:self action:@selector(register:)];
 
-	        MRYIPCCenter* center = [MRYIPCCenter centerNamed:appNotify];
-	        [_centers addObject:center];
-	    	
-	    	VMHUDView* hudView=[[VMHUDView alloc] initWithFrame:CGRectMake(0,0,kHudWidth,kHudHeight)];
-	    	__weak VMHUDView*weakHUDView=hudView;
-	    	[_hudViews addObject:hudView];
-
-	    	[hudView setBundleID:bundleID];
-	    	[hudView setVolumeChangedCallBlock:^{
-	    		//send volume
-	    		NSNumber *scaleNumber=[NSNumber numberWithDouble:[weakHUDView curScale]];
-	    		[center callExternalMethod:@selector(setVolume:)withArguments:@{@"curScale" : scaleNumber} completion:^(id ret){}];
-	    	}];
-	    	[hudView initScale];
-		    
-	        [_collectionView reloadData];
-		});
-	}];
 	int token;
 	notify_register_dispatch("com.brend0n.volumemixer/nowPlayingWebKitDidChange", &token, dispatch_get_main_queue(), ^(int token) {
-			[self setNowPlayingWebKit];
-		});
+		[self setNowPlayingWebKit];
+	});
+}
+//receive bundleID
+-(void)register:(NSDictionary*)args{
+	NSLog(@"registering...");
+	NSString* bundleID=args[@"bundleID"];
+	NSNumber*pid=args[@"pid"];
+	NSString*appNotify=[NSString stringWithFormat:@"com.brend0n.volumemixer/%@~%d/setVolume",bundleID,[pid intValue]];
+	NSLog(@"appNotify:%@",appNotify);
+
+	dispatch_async(dispatch_get_main_queue(), ^{
+        [_bundleIDs addObject:bundleID];
+        [_pids addObject:pid];
+
+    	VMHUDView* hudView=[[VMHUDView alloc] initWithFrame:CGRectMake(0,0,kHudWidth,kHudHeight)];
+    	[hudView setBundleID:bundleID];
+    	MRYIPCCenter* client = [MRYIPCCenter centerNamed:appNotify];
+    	[hudView setClient:client];
+    	[hudView initScale];
+    	[_hudViews addObject:hudView];
+	    
+    	[self reloadRunningApp];
+	});
 }
 -(void)setNowPlayingWebKit{
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];

@@ -1,7 +1,7 @@
 @interface VMHUDView :UIView
 @property(strong) UIView*clippingView;
 @property CGFloat curScale;
-@property void(^volumeChangedCallBlock)(void);
 @property (strong,nonatomic) NSString*bundleID;
+@property id client;
 -(void)initScale;
 @end

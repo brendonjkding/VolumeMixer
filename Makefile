@@ -6,14 +6,14 @@ TARGET = iphone:clang:11.2:9.0
 	ifeq ($(debug),0)
 		ARCHS= arm64 arm64e
 	else
-		ARCHS= arm64 
+		ARCHS= arm64 arm64e
 	endif
 endif
 
 
 TWEAK_NAME = VolumeMixer
 
-VolumeMixer_FILES = Tweak.xm VMHUDView.mm VMHUDWindow.mm VMHUDRootViewController.mm VMIPCCenter.mm VMLAListener.mm VMHookInfo.mm VMHookAudioUnit.mm
+VolumeMixer_FILES = Tweak.xm VMHUDView.mm VMHUDWindow.mm VMHUDRootViewController.mm VMLAListener.mm VMHookInfo.mm VMHookAudioUnit.mm
 VolumeMixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -std=c++11 -include Prefix.pch
 ifdef SIMULATOR
 VolumeMixer_LIBRARIES = applist-sim mryipc-sim substrate
@@ -37,6 +37,7 @@ after-install::
 	install.exec "killall -9 neteasemusic" ||true
 # 	install.exec "killall -9 QQMusic" ||true
 	install.exec "killall -9 MobileSafari" ||true
+	install.exec "sbreload" ||true
 
 ifdef SIMULATOR
 include $(THEOS)/makefiles/locatesim.mk
