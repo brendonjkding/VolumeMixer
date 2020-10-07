@@ -13,7 +13,7 @@
 
         PSSpecifier* spec;
         
-        spec = [PSSpecifier preferenceSpecifierNamed:VMNSLocalizedString(@"ABOUT_AUTHOR")
+        spec = [PSSpecifier preferenceSpecifierNamed:VMNSLocalizedString(@"")
                                               target:self
                                               set:Nil
                                               get:Nil

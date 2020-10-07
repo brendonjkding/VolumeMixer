@@ -18,6 +18,7 @@
 	self.layer.cornerRadius = 14.;
     self.curScale=1.;
 
+    // credits to https://github.com/Muirey03/13HUD/blob/master/MRYHUDView.xm#L69
 	// create blurred background for slider:
 	UIBlurEffect* blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleLight];
 	UIVisualEffectView* blurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];

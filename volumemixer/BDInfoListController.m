@@ -1,11 +1,22 @@
 #import "BDInfoListController.h"
 #import <Preferences/PSSpecifier.h>
+@interface PSTableCell()
+-(id)iconImageView;
+@end
 
 @implementation BDInfoListController
 -(void)loadView{
 	[super loadView];
     self.navigationItem.title = @"Brend0n";
     
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+  id cell=[super tableView:tableView cellForRowAtIndexPath:indexPath];
+  // [cell setShowsReorderControl:YES];
+  UIImageView* imageView=[cell iconImageView];
+  imageView.layer.cornerRadius = 7.0;
+  imageView.layer.masksToBounds = YES;
+  return cell;
 }
 - (NSArray *)specifiers {
 	if (!_specifiers) {
