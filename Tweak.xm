@@ -191,9 +191,9 @@ void BBLoadPref(){
 %hookf(OSStatus ,AudioQueueSetParameter,AudioQueueRef inAQ, AudioQueueParameterID inParamID, AudioQueueParameterValue inValue){
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
 	lstAudioQueue=inAQ;
-	// NSLog(@"%p %u %lf",(void*)inAQ,inParamID,inValue);
+	NSLog(@"AudioQueueSetParameter: %p %u %lf",(void*)inAQ,inParamID,inValue);
 
-	if(inParamID==kAudioQueueParam_Volume){
+	if(inParamID==kAudioQueueParam_Volume&&inValue){
 		return %orig(inAQ,inParamID,g_curScale);
 	}
 	
@@ -201,13 +201,19 @@ void BBLoadPref(){
 	return %orig(inAQ,inParamID,inValue);
 }
 %hookf(OSStatus, AudioQueuePrime,AudioQueueRef inAQ, UInt32 inNumberOfFramesToPrepare, UInt32 *outNumberOfFramesPrepared){
+	NSLog(@"AudioQueuePrime: %p",(void*)inAQ);
 	lstAudioQueue=inAQ;
-	AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
+	AudioQueueParameterValue outValue;
+	AudioQueueGetParameter(lstAudioQueue,kAudioQueueParam_Volume,&outValue);
+	if(outValue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
 	return %orig;
 }
 %hookf(OSStatus, AudioQueueStart,AudioQueueRef inAQ, const AudioTimeStamp *inStartTime){
 	lstAudioQueue=inAQ;
-	AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
+	NSLog(@"AudioQueuePrime: %p",(void*)inAQ);
+	AudioQueueParameterValue outValue;
+	AudioQueueGetParameter(lstAudioQueue,kAudioQueueParam_Volume,&outValue);
+	if(outValue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
 	return %orig;
 }
 %hookf(void,AudioServicesPlaySystemSound,SystemSoundID inSystemSoundID){
@@ -237,18 +243,19 @@ void sendPid(){
 	NSLog(@"AVAudioPlayer play %@",self);
 	lstAVAudioPlayer=self;
 	if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
-	[self setVolume:g_curScale];
+	if([self volume]) [self setVolume:g_curScale];
 	%orig;
 }
 -(void)setRate:(float)rate{
 	NSLog(@"AVAudioPlayer setRate:%f",rate);
 	lstAVAudioPlayer=self;
 	if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
-	[self setVolume:g_curScale];
+	if([self volume]) [self setVolume:g_curScale];
 	%orig;
 }
 -(void)setVolume:(float)volume{
 	NSLog(@"AVAudioPlayer setVolume: %f",volume);
+	if(!volume) return %orig;
 	return %orig(g_curScale);
 }
 %end
@@ -266,7 +273,7 @@ void sendPid(){
 	NSLog(@"AVPlayer play %@",self);
 	lstAVPlayer=self;
 	if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
-	[self setVolume:g_curScale];
+	if([self volume]) [self setVolume:g_curScale];
 	%orig;
 }
 -(void)setRate:(float)rate{
@@ -275,11 +282,12 @@ void sendPid(){
 		lstAVPlayer=self;
 		if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
 	}
-	[self setVolume:g_curScale];
+	if([self volume]) [self setVolume:g_curScale];
 	%orig;
 }
 -(void)setVolume:(float)volume{
 	NSLog(@"AVPlayer setVolume: %f",volume);
+	if(!volume) return %orig;
 	return %orig(g_curScale);
 }
 %end
