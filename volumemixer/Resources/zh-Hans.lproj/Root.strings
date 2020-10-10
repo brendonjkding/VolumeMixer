@@ -1,7 +1,8 @@
 "CHOOSE_ENABLED_APP"="选择APP";
 "ABOUT_AUTHOR"="作者";
-"BETA_ALERT_TITLE"="提示";
-"BETA_ALERT"="本插件处于测试阶段，我已了解可能发生bug";
+"BETA_ALERT_TITLE"="用前必读！";
+"BETA_ALERT"="1.本插件依赖libmryipc推荐使用1.0版本，推荐进行降级。否则可能偶尔发生启用的app无法启动的情况，这时需要注销
+2.本插件 /不是/ 从系统侧控制音量，而是在app端控制app使用的音频api里的音量";
 "ACTION_YES"="是";
 "ACTION_NO"="否";
 "WEB_AUDIO"="网页音频";

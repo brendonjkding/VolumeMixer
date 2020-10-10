@@ -72,7 +72,7 @@
 -(void)selectApp{
   NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
   if(prefs) {
-    NSString*key=prefs[@"didShowAlert"];
+    NSString*key=prefs[@"didShowReleaseAlert"];
     if(key){
       [self selectApp_];
       return;  
@@ -88,7 +88,7 @@
     dispatch_async(dispatch_get_main_queue(), ^{
       NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
       if(!prefs) prefs=[NSMutableDictionary new];
-      prefs[@"didShowAlert"]=@YES;
+      prefs[@"didShowReleaseAlert"]=@YES;
       [prefs writeToFile:kPrefPath atomically:YES];
       [self selectApp_];
     });
