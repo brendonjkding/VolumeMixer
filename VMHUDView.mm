@@ -48,11 +48,14 @@
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 configuration:2 initialWeighting:1];
         mtSliderView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 configuration:3 initialWeighting:1] ;
     }
-    else{
+    else if(@available(iOS 11.0, *)){
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 options:3 initialWeighting:1];
         mtSliderView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 options:32 initialWeighting:1] ;
     }
-	
+	else{
+        mtBgView=[objc_getClass("MTMaterialView") materialViewWithStyleOptions:4 materialSettings:nil captureOnly:NO];
+        mtSliderView=[objc_getClass("MTMaterialView") materialViewWithStyleOptions:1 materialSettings:nil captureOnly:NO];
+    }
 	[mtBgView setFrame:self.bounds];
 	[self addSubview:mtBgView];
 

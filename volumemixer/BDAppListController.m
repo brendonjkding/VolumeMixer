@@ -53,7 +53,7 @@
       self.navigationItem.searchController = self.searchController;
       self.navigationItem.hidesSearchBarWhenScrolling=NO;
   } else {
-      self.tableView.tableHeaderView = self.searchController.searchBar;
+      self.table.tableHeaderView = self.searchController.searchBar;
   }
     
 }

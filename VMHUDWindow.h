@@ -1,4 +1,5 @@
 @interface VMHUDWindow:UIWindow
--(void)changeVisibility;
+-(void) changeVisibility;
+-(void) showWindow;
 -(void) hideWindow;
 @end

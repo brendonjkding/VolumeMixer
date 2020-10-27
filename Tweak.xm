@@ -81,7 +81,7 @@ BOOL is_enabled_app(){
 	if(!info)info=[VMHookInfo new];
 	if(inID==kAudioUnitProperty_SetRenderCallback){//23
 		NSLog(@"kAudioUnitProperty_SetRenderCallback: %ld",(long)inUnit);	
-		NSLog(@"	AudioUnitScope:%u",inScope);
+		NSLog(@"	AudioUnitScope:%u",(unsigned int)inScope);
 		// if(inScope&kAudioUnitScope_Input){
 			void *outputCallback=(void*)*(long*)inData;
 			NSLog(@"	outputCallback:%p",outputCallback);
@@ -99,7 +99,7 @@ BOOL is_enabled_app(){
 	}
 	else if(inID==kAudioUnitProperty_StreamFormat){//8
 		NSLog(@"kAudioUnitProperty_StreamFormat: %ld",(long)inUnit);
-		NSLog(@"	AudioUnitScope:%u",inScope);
+		NSLog(@"	AudioUnitScope:%u",(unsigned int)inScope);
 	    // if(inScope&kAudioUnitScope_Input){
 			//to do: other format
 	    	UInt32 mFormatID=((AudioStreamBasicDescription*)inData)->mFormatID;
@@ -109,7 +109,7 @@ BOOL is_enabled_app(){
 				return ret;
 			}
 			UInt32 mFormatFlags=((AudioStreamBasicDescription*)inData)->mFormatFlags;	
-			NSLog(@"	mFormatFlags: %u",mFormatFlags);
+			NSLog(@"	mFormatFlags: %u",(unsigned int)mFormatFlags);
 		// }
 		[info setMFormatFlags:mFormatFlags];
 		[info hookIfReady];
@@ -142,7 +142,7 @@ BOOL is_enabled_app(){
 %hookf(OSStatus ,AudioQueueSetParameter,AudioQueueRef inAQ, AudioQueueParameterID inParamID, AudioQueueParameterValue inValue){
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
 	lstAudioQueue=inAQ;
-	NSLog(@"AudioQueueSetParameter: %p %u %lf",(void*)inAQ,inParamID,inValue);
+	NSLog(@"AudioQueueSetParameter: %p %u %lf",(void*)inAQ,(unsigned int)inParamID,inValue);
 
 	if(inParamID==kAudioQueueParam_Volume&&inValue){
 		return %orig(inAQ,inParamID,g_curScale);
@@ -253,7 +253,7 @@ void sendPid(){
 
   NSString *category=[self category];
   NSString *bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier]; 
-  NSLog(@"mlyx AVAudio category %@, options %lu",category,options);
+  NSLog(@"mlyx AVAudio category %@, options %u",category,(unsigned int)options);
 
   //听歌识曲
   if([category isEqualToString:@"AVAudioSessionCategoryPlayAndRecord"]||[category isEqualToString:@"AVAudioSessionCategoryRecord"]){
@@ -342,15 +342,15 @@ void showHUDWindowSB(){
 }
 %end
 
-%hook SBVolumeControl
+%hook VolumeControlClass
 - (void)increaseVolume {
 	%orig;
-	if(byVolumeButton) [hudWindow changeVisibility];
+	if(byVolumeButton) [hudWindow showWindow];
 }
 
 - (void)decreaseVolume {
 	%orig;
-    if(byVolumeButton) [hudWindow changeVisibility];
+    if(byVolumeButton) [hudWindow showWindow];
 }
 %end
 %end //SB
@@ -405,6 +405,11 @@ void showHUDWindowSB(){
 // }
 // +(id)materialViewWithRecipe:(NSInteger)arg1 options:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
 // 	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
+// 	return %orig;
+
+// }
+// +(id)materialViewWithStyleOptions:(NSInteger)arg1 materialSettings:(id)arg2 captureOnly:(BOOL)arg3{
+// 	NSLog(@"vmlog %ld %@ %d",(long)arg1,arg2,arg3);
 // 	return %orig;
 
 // }
@@ -475,7 +480,7 @@ void registerApp(){
 	NSLog(@"ctor: VolumeMixer");
 
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kSpringBoardBundleId]){
-		%init(SB);
+		%init(SB,VolumeControlClass=objc_getClass("SBVolumeControl")?:objc_getClass("VolumeControl"));
 		loadPref();
 		
 		int token;

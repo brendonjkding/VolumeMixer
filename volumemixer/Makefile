@@ -4,7 +4,7 @@ ARCHS = x86_64
 else
 TARGET = iphone:clang:11.2:9.0
 	ifeq ($(debug),0)
-		ARCHS= arm64 arm64e
+		ARCHS= armv7 arm64 arm64e
 	else
 		ARCHS= arm64 
 	endif

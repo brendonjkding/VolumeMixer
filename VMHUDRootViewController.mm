@@ -59,8 +59,11 @@
     if(@available(iOS 13.0, *)) {
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 configuration:1 initialWeighting:1];
     }
-    else{
+    else if(@available(iOS 11.0, *)){
     	mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 options:128 initialWeighting:1];
+    }
+    else{
+        mtBgView=[objc_getClass("MTMaterialView") materialViewWithStyleOptions:4 materialSettings:nil captureOnly:NO];
     }
     mtBgView.layer.cornerRadius = 10.;
     mtBgView.layer.masksToBounds = YES;
@@ -158,7 +161,7 @@
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
-    NSLog(@"didSelectItemAtIndexPath: %ld",indexPath.row);
+    NSLog(@"didSelectItemAtIndexPath: %ld",(long)indexPath.row);
 }
 
 -(void)initServer{

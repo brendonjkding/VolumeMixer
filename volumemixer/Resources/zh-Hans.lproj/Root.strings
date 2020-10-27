@@ -7,7 +7,7 @@
 "WEB_AUDIO"="网页音频";
 "ENABLED"="启用";
 "SHOW_PANEL"="显示界面";
-"BY_VOLUME_BUTTON"="使用音量键(iOS 13+)";
+"BY_VOLUME_BUTTON"="使用音量键";
 "BY_ACTIVATOR"="使用Activator";
 "ENABLE_AUDIO_MIX"="Audio Mix";
 "AUDIO_MIX_CREDIT"="防止音乐app播放被打断
