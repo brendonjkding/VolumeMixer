@@ -1,5 +1,5 @@
 #include "VMPrefRootListController.h"
-#include "VMAPPListController.h"
+#include "BDAppListController.h"
 #include "BDInfoListController.h"
 #import <Preferences/PSSpecifier.h>
 
@@ -59,14 +59,18 @@
   self.navigationItem.backBarButtonItem = backItem; 
   [self.navigationController pushViewController:[[BDInfoListController alloc] init] animated:YES];
 }
+-(void)selectAudiomixApp{
+  UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
+  self.navigationItem.backBarButtonItem = backItem; 
+  [self.navigationController pushViewController:[[BDAppListController alloc] initWithDefaults:@"com.brend0n.volumemixer" andKey:@"audiomixApps"] animated:YES];
+}
 -(void)selectApp_{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
   self.navigationItem.backBarButtonItem = backItem; 
-  [self.navigationController pushViewController:[[VMAPPListController alloc] init] animated:YES];
+  [self.navigationController pushViewController:[[BDAppListController alloc] initWithDefaults:@"com.brend0n.volumemixer" andKey:@"apps"] animated:YES];
 }
-#define prefPath @"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"
 -(void)selectApp{
-  NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+  NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
   if(prefs) {
     NSString*key=prefs[@"didShowAlert"];
     if(key){
@@ -82,10 +86,10 @@
 
   UIAlertAction *okAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_YES") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:prefPath];
+      NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
       if(!prefs) prefs=[NSMutableDictionary new];
       prefs[@"didShowAlert"]=@YES;
-      [prefs writeToFile:prefPath atomically:YES];
+      [prefs writeToFile:kPrefPath atomically:YES];
       [self selectApp_];
     });
   }];

@@ -1,4 +1,4 @@
-#import "VMAPPListController.h"
+#import "BDAppListController.h"
 #import <Preferences/PSSpecifier.h>
 #import <AppList/AppList.h>
 
@@ -7,13 +7,12 @@
 @interface PSSwitchTableCell : PSControlTableCell
 - (id)initWithStyle:(int)style reuseIdentifier:(id)identifier specifier:(PSSpecifier*)specifier;
 @end
-@interface APPSwitchTableCell:PSSwitchTableCell
+@interface BDAPPSwitchTableCell:PSSwitchTableCell
 @end
-@implementation APPSwitchTableCell
+@implementation BDAPPSwitchTableCell
 -(id)initWithStyle:(int)style reuseIdentifier:(id)identifier specifier:(PSSpecifier*)specifier { //init method
   self = [super initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:identifier specifier:specifier]; //call the super init method
   if (self) {
-    // [((UISwitch *)[self control]) setOnTintColor:[UIColor redColor]]; //change the switch color
     self.detailTextLabel.text=specifier.properties[@"detail"];
   }
   return self;
@@ -22,7 +21,7 @@
 @end
 
 
-@interface VMAPPListController()<UISearchControllerDelegate,UISearchBarDelegate,UISearchResultsUpdating>
+@interface BDAppListController()<UISearchControllerDelegate,UISearchBarDelegate,UISearchResultsUpdating>
 
 @property (strong, nonatomic) UISearchController *searchController;
 @property (strong, nonatomic) NSString*searchKey;
@@ -31,15 +30,19 @@
 
 @end
 
-@implementation VMAPPListController
+@implementation BDAppListController
+-(id)initWithDefaults:(NSString*)defaults andKey:(NSString*)key{
+  self=[super init];
+  if(!self) return self;
+  _searchKey=@"";
+  _key=key;
+  _defaults=defaults;
+  return self;
+}
 -(void)loadView{
 	[super loadView];
 
-  _searchKey=@"";
-  _key=@"apps";
-  _defaults=@"com.brend0n.volumemixer";
-
-  self.navigationItem.title = @"VolumeMixer";
+  self.navigationItem.title = @"";
   
   self.searchController = [[UISearchController alloc]initWithSearchResultsController:nil];
   self.searchController.searchResultsUpdater = self;
@@ -84,7 +87,7 @@
       [spec setProperty:icon forKey:@"iconImage"];
       [spec setProperty:_defaults forKey:@"defaults"];
       [spec setProperty:displayIdentifier forKey:@"detail"];
-      [spec setProperty:NSClassFromString(@"APPSwitchTableCell") forKey:@"cellClass"];
+      [spec setProperty:NSClassFromString(@"BDAPPSwitchTableCell") forKey:@"cellClass"];
       
       [_specifiers addObject:spec];
         
@@ -101,7 +104,6 @@
     NSArray*apps=settings[_key];
     if(!apps) return @NO;
     return [NSNumber numberWithBool:[apps containsObject:specifier.properties[@"displayIdentifier"]]];
-    // return (settings[specifier.properties[@"key"]]) ?: specifier.properties[@"default"];
 }
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier*)specifier {

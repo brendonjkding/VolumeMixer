@@ -250,7 +250,8 @@ void sendPid(){
 	if(!prefs) prefs=[NSMutableDictionary new];
 	BOOL audioMixEnabled=prefs[@"audioMixEnabled"]?[prefs[@"audioMixEnabled"] boolValue]:NO;
 	if(!audioMixEnabled) return %orig;
-	NSString *category=[self category];
+
+  NSString *category=[self category];
   NSString *bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier]; 
   NSLog(@"mlyx AVAudio category %@, options %lu",category,options);
 
@@ -259,7 +260,7 @@ void sendPid(){
     return %orig;
   }
 
-  if([bundleIdentifier isEqualToString:@"com.netease.cloudmusic"]||[bundleIdentifier isEqualToString:@"com.tencent.QQMusic"]||[bundleIdentifier isEqualToString:@"com.spotify.client"]){
+  if([prefs[@"audiomixApps"] containsObject:bundleIdentifier]){
     [self setCategory:AVAudioSessionCategoryPlayback withOptions:0 error:outError];
   }else{
     [self setCategory:category withOptions:2 error:outError];

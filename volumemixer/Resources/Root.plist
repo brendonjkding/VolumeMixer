@@ -11,12 +11,12 @@
 			<string></string>
 		</dict>
         <dict>
-                <key>cell</key>
-                <string>PSButtonCell</string>
-                <key>label</key>
-                <string>CHOOSE_ENABLED_APP</string>
-                <key>action</key>
-                <string>selectApp</string>
+            <key>cell</key>
+            <string>PSButtonCell</string>
+            <key>label</key>
+            <string>CHOOSE_ENABLED_APP</string>
+            <key>action</key>
+            <string>selectApp</string>
         </dict>
 
         <dict>
@@ -94,6 +94,14 @@
 			<key>PostNotification</key>
 			<string>com.brend0n.volumemixer/loadPref</string>
 		</dict>
+		<dict>
+            <key>cell</key>
+            <string>PSButtonCell</string>
+            <key>label</key>
+            <string>CHOOSE_ENABLED_APP</string>
+            <key>action</key>
+            <string>selectAudiomixApp</string>
+        </dict>
 	</array>
 	<key>title</key>
 	<string>VolumeMixer</string>

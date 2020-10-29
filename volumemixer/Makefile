@@ -13,11 +13,11 @@ include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = volumemixer
 
-volumemixer_FILES = VMPrefRootListController.m BDInfoListController.m VMAPPListController.m
+volumemixer_FILES = VMPrefRootListController.m BDInfoListController.m BDAppListController.m
 volumemixer_INSTALL_PATH = /Library/PreferenceBundles
 volumemixer_FRAMEWORKS = UIKit
 volumemixer_PRIVATE_FRAMEWORKS = Preferences
-volumemixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function
+volumemixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -include Prefix.pch
 ifdef SIMULATOR
 volumemixer_LIBRARIES = applist-sim
 else
