@@ -1,3 +1,4 @@
+#ifdef __OBJC__
 #define likely(E) __builtin_expect(!!(E),1)
 #define unlikely(E) __builtin_expect(!!(E),0)
 
@@ -5,3 +6,10 @@
 
 #define kSpringBoardBundleId @"com.apple.springboard"
 #define kWebKitBundleId @"com.apple.WebKit.WebContent"
+
+#if DEBUG
+#else
+#define NSLog(FORMAT, ...)
+#endif
+
+#endif //__objc__
