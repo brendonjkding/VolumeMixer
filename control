@@ -1,5 +1,5 @@
 Package: com.brend0n.volumemixer
-Name: VolumeMixer 单独音量控制
+Name: VolumeMixer
 Depends: mobilesubstrate, preferenceloader, applist, com.muirey03.libmryipc
 Version: 0.0.1~b6
 Architecture: iphoneos-arm

@@ -86,12 +86,12 @@
 }
 - (void)longPress:(UILongPressGestureRecognizer *)longPress{
 	if (longPress.state == UIGestureRecognizerStateBegan){
-		NSLog(@"hideWindow: %@",longPress.view);
+		// NSLog(@"hideWindow: %@",longPress.view);
     	[(VMHUDWindow*)[self.view superview] hideWindow];
     }
 }
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch{
-	NSLog(@"touch view: %@",touch.view);
+	// NSLog(@"touch view: %@",touch.view);
 	return touch.view==self.view;
  }
 
@@ -170,11 +170,6 @@
 -(void)initServer{
 	_center = [MRYIPCCenter centerNamed:@"com.brend0n.volumemixer/register"];
 	[_center addTarget:self action:@selector(register:)];
-
-	int token;
-	notify_register_dispatch("com.brend0n.volumemixer/nowPlayingWebKitDidChange", &token, dispatch_get_main_queue(), ^(int token) {
-		[self setNowPlayingWebKit];
-	});
 }
 //receive bundleID
 -(void)register:(NSDictionary*)args{
@@ -198,15 +193,6 @@
 	    
     	[self reloadRunningApp];
 	});
-}
--(void)setNowPlayingWebKit{
-	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-	int pid=prefs?[prefs[@"nowPlayingWebKitpid"] intValue]:0;
-	NSLog(@"%d",pid);
-	if(pid){
-
-	}
-	
 }
 -(void)loadFrameWorks{
 #if TARGET_OS_SIMULATOR

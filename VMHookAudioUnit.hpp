@@ -41,7 +41,7 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 	}
 
 	for (UInt32 i = 0; i < ioData -> mNumberBuffers; i++){
-		auto *buf = (unsigned char*)ioData->mBuffers[i].mData;
+		unsigned char*buf = (unsigned char*)ioData->mBuffers[i].mData;
 
 		uint bytes = ioData->mBuffers[i].mDataByteSize;
 		

@@ -1,14 +1,9 @@
 #import <notify.h>
-#import <substrate.h>
 #import <MRYIPCCenter/MRYIPCCenter.h>
 
-#import <cmath>
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
-#import <OpenAL/OpenAL.h>
-#import <WebKit/WebKit.h>
 
-#import "VMHUDView.h"
 #import "VMHUDWindow.h"
 #import "VMHUDRootViewController.h"
 #import "VMHookInfo.h"
@@ -16,38 +11,42 @@
 
 %config(generator=MobileSubstrate)
 
-BOOL enabled;
-BOOL byVolumeButton;
+static BOOL byVolumeButton;
 
 VMHUDWindow*hudWindow;
-VMHUDView* hudview;
-double g_curScale=1;
-AudioQueueRef lstAudioQueue;
-AVPlayer* lstAVPlayer;
-AVAudioPlayer* lstAVAudioPlayer;
+static double g_curScale=1;
+static AudioQueueRef lstAudioQueue;
+static AVPlayer* lstAVPlayer;
+static AVAudioPlayer* lstAVAudioPlayer;
 
-NSMutableDictionary<NSString*,VMHookInfo*> *hookInfos;
+static NSMutableDictionary<NSString*,VMHookInfo*> *hookInfos;
 
-void setScale(double curScale);
-void registerApp();
-void initScale();
+static void setScale(double curScale);
+static void registerApp();
+static void initScale();
 
-void loadPref(){
+static void loadPref(){
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
 	if(!prefs) prefs=[NSMutableDictionary new];
 	byVolumeButton=prefs[@"byVolumeButton"]?[prefs[@"byVolumeButton"] boolValue]:NO;
+
+	// 0.0.2 compatibility 
+	if(prefs[@"webEnabled"]){
+		if([prefs[@"webEnabled"] boolValue]){
+			NSMutableArray*apps=[prefs[@"apps"] mutableCopy];
+    		if(!apps) apps=[NSMutableArray new];
+    		[apps addObject:kWebKitBundleId];
+    		prefs[@"apps"]=apps;
+		}
+
+    	[prefs removeObjectForKey:@"webEnabled"];
+    	[prefs writeToFile:kPrefPath atomically:YES];
+	}
 }
 
-BOOL webEnabled(){
-	// NSLog(@"loadPref..........");
-	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-	if(!prefs) prefs=[NSMutableDictionary new];
-	return prefs[@"webEnabled"]?[prefs[@"webEnabled"] boolValue]:YES;
-}
-BOOL is_enabled_app(){
+static BOOL isEnabledApp(){
 	NSString* bundleIdentifier=[[NSBundle mainBundle] bundleIdentifier];
 	if(unlikely([bundleIdentifier isEqualToString:kSpringBoardBundleId]))return YES;
-	if(unlikely([bundleIdentifier isEqualToString:kWebKitBundleId])&&webEnabled())return YES;
 
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
 	NSArray *apps=prefs?prefs[@"apps"]:nil;
@@ -57,8 +56,8 @@ BOOL is_enabled_app(){
 	return NO;
 }
 
-#pragma mark hook
-%group hook
+#pragma mark appHook
+%group appHook
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
 	// method 1:
@@ -173,14 +172,6 @@ BOOL is_enabled_app(){
 	return %orig;
 }
 
-void sendPid(){
-	int pid=[[NSProcessInfo processInfo] processIdentifier];
-	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-    if(!prefs) prefs=[NSMutableDictionary new];
-    prefs[@"nowPlayingWebKitpid"]=[NSNumber numberWithInt:pid];
-    [prefs writeToFile:kPrefPath atomically:YES];
-	notify_post("com.brend0n.volumemixer/nowPlayingWebKitDidChange");
-}
 #pragma mark AVAudioPlayer
 %hook AVAudioPlayer
 +(instancetype)alloc{
@@ -193,14 +184,12 @@ void sendPid(){
 -(void)play{
 	NSLog(@"AVAudioPlayer play %@",self);
 	lstAVAudioPlayer=self;
-	if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
 	if([self volume]) [self setVolume:g_curScale];
 	%orig;
 }
 -(void)setRate:(float)rate{
 	NSLog(@"AVAudioPlayer setRate:%f",rate);
 	lstAVAudioPlayer=self;
-	if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
 	if([self volume]) [self setVolume:g_curScale];
 	%orig;
 }
@@ -223,7 +212,6 @@ void sendPid(){
 -(void)play{
 	NSLog(@"AVPlayer play %@",self);
 	lstAVPlayer=self;
-	if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
 	if([self volume]) [self setVolume:g_curScale];
 	%orig;
 }
@@ -231,7 +219,6 @@ void sendPid(){
 	NSLog(@"AVPlayer setRate:%f",rate);
 	if(rate){
 		lstAVPlayer=self;
-		if(unlikely([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId])) sendPid();
 	}
 	if([self volume]) [self setVolume:g_curScale];
 	%orig;
@@ -270,56 +257,10 @@ void sendPid(){
 }
 %end
 
-%end //hook
+%end //appHook
 
-
-
-#if TARGET_OS_SIMULATOR
-#pragma mark SIM
-%group SIM
-%hook UIStatusBarWindow
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    id ret = %orig;
-    
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(vm_tap:)];
-    [ret addGestureRecognizer:tap];
-
-    return ret;
-}
-%new
-- (void)vm_tap:(UITapGestureRecognizer *)sender {
-	if (sender.state == UIGestureRecognizerStateEnded){
-		[hudWindow changeVisibility];
-	}
-}
-%end
-
-@interface SBMainDisplaySceneLayoutStatusBarView:UIView
-@end
-%hook SBMainDisplaySceneLayoutStatusBarView
-- (void)_addStatusBarIfNeeded {
-	%orig;
-
-	UIView *statusBar = [self valueForKey:@"_statusBar"];
-
-	UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(vm_tap:)];
-	tap.numberOfTapsRequired=2;
-    [statusBar addGestureRecognizer:tap];
-}
-%new
-- (void)vm_tap:(UITapGestureRecognizer *)sender {
-	if (sender.state == UIGestureRecognizerStateEnded){
-		[hudWindow changeVisibility];
-	}
-
-}
-%end
-%end//SIM
-#endif
-
-#pragma mark SB
-void showHUDWindowSB(){
+#pragma mark SBHook
+static void showHUDWindowSB(){
 	static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
     	void(^blockForMain)(void) = ^{
@@ -333,7 +274,7 @@ void showHUDWindowSB(){
     	
     });
 }
-%group SB
+%group SBHook
 %hook SpringBoard
 -(void) applicationDidFinishLaunching:(id)application{
 	%orig;
@@ -353,71 +294,11 @@ void showHUDWindowSB(){
     if(byVolumeButton) [hudWindow showWindow];
 }
 %end
-%end //SB
+%end //SBHook
 
-#pragma mark test
-%group test
 
-%hookf(ALCdevice*,alcOpenDevice ,const ALCchar *devicename){
-	NSLog(@"openal!!!");
-	return %orig;
-}
 
-%hookf(void, alcGetProcAddress,ALCdevice *device, const ALCchar *funcName){
-	NSLog(@"openal!!!");
-	%orig;
-}
-// %hookf(OSStatus,AudioQueueAllocateBuffer,AudioQueueRef inAQ, UInt32 inBufferByteSize, AudioQueueBufferRef *outBuffer ){
-// 	NSLog(@"AudioQueueAllocateBuffer!!!");
-// 	return %orig(inAQ,inBufferByteSize,outBuffer);
-// }
-// to do: wechat?
-// AudioFile_ReadProc orig_inReadFunc;
-// static OSStatus my_inReadFunc(
-// 								void *		inClientData,
-// 								SInt64		inPosition, 
-// 								UInt32		requestCount,
-// 								void *		buffer, 
-// 								UInt32 *	actualCount){
-// 	NSLog(@"AudioFile test");
-// 	return orig_inReadFunc(inClientData,inPosition,requestCount,buffer,actualCount);
-// }
-
-// %hookf(OSStatus, AudioFileOpenWithCallbacks,void *inClientData, AudioFile_ReadProc inReadFunc, AudioFile_WriteProc inWriteFunc, AudioFile_GetSizeProc inGetSizeFunc, AudioFile_SetSizeProc inSetSizeFunc, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
-// 	NSLog(@"AudioFileOpenWithCallbacks");
-// 	// MSHookFunction((void *)inReadFunc, (void *)my_inReadFunc, (void **)&orig_inReadFunc);
-// 	return %orig;
-// }
-
-%hookf(OSStatus ,AudioFileOpenURL,CFURLRef inFileRef, AudioFilePermissions inPermissions, AudioFileTypeID inFileTypeHint, AudioFileID   *outAudioFile){
-	NSLog(@"AudioFileOpenURL");
-	return %orig;
-}
-%hookf(OSStatus, AudioFileStreamOpen, void *inClientData, AudioFileStream_PropertyListenerProc inPropertyListenerProc, AudioFileStream_PacketsProc inPacketsProc, AudioFileTypeID inFileTypeHint, AudioFileStreamID  _Nullable *outAudioFileStream){
-	NSLog(@"AudioFileStreamOpen");
-	return %orig;
-}
-#pragma mark MTMaterialView
-// %hook MTMaterialView
-// +(id)materialViewWithRecipe:(NSInteger)arg1 configuration:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
-// 	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
-// 	return %orig;
-// }
-// +(id)materialViewWithRecipe:(NSInteger)arg1 options:(NSInteger)arg2 initialWeighting:(CGFloat)arg3{
-// 	NSLog(@"%ld %ld %lf",arg1,arg2,arg3);
-// 	return %orig;
-
-// }
-// +(id)materialViewWithStyleOptions:(NSInteger)arg1 materialSettings:(id)arg2 captureOnly:(BOOL)arg3{
-// 	NSLog(@"vmlog %ld %@ %d",(long)arg1,arg2,arg3);
-// 	return %orig;
-
-// }
-// %end
-
-%end//test
-
-void initScale(){
+static void initScale(){
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
     if(!prefs)prefs=[NSMutableDictionary new];
     NSNumber *scaleNumber=prefs[[[NSBundle mainBundle] bundleIdentifier]];
@@ -426,7 +307,7 @@ void initScale(){
     	auCurScale=g_curScale;
     }
 }
-void setScale(double curScale){
+static void setScale(double curScale){
 	g_curScale=curScale;
 	auCurScale=g_curScale;
 
@@ -476,24 +357,21 @@ void registerApp(){
 
 #pragma mark ctor
 %ctor{
-	if(!is_enabled_app()) return;
+	if(!isEnabledApp()) return;
 	NSLog(@"ctor: VolumeMixer");
 
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kSpringBoardBundleId]){
-		%init(SB,VolumeControlClass=objc_getClass("SBVolumeControl")?:objc_getClass("VolumeControl"));
-		loadPref();
+		%init(SBHook,VolumeControlClass=objc_getClass("SBVolumeControl")?:objc_getClass("VolumeControl"));
 		
+		loadPref();
 		int token;
 		notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
 			loadPref();
 		});
 		
-#if TARGET_OS_SIMULATOR
-		%init(SIM);	
-#endif
 	}	
 	else {
-		%init(hook);
+		%init(appHook);
 		if(![[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
 		initScale();
 		origCallbacks=[NSMutableDictionary new];
@@ -502,8 +380,5 @@ void registerApp(){
 		
 	}
 
-#if DEBUG
-	%init(test);
-#endif
 
 }

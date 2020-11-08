@@ -115,7 +115,7 @@
         CGFloat newY=MIN(MAX(_clippingView.frame.origin.y+offsetY,0),_clippingView.frame.size.height);
         CGFloat scale=1.-newY/_clippingView.frame.size.height;
         // NSLog(@"Scale:%lf",scale);
-        if(fabs(scale-_curScale)>1/8){
+        if(fabs(scale-_curScale)>1./16.||scale==0.){
         	_curScale=scale;
             // NSLog(@"newScale:%lf",_curScale);
             [_client callExternalMethod:@selector(setVolume:)withArguments:@{@"curScale" : @(_curScale)} completion:^(id ret){}];

@@ -40,6 +40,11 @@
     NSString *path = [NSString stringWithFormat:@"/User/Library/Preferences/%@.plist", specifier.properties[@"defaults"]];
     NSMutableDictionary *settings = [NSMutableDictionary dictionary];
     [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:path]];
+    if([specifier.properties[@"key"] isEqualToString:@"webEnabled"]) {
+      NSArray*apps=settings[@"apps"];
+      if(!apps) return @NO;
+      return [NSNumber numberWithBool:[apps containsObject:kWebKitBundleId]];
+    }
     return (settings[specifier.properties[@"key"]]) ?: specifier.properties[@"default"];
 }
 
@@ -47,7 +52,17 @@
     NSString *path = [NSString stringWithFormat:@"/User/Library/Preferences/%@.plist", specifier.properties[@"defaults"]];
     NSMutableDictionary *settings = [NSMutableDictionary dictionary];
     [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:path]];
-    [settings setObject:value forKey:specifier.properties[@"key"]];
+    if([specifier.properties[@"key"] isEqualToString:@"webEnabled"]) {
+      NSMutableArray*apps=[settings[@"apps"] mutableCopy];
+      if(!apps) apps=[NSMutableArray new];
+      if([value boolValue]&&![apps containsObject:kWebKitBundleId]){
+        [apps addObject:kWebKitBundleId];
+      }
+      else if ([apps containsObject:kWebKitBundleId]){
+        [apps removeObjectAtIndex:[apps indexOfObject:kWebKitBundleId]];
+      }
+    }
+    else [settings setObject:value forKey:specifier.properties[@"key"]];
     [settings writeToFile:path atomically:YES];
     CFStringRef notificationName = (__bridge CFStringRef )specifier.properties[@"PostNotification"];
     if (notificationName) {

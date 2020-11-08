@@ -13,15 +13,23 @@ endif
 
 TWEAK_NAME = VolumeMixer
 
-VolumeMixer_FILES = Tweak.xm VMHUDView.mm VMHUDWindow.mm VMHUDRootViewController.mm VMLAListener.mm VMHookInfo.mm VMHookAudioUnit.mm
-VolumeMixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -std=c++11 -include Prefix.pch
+VolumeMixer_FILES = Tweak.xm VMHUDView.m VMHUDWindow.m VMHUDRootViewController.m VMLAListener.m VMHookInfo.mm VMHookAudioUnit.mm 
+ifneq ($(debug),0)
+VolumeMixer_FILES += test.x
+endif
+ifdef SIMULATOR
+VolumeMixer_FILES += sim.x
+endif
+
+VolumeMixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -include Prefix.pch
+
 ifdef SIMULATOR
 VolumeMixer_LIBRARIES = applist-sim mryipc-sim substrate
 else
 VolumeMixer_LIBRARIES = applist mryipc
 endif
 
-SUBPROJECTS += volumemixer
+SUBPROJECTS += volumemixerpref
 
 include $(THEOS)/makefiles/common.mk
 include $(THEOS_MAKE_PATH)/tweak.mk
@@ -42,7 +50,7 @@ after-install::
 ifdef SIMULATOR
 include $(THEOS)/makefiles/locatesim.mk
 BUNDLE_NAME = volumemixer
-PREF_FOLDER_NAME = $(shell echo $(BUNDLE_NAME) | tr A-Z a-z)
+PREF_FOLDER_NAME = volumemixerpref
 endif
 
 ifneq (,$(filter x86_64 i386,$(ARCHS)))
@@ -51,14 +59,14 @@ setup::  all
 	@cp -v $(THEOS_OBJ_DIR)/$(TWEAK_NAME).dylib /opt/simject/$(TWEAK_NAME).dylib
 	@codesign -f -s - /opt/simject/$(TWEAK_NAME).dylib
 	@cp -v $(PWD)/$(TWEAK_NAME).plist /opt/simject
-	sudo cp -v $(PWD)/$(PREF_FOLDER_NAME)/entry.plist $(PL_SIMULATOR_PLISTS_PATH)/$(BUNDLE_NAME).plist
-	sudo cp -vR $(THEOS_OBJ_DIR)/$(BUNDLE_NAME).bundle $(PL_SIMULATOR_BUNDLES_PATH)/
+	@sudo cp -v $(PWD)/$(PREF_FOLDER_NAME)/entry.plist $(PL_SIMULATOR_PLISTS_PATH)/$(BUNDLE_NAME).plist
+	@sudo cp -vR $(THEOS_OBJ_DIR)/$(BUNDLE_NAME).bundle $(PL_SIMULATOR_BUNDLES_PATH)/
 	@sudo codesign -f -s - $(PL_SIMULATOR_BUNDLES_PATH)/$(BUNDLE_NAME).bundle/$(BUNDLE_NAME)
 	@resim
 endif
 remove::
 	@rm -f /opt/simject/$(TWEAK_NAME).dylib /opt/simject/$(TWEAK_NAME).plist
-	sudo rm -r $(PL_SIMULATOR_BUNDLES_PATH)/$(BUNDLE_NAME).bundle
-	sudo rm $(PL_SIMULATOR_PLISTS_PATH)/$(BUNDLE_NAME).plist
+	@sudo rm -r $(PL_SIMULATOR_BUNDLES_PATH)/$(BUNDLE_NAME).bundle
+	@sudo rm $(PL_SIMULATOR_PLISTS_PATH)/$(BUNDLE_NAME).plist
 	@resim
 
