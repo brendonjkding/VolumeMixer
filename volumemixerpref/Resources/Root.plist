@@ -9,6 +9,8 @@
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string></string>
+			<key>footerText</key>
+			<string>WEB_FOOTER_TEXT</string>
 		</dict>
         <dict>
             <key>cell</key>
@@ -65,26 +67,6 @@
 			<key>activatorListener</key>
 			<string>com.brend0n.volumemixer</string>
 		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSGroupCell</string>
-			<key>label</key>
-			<string>WEB_AUDIO</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSSwitchCell</string>
-			<key>default</key>
-			<true/>
-			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
-			<key>key</key>
-			<string>webEnabled</string>
-			<key>label</key>
-			<string>ENABLED</string>
-			<key>PostNotification</key>
-			<string>com.brend0n.volumemixer/loadPref</string>
-		</dict>
 
 		<dict>
 			<key>cell</key>
@@ -112,7 +94,7 @@
             <key>cell</key>
             <string>PSButtonCell</string>
             <key>label</key>
-            <string>CHOOSE_ENABLED_APP</string>
+            <string>CHOOSE_AUDIO_MIX_MUSIC_APP</string>
             <key>action</key>
             <string>selectAudiomixApp</string>
         </dict>

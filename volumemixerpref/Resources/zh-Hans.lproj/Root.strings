@@ -1,4 +1,5 @@
 "CHOOSE_ENABLED_APP"="选择APP";
+"CHOOSE_AUDIO_MIX_MUSIC_APP"="选择音乐APP";
 "ABOUT_AUTHOR"="作者";
 "BETA_ALERT_TITLE"="用前必读！";
 "BETA_ALERT"="1.本插件依赖libmryipc推荐使用1.0版本，推荐进行降级。否则可能偶尔发生启用的app无法启动的情况，这时需要注销
@@ -12,4 +13,6 @@
 "BY_ACTIVATOR"="使用Activator";
 "ENABLE_AUDIO_MIX"="Audio Mix";
 "AUDIO_MIX_CREDIT"="防止音乐app播放被打断
+启动audiomix后音乐app不会在控制中心或锁屏里出现，需要在上方勾选音乐app修复这个问题
 Credit: onewayticket255";
+"WEB_FOOTER_TEXT"="并非所有web音量都可控制";

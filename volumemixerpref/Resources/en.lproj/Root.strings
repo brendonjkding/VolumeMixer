@@ -1,4 +1,5 @@
 "CHOOSE_ENABLED_APP"="Choose Enabled App";
+"CHOOSE_AUDIO_MIX_MUSIC_APP"="Choose Music App";
 "ABOUT_AUTHOR"="Author";
 "BETA_ALERT_TITLE"="Read before using!!!";
 "BETA_ALERT"="1. I strongly recommend downgrading the dependency libmryipc to version 1.0 or you may occasionally suffer from enabled apps stucking at launch time. If that happen, just respring.
@@ -11,5 +12,7 @@
 "BY_VOLUME_BUTTON"="By Volume Button";
 "BY_ACTIVATOR"="By Activator";
 "ENABLE_AUDIO_MIX"="Audio Mix";
-"AUDIO_MIX_CREDIT"="Prevent music apps from being interrupted
+"AUDIO_MIX_CREDIT"="Prevent music apps from being interrupted.(This will NOT make two \"music\" mode apps play simultaneously)
+With Audio Mix Option on, apps will not show up in ControlCenter/LockScreen. Manually choose your music apps to fix that. 
 Credit: onewayticket255";
+"WEB_FOOTER_TEXT"="Not work on some types of web audio. Known: Youtube on web, Youtube App";

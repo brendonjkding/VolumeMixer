@@ -248,8 +248,10 @@ static BOOL isEnabledApp(){
   }
 
   if([prefs[@"audiomixApps"] containsObject:bundleIdentifier]){
+    //Choose Playback Mode App to Fix that[Recommend: Music App] 
     [self setCategory:AVAudioSessionCategoryPlayback withOptions:0 error:outError];
   }else{
+  	//AudioMix Enabled App Will NOT Show Up in ControlCenter and LockScreen MediaPlayer
     [self setCategory:category withOptions:2 error:outError];
   }
   
