@@ -1,0 +1,3 @@
+@interface VMLicenseViewController :UIViewController
+
+@end

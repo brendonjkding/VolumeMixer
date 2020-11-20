@@ -1,6 +1,7 @@
 #include "VMPrefRootListController.h"
 #include "BDAppListController.h"
 #include "BDInfoListController.h"
+#include "VMLicenseViewController.h"
 #import <Preferences/PSSpecifier.h>
 
 #define VMNSLocalizedString(key) NSLocalizedStringFromTableInBundle((key),@"Root",[NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle"],nil)
@@ -13,15 +14,19 @@
 
         PSSpecifier* spec;
         
-        spec = [PSSpecifier preferenceSpecifierNamed:VMNSLocalizedString(@"")
-                                              target:self
-                                              set:Nil
-                                              get:Nil
-                                              detail:Nil
-                                              cell:PSGroupCell
-                                              edit:Nil];
-        [spec setProperty:@"作者" forKey:@"label"];
+        spec=[PSSpecifier emptyGroupSpecifier];
         [_specifiers addObject:spec];
+
+        spec = [PSSpecifier preferenceSpecifierNamed:@"Licenses"
+                                              target:self
+                                                 set:NULL
+                                                 get:NULL
+                                              detail:Nil
+                                                cell:PSLinkCell
+                                                edit:Nil];
+        spec->action = @selector(showLicenses);
+        [_specifiers addObject:spec];
+
         spec = [PSSpecifier preferenceSpecifierNamed:VMNSLocalizedString(@"ABOUT_AUTHOR")
                                               target:self
                                                  set:NULL
@@ -113,5 +118,10 @@
   [alertController addAction:okAction];
   [self presentViewController:alertController animated:YES completion:nil];
   
+}
+-(void)showLicenses{
+  UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
+  self.navigationItem.backBarButtonItem = backItem; 
+  [self.navigationController pushViewController:[[VMLicenseViewController alloc] init] animated:TRUE];
 }
 @end

@@ -6,14 +6,14 @@ TARGET = iphone:clang:11.2:9.0
 	ifeq ($(debug),0)
 		ARCHS= armv7 arm64 arm64e
 	else
-		ARCHS= arm64 
+		ARCHS= arm64 arm64e
 	endif
 endif
 include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = volumemixer
 
-volumemixer_FILES = VMPrefRootListController.m BDInfoListController.m BDAppListController.m
+volumemixer_FILES = VMPrefRootListController.m BDInfoListController.m BDAppListController.m VMLicenseViewController.m
 volumemixer_INSTALL_PATH = /Library/PreferenceBundles
 volumemixer_FRAMEWORKS = UIKit
 volumemixer_PRIVATE_FRAMEWORKS = Preferences
