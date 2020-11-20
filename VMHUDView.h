@@ -2,6 +2,6 @@
 @property(strong) UIView*clippingView;
 @property CGFloat curScale;
 @property (strong,nonatomic) NSString*bundleID;
-@property id client;
+@property (weak)id client;
 -(void)initScale;
 @end

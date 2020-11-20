@@ -12,6 +12,7 @@
 @interface VMHUDRootViewController()<UICollectionViewDelegate,UICollectionViewDataSource,UIGestureRecognizerDelegate>
 @property (strong, nonatomic) UICollectionView *collectionView;
 @property (strong, nonatomic) NSMutableArray<VMHUDView*> *hudViews;
+@property (strong, nonatomic) NSMutableArray<MRYIPCCenter*> *clients;
 @property (strong, nonatomic) NSMutableArray<NSString*> *bundleIDs;
 @property (strong, nonatomic) NSMutableArray<NSNumber*> *pids;
 @end
@@ -32,6 +33,7 @@
 	_hudViews=[NSMutableArray new];
 	_bundleIDs=[NSMutableArray new];
 	_pids=[NSMutableArray new];
+    _clients=[NSMutableArray new];
 
 	return self;
 }
@@ -98,6 +100,7 @@
 	[_hudViews[i] removeFromSuperview];
 	[_hudViews removeObjectAtIndex:i];
 	[_pids removeObjectAtIndex:i];
+    [_clients removeObjectAtIndex:i];
 }
 -(void)reloadRunningApp{
 	void(^blockForMain)(void) = ^{
@@ -188,6 +191,7 @@
     	VMHUDView* hudView=[[VMHUDView alloc] initWithFrame:CGRectMake(0,0,kHudWidth,kHudHeight)];
     	[hudView setBundleID:bundleID];
     	MRYIPCCenter* client = [MRYIPCCenter centerNamed:appNotify];
+        [_clients addObject:client];
     	[hudView setClient:client];
     	[hudView initScale];
     	[_hudViews addObject:hudView];
