@@ -13,4 +13,6 @@
 #define NSLog(FORMAT, ...)
 #endif
 
+#define MRYIPCCenter VM_MRYIPCCenter
+#define _MRYIPCMethod VM__MRYIPCMethod
 #endif //__objc__

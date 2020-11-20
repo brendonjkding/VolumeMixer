@@ -14,6 +14,7 @@ endif
 TWEAK_NAME = VolumeMixer
 
 VolumeMixer_FILES = Tweak.xm VMHUDView.m VMHUDWindow.m VMHUDRootViewController.m VMLAListener.m VMHookInfo.mm VMHookAudioUnit.mm 
+VolumeMixer_FILES += MRYIPC/MRYIPCCenter.m
 ifneq ($(debug),0)
 VolumeMixer_FILES += test.x
 endif
@@ -26,7 +27,7 @@ VolumeMixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-fun
 ifdef SIMULATOR
 VolumeMixer_LIBRARIES = applist-sim mryipc-sim substrate
 else
-VolumeMixer_LIBRARIES = applist mryipc
+VolumeMixer_LIBRARIES = applist
 endif
 
 SUBPROJECTS += volumemixerpref

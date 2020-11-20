@@ -1,0 +1,3 @@
+[submodule "MRYIPC"]
+	path = MRYIPC
+	url = https://github.com/Muirey03/MRYIPC.git

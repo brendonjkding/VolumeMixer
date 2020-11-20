@@ -2,8 +2,7 @@
 "CHOOSE_AUDIO_MIX_MUSIC_APP"="Choose Music App";
 "ABOUT_AUTHOR"="Author";
 "BETA_ALERT_TITLE"="Read before using!!!";
-"BETA_ALERT"="1. I strongly recommend downgrading the dependency libmryipc to version 1.0 or you may occasionally suffer from enabled apps stucking at launch time. If that happen, just respring.
-2. This tweak does NOT control volume from system side. Instead, it hooks several audio apis used by apps to achieve the control of volume";
+"BETA_ALERT"="This tweak does NOT control volume from system side. Instead, it hooks several audio apis used by apps to achieve the control of volume";
 "ACTION_YES"="YES";
 "ACTION_NO"="NO";
 "WEB_AUDIO"="Web Audio";
