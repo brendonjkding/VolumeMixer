@@ -75,11 +75,11 @@ static BOOL isEnabledApp(){
 		kAudioUnitScope_Output		= 2,
 	*/
 	//assume one thread
-	NSString*unitKey=[NSString stringWithFormat:@"%ld",(long)inUnit];
+	NSString*unitKey=[NSString stringWithFormat:@"%p",inUnit];
 	VMHookInfo*info=hookInfos[unitKey];
 	if(!info)info=[VMHookInfo new];
 	if(inID==kAudioUnitProperty_SetRenderCallback){//23
-		NSLog(@"kAudioUnitProperty_SetRenderCallback: %ld",(long)inUnit);	
+		NSLog(@"kAudioUnitProperty_SetRenderCallback: %p",inUnit);	
 		NSLog(@"	AudioUnitScope:%u",(unsigned int)inScope);
 		// if(inScope&kAudioUnitScope_Input){
 			void *outputCallback=(void*)*(long*)inData;
@@ -97,7 +97,7 @@ static BOOL isEnabledApp(){
 		[info hookIfReady];
 	}
 	else if(inID==kAudioUnitProperty_StreamFormat){//8
-		NSLog(@"kAudioUnitProperty_StreamFormat: %ld",(long)inUnit);
+		NSLog(@"kAudioUnitProperty_StreamFormat: %p",inUnit);
 		NSLog(@"	AudioUnitScope:%u",(unsigned int)inScope);
 	    // if(inScope&kAudioUnitScope_Input){
 			//to do: other format

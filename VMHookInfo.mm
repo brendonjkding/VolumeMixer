@@ -3,6 +3,7 @@
 #import <substrate.h>
 #import "VMHookAudioUnit.hpp"
 
+// key: outputCallbackAddressString value: addressForCalling
 NSMutableDictionary<NSString*,NSNumber*> *hookedCallbacks;
 
 @implementation VMHookInfo
@@ -17,41 +18,39 @@ NSMutableDictionary<NSString*,NSNumber*> *hookedCallbacks;
 	    kAudioFormatFlagIsNonMixable                = (1U << 6),     // 0x40
 	    kAudioFormatFlagsAreAllClear                = 0x80000000,
     */
-	static int cs=0,cf=0;
+	static int cn=0,cc=0;
 	//different callback hooked to same my but need different orig, use inrefcon to differ
 	
-	if(!_hooked && _outputCallback && _mFormatFlags && _inRefCon){
+	if(_outputCallback && _mFormatFlags && _inRefCon){
 		//only hook once
-		NSString*outputCallbackString=[NSString stringWithFormat:@"%ld",(long)_outputCallback];
+		NSString*outputCallbackString=[NSString stringWithFormat:@"%p",_outputCallback];
 		NSLog(@"checking: %@",outputCallbackString);
 		if(!hookedCallbacks[outputCallbackString]){
 			if(_mFormatFlags&kAudioFormatFlagIsFloat){
 				MSHookFunction((void *)_outputCallback, (void *)my_outputCallback<float>, (void **)&_orig_outputCallback);
-				NSLog(@"%d: hook float",cf++);
+				NSLog(@"float");
 			}
 			else{
 				MSHookFunction((void *)_outputCallback, (void *)my_outputCallback<short>, (void **)&_orig_outputCallback);
-				NSLog(@"%d: hook short",cs++);
+				NSLog(@"short");
 			}
 
+			//what if one callback has multiple inrefcon
+			NSString*key=[NSString stringWithFormat:@"%p",_inRefCon];
+			origCallbacks[key]=[NSNumber numberWithLong:(long)_orig_outputCallback];
+			NSLog(@"[*]new hook %d: %@",++cn, outputCallbackString);
 
 			hookedCallbacks[outputCallbackString]=[NSNumber numberWithLong:(long)_orig_outputCallback];
-			NSLog(@"saved: %@",hookedCallbacks[outputCallbackString]);
 
-			//to do: what if one callback has multiple inrefcon. complete
-			NSString*key=[NSString stringWithFormat:@"%ld",(long)_inRefCon];
-			origCallbacks[key]=[NSNumber numberWithLong:(long)_orig_outputCallback];
-
-			// _hooked=YES;
-			//to do: what if callback of one unit is set multiple times. complete
+			//what if callback of one unit is set multiple times. 
 			_outputCallback=0;
 			_mFormatFlags=0;
 			_inRefCon=0;
 		}
 		else{
-			NSString*key=[NSString stringWithFormat:@"%ld",(long)_inRefCon];
+			NSString*key=[NSString stringWithFormat:@"%p",_inRefCon];
 			origCallbacks[key]=hookedCallbacks[outputCallbackString];
-			NSLog(@"cached: %@",hookedCallbacks[outputCallbackString]);
+			NSLog(@"[*]cached hook %d: %@",++cc, outputCallbackString);
 		}
 		
 	}

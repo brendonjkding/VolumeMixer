@@ -32,7 +32,7 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 	OSStatus ret;
 	void*inRefConKey=inRefCon;
 	if(!inRefConKey) inRefConKey=(void*)-1;
-	orig_t orig=(orig_t) [origCallbacks[[NSString stringWithFormat:@"%ld",(long)inRefConKey]] longValue];
+	orig_t orig=(orig_t) [origCallbacks[[NSString stringWithFormat:@"%p",inRefConKey]] longValue];
 	ret= orig(inRefCon,ioActionFlags,inTimeStamp,inBusNumber,inNumberFrames,ioData);
 
 
