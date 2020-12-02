@@ -4,8 +4,6 @@
 #include "VMLicenseViewController.h"
 #import <Preferences/PSSpecifier.h>
 
-#define VMNSLocalizedString(key) NSLocalizedStringFromTableInBundle((key),@"Root",[NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle"],nil)
-
 @implementation VMPrefRootListController
 
 - (NSArray *)specifiers {

@@ -17,3 +17,7 @@ Credit: onewayticket255";
 "WEB_AUDIO_AUDIO_UNIT"="Web Audio (Advanced)";
 "WEB_FOOTER_TEXT"="Not work on some types of web audio. Known: Youtube on web, Youtube App
 Turn off two web audio options if webpages stuck or failed to load.";
+"SELECT_ALL"="Select All";
+"DESELECT_ALL"="Deselect All";
+"CANCEL"="Cancel";
+"SELECT_DESELECT_ALL"="Select/Deselect All";

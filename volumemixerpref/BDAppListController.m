@@ -27,6 +27,7 @@
 @property (strong, nonatomic) NSString*searchKey;
 @property (strong, nonatomic) NSString*key;
 @property (strong, nonatomic) NSString*defaults;
+@property UIBarButtonItem *rightItem;
 
 @end
 
@@ -55,7 +56,55 @@
   } else {
       self.table.tableHeaderView = self.searchController.searchBar;
   }
+
+  _rightItem=[[UIBarButtonItem alloc] initWithTitle:VMNSLocalizedString(@"SELECT_DESELECT_ALL") style:UIBarButtonItemStylePlain target:self action:@selector(rightBarItemClicked:)];
+  self.navigationItem.rightBarButtonItem=_rightItem;
     
+}
+- (void)selectAll{
+    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
+    [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
+    NSMutableArray*apps=[NSMutableArray new];
+    if([settings[_key] containsObject:kWebKitBundleId]) [apps addObject:kWebKitBundleId];
+
+    NSArray *sortedDisplayIdentifiers;
+    [[ALApplicationList sharedApplicationList] applicationsFilteredUsingPredicate:[NSPredicate predicateWithFormat:@"isInternalApplication = FALSE"]
+      onlyVisible:YES titleSortedIdentifiers:&sortedDisplayIdentifiers];
+    for(id displayIdentifier in sortedDisplayIdentifiers) [apps addObject:displayIdentifier];
+    settings[_key]=apps;
+
+    [settings writeToFile:kPrefPath atomically:YES];
+    [self reloadSpecifiers];
+
+}
+- (void)deselectAll{
+    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
+    [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
+    NSMutableArray*apps=[NSMutableArray new];
+    if([settings[_key] containsObject:kWebKitBundleId]) [apps addObject:kWebKitBundleId];
+    settings[_key]=apps;
+
+    [settings writeToFile:kPrefPath atomically:YES];
+    [self reloadSpecifiers];
+}
+- (void)rightBarItemClicked:(UIBarButtonItem *)item{
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:@"" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"CANCEL") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+
+    }];
+
+    UIAlertAction *deSelectAllAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"DESELECT_ALL") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+      [self deselectAll];
+    }];
+
+    UIAlertAction *selectAllAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"SELECT_ALL") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+      [self selectAll];
+    }];
+
+    [alertController addAction:selectAllAction];
+    [alertController addAction:deSelectAllAction];
+    [alertController addAction:cancelAction];
+    [self presentViewController:alertController animated:YES completion:nil];
 }
 - (void)updateSearchResultsForSearchController:(UISearchController *)searchController{
   _searchKey=searchController.searchBar.text;

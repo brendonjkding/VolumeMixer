@@ -17,3 +17,7 @@ Credit: onewayticket255";
 "WEB_AUDIO_AUDIO_UNIT"="网页音频 (加强)";
 "WEB_FOOTER_TEXT"="并非所有web音量都可控制
 如果有网页崩溃、重复刷新现象，关闭以上两选项";
+"SELECT_ALL"="全选";
+"DESELECT_ALL"="全不选";
+"CANCEL"="取消";
+"SELECT_DESELECT_ALL"="全选/全不选";

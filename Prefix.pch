@@ -8,6 +8,8 @@
 #define kSpringBoardBundleId @"com.apple.springboard"
 #define kWebKitBundleId @"com.apple.WebKit.WebContent"
 
+#define VMNSLocalizedString(key) NSLocalizedStringFromTableInBundle((key),@"Root",[NSBundle bundleWithPath:kBundlePath],nil)
+
 #if DEBUG
 #else
 #define NSLog(FORMAT, ...)
