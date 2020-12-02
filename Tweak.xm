@@ -12,6 +12,7 @@
 %config(generator=MobileSubstrate)
 
 static BOOL byVolumeButton;
+static BOOL webAudioUnitHookEnabled;
 
 VMHUDWindow*hudWindow;
 static double g_curScale=1;
@@ -29,6 +30,7 @@ static void loadPref(){
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
 	if(!prefs) prefs=[NSMutableDictionary new];
 	byVolumeButton=prefs[@"byVolumeButton"]?[prefs[@"byVolumeButton"] boolValue]:NO;
+	webAudioUnitHookEnabled=prefs[@"webAudioUnitHookEnabled"]?[prefs[@"webAudioUnitHookEnabled"] boolValue]:NO;
 
 	// 0.0.2 compatibility 
 	if(prefs[@"webEnabled"]){
@@ -59,9 +61,13 @@ static BOOL isEnabledApp(){
 #pragma mark appHook
 %group appHook
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
-	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
-	// method 1:
 	OSStatus ret=%orig;
+	
+	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) {
+		if(!webAudioUnitHookEnabled) return ret;
+		registerApp();
+	}
+	// method 1:
 	// inID
 	/*
 		kAudioUnitProperty_SetRenderCallback 23

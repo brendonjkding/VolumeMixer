@@ -34,6 +34,20 @@
 			<key>PostNotification</key>
 			<string>com.brend0n.volumemixer/loadPref</string>
 		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.brend0n.volumemixer</string>
+			<key>key</key>
+			<string>webAudioUnitHookEnabled</string>
+			<key>label</key>
+			<string>WEB_AUDIO_AUDIO_UNIT</string>
+			<key>PostNotification</key>
+			<string>com.brend0n.volumemixer/loadPref</string>
+		</dict>
 
         <dict>
 			<key>cell</key>
