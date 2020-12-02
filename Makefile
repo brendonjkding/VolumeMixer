@@ -24,10 +24,9 @@ endif
 
 VolumeMixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -include Prefix.pch
 
-ifdef SIMULATOR
-VolumeMixer_LIBRARIES = applist-sim mryipc-sim substrate
-else
 VolumeMixer_LIBRARIES = applist
+ifdef SIMULATOR
+VolumeMixer_LIBRARIES += substrate
 endif
 
 SUBPROJECTS += volumemixerpref

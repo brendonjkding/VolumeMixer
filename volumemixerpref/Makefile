@@ -18,11 +18,7 @@ volumemixer_INSTALL_PATH = /Library/PreferenceBundles
 volumemixer_FRAMEWORKS = UIKit
 volumemixer_PRIVATE_FRAMEWORKS = Preferences
 volumemixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -include Prefix.pch
-ifdef SIMULATOR
-volumemixer_LIBRARIES = applist-sim
-else
 volumemixer_LIBRARIES = applist
-endif
 
 include $(THEOS_MAKE_PATH)/bundle.mk
 
