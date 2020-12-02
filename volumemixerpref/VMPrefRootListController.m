@@ -12,6 +12,16 @@
 
         PSSpecifier* spec;
         
+        spec=[self specifierForID:@"PANEL_PORTRAIT_Y"];
+        [spec setProperty:@0 forKey:@"min"];
+        [spec setProperty:@([UIScreen mainScreen].bounds.size.height) forKey:@"max"];
+        [spec setProperty:@200 forKey:@"default"];
+
+        spec=[self specifierForID:@"PANEL_LANDSCAPE_Y"];
+        [spec setProperty:@0 forKey:@"min"];
+        [spec setProperty:@([UIScreen mainScreen].bounds.size.width) forKey:@"max"];
+        [spec setProperty:@([UIScreen mainScreen].bounds.size.width/2.) forKey:@"default"];
+
         spec=[PSSpecifier emptyGroupSpecifier];
         [_specifiers addObject:spec];
 

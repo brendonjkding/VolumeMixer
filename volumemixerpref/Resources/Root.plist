@@ -112,6 +112,52 @@
             <key>action</key>
             <string>selectAudiomixApp</string>
         </dict>
+
+        <dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>PANEL_PORTRAIT_Y</string>
+			<key>id</key>
+			<string>PANEL_PORTRAIT_Y_GROUP</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>showValue</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.brend0n.volumemixer</string>
+			<key>key</key>
+			<string>panelPortraitY</string>
+			<key>PostNotification</key>
+			<string>com.brend0n.volumemixer/loadPref</string>
+			<key>id</key>
+			<string>PANEL_PORTRAIT_Y</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>PANEL_LANDSCAPE_Y</string>
+			<key>id</key>
+			<string>PANEL_LANDSCAPE_Y_GROUP</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>showValue</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.brend0n.volumemixer</string>
+			<key>key</key>
+			<string>panelLandScapeY</string>
+			<key>PostNotification</key>
+			<string>com.brend0n.volumemixer/loadPref</string>
+			<key>id</key>
+			<string>PANEL_LANDSCAPE_Y</string>
+		</dict>
 	</array>
 	<key>title</key>
 	<string>VolumeMixer</string>

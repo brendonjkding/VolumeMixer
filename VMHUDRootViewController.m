@@ -22,6 +22,8 @@
 #define kHudHeight 148.
 @implementation VMHUDRootViewController{
 	MRYIPCCenter* _center;
+    CGFloat _panelPortraitY;
+    CGFloat _panelLandScapeY;
 }
 -(instancetype)init{
 	self= [super init];
@@ -29,6 +31,7 @@
 
 	[self initServer];
 	[self loadFrameWorks];
+    [self loadPref];
 
 	_hudViews=[NSMutableArray new];
 	_bundleIDs=[NSMutableArray new];
@@ -50,7 +53,8 @@
     layout.minimumLineSpacing = 1;
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
     _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 100, minWidth, kHudHeight+ALApplicationIconSizeSmall+kSliderAndIconInterval+2*kCollectionViewItemInset) collectionViewLayout:layout];
-    [_collectionView setCenter:CGPointMake(self.view.frame.size.width/2.,self.view.frame.size.height/2.)];
+    CGFloat newCenterY=self.view.frame.size.width<self.view.frame.size.height?_panelPortraitY:_panelLandScapeY;
+    [_collectionView setCenter:CGPointMake(self.view.frame.size.width/2.,newCenterY)];
     _collectionView.showsHorizontalScrollIndicator = NO;
     _collectionView.delegate = self;
     _collectionView.dataSource = self;
@@ -223,8 +227,19 @@
     CGFloat newWidth=size.width;
     CGFloat newHeight=size.height;
 
+    CGFloat newCenterY=newWidth<newHeight?_panelPortraitY:_panelLandScapeY;
     [UIView animateWithDuration:0.25 animations:^{
-        [_collectionView setCenter:CGPointMake(newWidth/2.,newHeight/2.)];
+        [_collectionView setCenter:CGPointMake(newWidth/2.,newCenterY)];
+    }];
+}
+-(void)loadPref{
+    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
+    _panelPortraitY=prefs[@"panelPortraitY"]?[prefs[@"panelPortraitY"] doubleValue]:200.;
+    _panelLandScapeY=prefs[@"panelLandScapeY"]?[prefs[@"panelLandScapeY"] doubleValue]:[UIScreen mainScreen].bounds.size.width/2.;
+
+    CGFloat newCenterY=self.view.frame.size.width<self.view.frame.size.height?_panelPortraitY:_panelLandScapeY;
+    [UIView animateWithDuration:0.25 animations:^{
+        [_collectionView setCenter:CGPointMake(_collectionView.center.x,newCenterY)];
     }];
 }
 @end

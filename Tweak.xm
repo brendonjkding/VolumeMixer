@@ -15,6 +15,7 @@ static BOOL byVolumeButton;
 static BOOL webAudioUnitHookEnabled;
 
 VMHUDWindow*hudWindow;
+static VMHUDRootViewController*rootViewController;
 static double g_curScale=1;
 static AudioQueueRef lstAudioQueue;
 static AVPlayer* lstAVPlayer;
@@ -31,6 +32,8 @@ static void loadPref(){
 	if(!prefs) prefs=[NSMutableDictionary new];
 	byVolumeButton=prefs[@"byVolumeButton"]?[prefs[@"byVolumeButton"] boolValue]:NO;
 	webAudioUnitHookEnabled=prefs[@"webAudioUnitHookEnabled"]?[prefs[@"webAudioUnitHookEnabled"] boolValue]:NO;
+
+	[rootViewController loadPref];
 
 	// 0.0.2 compatibility 
 	if(prefs[@"webEnabled"]){
@@ -274,7 +277,7 @@ static void showHUDWindowSB(){
     	void(^blockForMain)(void) = ^{
 				CGRect bounds=[UIScreen mainScreen].bounds;
 		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
-		        VMHUDRootViewController*rootViewController=[VMHUDRootViewController new];
+		        rootViewController=[VMHUDRootViewController new];
 		        [hudWindow setRootViewController:rootViewController];
 		};
 		if ([NSThread isMainThread]) blockForMain();

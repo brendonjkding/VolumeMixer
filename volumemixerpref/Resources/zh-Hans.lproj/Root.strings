@@ -21,3 +21,5 @@ Credit: onewayticket255";
 "DESELECT_ALL"="全不选";
 "CANCEL"="取消";
 "SELECT_DESELECT_ALL"="全选/全不选";
+"PANEL_PORTRAIT_Y"="面板竖屏y轴";
+"PANEL_LANDSCAPE_Y"="面板横屏y轴";
