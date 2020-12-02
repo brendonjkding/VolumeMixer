@@ -41,6 +41,7 @@
 	[super loadView];
 
 	double maxWidth=MAX(self.view.frame.size.width,self.view.frame.size.height);
+    double minWidth=MIN(self.view.frame.size.width,self.view.frame.size.height);
 	UILabel *_touchBlockView = [[UILabel alloc] initWithFrame:CGRectMake(-10,0,maxWidth+10,maxWidth)];
     [self.view addSubview:_touchBlockView];
     _touchBlockView.text=@"1";
@@ -48,7 +49,8 @@
 	UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
     layout.minimumLineSpacing = 1;
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
-    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 100, self.view.frame.size.width, kHudHeight+ALApplicationIconSizeSmall+kSliderAndIconInterval+2*kCollectionViewItemInset) collectionViewLayout:layout];
+    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 100, minWidth, kHudHeight+ALApplicationIconSizeSmall+kSliderAndIconInterval+2*kCollectionViewItemInset) collectionViewLayout:layout];
+    [_collectionView setCenter:CGPointMake(self.view.frame.size.width/2.,self.view.frame.size.height/2.)];
     _collectionView.showsHorizontalScrollIndicator = NO;
     _collectionView.delegate = self;
     _collectionView.dataSource = self;
@@ -213,5 +215,16 @@
 		if (!bundle.loaded)
 			[bundle load];
 	}
+}
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+    // CGFloat oldWidth=size.height;
+    // CGFloat oldHeight=size.width;
+    CGFloat newWidth=size.width;
+    CGFloat newHeight=size.height;
+
+    [UIView animateWithDuration:0.25 animations:^{
+        [_collectionView setCenter:CGPointMake(newWidth/2.,newHeight/2.)];
+    }];
 }
 @end
