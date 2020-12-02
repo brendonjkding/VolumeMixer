@@ -373,13 +373,6 @@ void registerApp(){
 
 	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kSpringBoardBundleId]){
 		%init(SBHook,VolumeControlClass=objc_getClass("SBVolumeControl")?:objc_getClass("VolumeControl"));
-		
-		loadPref();
-		int token;
-		notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
-			loadPref();
-		});
-		
 	}	
 	else {
 		%init(appHook);
@@ -390,6 +383,10 @@ void registerApp(){
 		hookedCallbacks=[NSMutableDictionary new];
 		
 	}
-
+	loadPref();
+	int token;
+	notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
+		loadPref();
+	});
 
 }
