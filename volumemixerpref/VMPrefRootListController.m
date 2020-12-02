@@ -66,6 +66,7 @@
       else if ([apps containsObject:kWebKitBundleId]){
         [apps removeObjectAtIndex:[apps indexOfObject:kWebKitBundleId]];
       }
+      settings[@"apps"]=apps;
     }
     else [settings setObject:value forKey:specifier.properties[@"key"]];
     [settings writeToFile:path atomically:YES];
