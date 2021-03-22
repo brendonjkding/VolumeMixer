@@ -9,8 +9,6 @@
 #import "VMHookInfo.h"
 #import "VMHookAudioUnit.hpp"
 
-%config(generator=MobileSubstrate)
-
 static BOOL byVolumeButton;
 static BOOL webAudioUnitHookEnabled;
 

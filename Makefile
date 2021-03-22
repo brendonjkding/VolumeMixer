@@ -29,6 +29,10 @@ ifdef SIMULATOR
 VolumeMixer_LIBRARIES += substrate
 endif
 
+ifdef SIMULATOR
+VolumeMixer_LOGOSFLAGS += -c generator=MobileSubstrate
+endif
+
 SUBPROJECTS += volumemixerpref
 
 include $(THEOS)/makefiles/common.mk
