@@ -169,7 +169,7 @@ static BOOL isEnabledApp(){
 }
 %hookf(OSStatus, AudioQueueStart,AudioQueueRef inAQ, const AudioTimeStamp *inStartTime){
 	lstAudioQueue=inAQ;
-	NSLog(@"AudioQueuePrime: %p",(void*)inAQ);
+	NSLog(@"AudioQueueStart: %p",(void*)inAQ);
 	AudioQueueParameterValue outValue;
 	AudioQueueGetParameter(lstAudioQueue,kAudioQueueParam_Volume,&outValue);
 	if(outValue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
