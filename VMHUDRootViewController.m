@@ -2,6 +2,7 @@
 #import "VMHUDWindow.h"
 #import "VMHUDView.h"
 #import "MTMaterialView.h"
+#import "FrontBoard.h"
 #import <objc/runtime.h>
 #import <notify.h>
 #import <AppList/AppList.h>
@@ -15,6 +16,7 @@
 @property (strong, nonatomic) NSMutableArray<MRYIPCCenter*> *clients;
 @property (strong, nonatomic) NSMutableArray<NSString*> *bundleIDs;
 @property (strong, nonatomic) NSMutableArray<NSNumber*> *pids;
+@property (strong, nonatomic) NSMutableArray<NSNumber*> *runningAppIndexes;
 @end
 #define kSliderAndIconInterval 12.
 #define kCollectionViewItemInset 10.
@@ -24,6 +26,7 @@
 	MRYIPCCenter* _center;
     CGFloat _panelPortraitY;
     CGFloat _panelLandScapeY;
+    BOOL _isHideInactiveApps;
 }
 -(instancetype)init{
 	self= [super init];
@@ -37,6 +40,7 @@
 	_bundleIDs=[NSMutableArray new];
 	_pids=[NSMutableArray new];
     _clients=[NSMutableArray new];
+    _runningAppIndexes=[NSMutableArray new];
 
 	return self;
 }
@@ -115,6 +119,17 @@
 			int error=kill(pid, 0);
 			if(error) [self removeDataAtIndex:i];
         }
+        if(_isHideInactiveApps){
+           NSMutableArray *runningAppIndexes=[NSMutableArray new];
+           int i=0;
+           for(id pid in _pids){
+               if([[[[objc_getClass("FBProcessManager") sharedInstance] processForPID:[pid intValue]] state] taskState]==2){
+                    [runningAppIndexes addObject:@(i)];
+               }
+               i++;
+           }
+           _runningAppIndexes=runningAppIndexes;
+        }
         [_collectionView reloadData];
 	};
 	if ([NSThread isMainThread]) blockForMain();
@@ -122,21 +137,27 @@
 }
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    if(_isHideInactiveApps){
+        return [_runningAppIndexes count];
+    }
     return [_hudViews count];
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"hudCell" forIndexPath:indexPath];
+
+    int index=_isHideInactiveApps?[_runningAppIndexes[indexPath.row] intValue]:indexPath.row;
+
     UIView*contentView=cell.contentView;
     for(UIView*view in [contentView subviews]){
     	// NSLog(@"view: %@",view);
     	[view removeFromSuperview];
     }
-    VMHUDView* hudView=_hudViews[indexPath.row];
+    VMHUDView* hudView=_hudViews[index];
     [contentView setFrame:CGRectMake(contentView.frame.origin.x,contentView.frame.origin.y,hudView.frame.size.width,kHudHeight+ALApplicationIconSizeSmall+kSliderAndIconInterval)];
     [contentView addSubview:hudView];
     UIImage *icon;
-    if(![_bundleIDs[indexPath.row] isEqualToString:kWebKitBundleId])icon=[[ALApplicationList sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall forDisplayIdentifier:_bundleIDs[indexPath.row]];
+    if(![_bundleIDs[index] isEqualToString:kWebKitBundleId])icon=[[ALApplicationList sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall forDisplayIdentifier:_bundleIDs[index]];
     else icon=[UIImage imageNamed:@"WebKitIcon" inBundle:[NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle"] compatibleWithTraitCollection:nil];
     UIImageView* imageView=[[UIImageView alloc] initWithImage:icon];
     [contentView addSubview:imageView];
@@ -236,6 +257,7 @@
     NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
     _panelPortraitY=prefs[@"panelPortraitY"]?[prefs[@"panelPortraitY"] doubleValue]:200.;
     _panelLandScapeY=prefs[@"panelLandScapeY"]?[prefs[@"panelLandScapeY"] doubleValue]:[UIScreen mainScreen].bounds.size.width/2.;
+    _isHideInactiveApps=prefs[@"isHideInactiveApps"]?[prefs[@"isHideInactiveApps"] boolValue]:NO;
 
     CGFloat newCenterY=self.view.frame.size.width<self.view.frame.size.height?_panelPortraitY:_panelLandScapeY;
     [UIView animateWithDuration:0.25 animations:^{

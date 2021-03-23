@@ -23,3 +23,4 @@ Turn off two web audio options if webpages stuck or failed to load.";
 "SELECT_DESELECT_ALL"="Select/Deselect All";
 "PANEL_PORTRAIT_Y"="Panel Y-axis (portrait)";
 "PANEL_LANDSCAPE_Y"="Panel Y-axis (landscape)";
+"HIDE_INACTIVE_APPS"="Hide Inactive Apps";
