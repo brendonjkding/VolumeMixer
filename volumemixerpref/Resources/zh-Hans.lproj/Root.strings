@@ -2,7 +2,7 @@
 "CHOOSE_AUDIO_MIX_MUSIC_APP"="选择音乐APP";
 "ABOUT_AUTHOR"="作者";
 "BETA_ALERT_TITLE"="用前必读！";
-"BETA_ALERT"="本插件 /不是/ 从系统侧控制音量，而是在app端控制app使用的音频api里的音量";
+"BETA_ALERT"="本插件 /不是/ 从系统侧控制音量，而是在App端控制App使用的音频API里的音量。本插件没有直接修改文件，但是行为可被检测。少数App(游戏)会认为此行为违规。风险自行承担。";
 "ACTION_YES"="是";
 "ACTION_NO"="否";
 "WEB_AUDIO"="网页音频";
