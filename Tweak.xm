@@ -32,19 +32,6 @@ static void loadPref(){
 	webAudioUnitHookEnabled=prefs[@"webAudioUnitHookEnabled"]?[prefs[@"webAudioUnitHookEnabled"] boolValue]:NO;
 
 	[rootViewController loadPref];
-
-	// 0.0.2 compatibility 
-	if(prefs[@"webEnabled"]){
-		if([prefs[@"webEnabled"] boolValue]){
-			NSMutableArray*apps=[prefs[@"apps"] mutableCopy];
-    		if(!apps) apps=[NSMutableArray new];
-    		[apps addObject:kWebKitBundleId];
-    		prefs[@"apps"]=apps;
-		}
-
-    	[prefs removeObjectForKey:@"webEnabled"];
-    	[prefs writeToFile:kPrefPath atomically:YES];
-	}
 }
 
 static BOOL isEnabledApp(){
