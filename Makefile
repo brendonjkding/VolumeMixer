@@ -59,6 +59,6 @@ after-install::
 	install.exec "killall -9 neteasemusic" ||true
 # 	install.exec "killall -9 QQMusic" ||true
 	install.exec "killall -9 MobileSafari" ||true
-	install.exec "sbreload" ||true
+	install.exec "killall -9 SpringBoard" ||true
 
 

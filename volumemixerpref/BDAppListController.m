@@ -47,7 +47,7 @@
   
   self.searchController = [[UISearchController alloc]initWithSearchResultsController:nil];
   self.searchController.searchResultsUpdater = self;
-  self.searchController.obscuresBackgroundDuringPresentation = NO;
+  if(@available(iOS 9.1, *)) self.searchController.obscuresBackgroundDuringPresentation = NO;
 
 
   if (@available(iOS 11.0, *)) {

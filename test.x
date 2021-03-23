@@ -58,7 +58,17 @@
 
 // }
 // %end
-
+// %hook _UIBackdropView
+// -(instancetype)initWithStyle:(long long)style{
+//     id ret=%orig;
+//     NSLog(@"%lld",style);
+//     return ret;
+// }
+// -(void)setStyle:(long long)style{
+//     NSLog(@"%lld",style);
+//     %orig;
+// }
+// %end
 %ctor{
 
 }

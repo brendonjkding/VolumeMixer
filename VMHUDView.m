@@ -43,7 +43,7 @@
 		if (!bundle.loaded)
 			[bundle load];
 	}
-    MTMaterialView* mtBgView,*mtSliderView;
+    UIView* mtBgView,*mtSliderView;
     if(@available(iOS 13.0, *)) {
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 configuration:2 initialWeighting:1];
         mtSliderView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 configuration:3 initialWeighting:1] ;
@@ -52,9 +52,13 @@
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 options:3 initialWeighting:1];
         mtSliderView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 options:32 initialWeighting:1] ;
     }
-	else{
+	else if(objc_getClass("MTMaterialView")){
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithStyleOptions:4 materialSettings:nil captureOnly:NO];
         mtSliderView=[objc_getClass("MTMaterialView") materialViewWithStyleOptions:1 materialSettings:nil captureOnly:NO];
+    }
+    else{
+        mtBgView=[[objc_getClass("_UIBackdropView") alloc] initWithStyle:2060];
+        mtSliderView=[[objc_getClass("_UIBackdropView") alloc] initWithStyle:100];
     }
 	[mtBgView setFrame:self.bounds];
 	[self addSubview:mtBgView];

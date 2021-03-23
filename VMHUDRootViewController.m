@@ -67,15 +67,18 @@
     [self.view addSubview:_collectionView];
 	
 
-	MTMaterialView* mtBgView;
+	UIView* mtBgView;
     if(@available(iOS 13.0, *)) {
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 configuration:1 initialWeighting:1];
     }
     else if(@available(iOS 11.0, *)){
     	mtBgView=[objc_getClass("MTMaterialView") materialViewWithRecipe:4 options:128 initialWeighting:1];
     }
-    else{
+    else if(objc_getClass("MTMaterialView")){
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithStyleOptions:4 materialSettings:nil captureOnly:NO];
+    }
+    else{
+        mtBgView=[[objc_getClass("_UIBackdropView") alloc] initWithStyle:2060];
     }
     mtBgView.layer.cornerRadius = 10.;
     mtBgView.layer.masksToBounds = YES;
