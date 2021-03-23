@@ -3,10 +3,10 @@
 #import "VMHUDView.h"
 #import "MTMaterialView.h"
 #import "FrontBoard.h"
+#import "MRYIPC/MRYIPCCenter.h"
 #import <objc/runtime.h>
 #import <notify.h>
 #import <AppList/AppList.h>
-#import <MRYIPCCenter/MRYIPCCenter.h>
 #import <sys/types.h>
 #import <signal.h>
 

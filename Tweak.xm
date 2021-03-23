@@ -1,9 +1,8 @@
 #import "VMHookInfo.h"
 #import "VMHookAudioUnit.hpp"
+#import "MRYIPC/MRYIPCCenter.h"
 
 #import <notify.h>
-#import <MRYIPCCenter/MRYIPCCenter.h>
-
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 

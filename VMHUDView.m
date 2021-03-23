@@ -1,8 +1,8 @@
 #import "VMHUDView.h"
 #import "VMHUDWindow.h"
 #import "MTMaterialView.h"
+#import "MRYIPC/MRYIPCCenter.h"
 #import <objc/runtime.h>
-#import <MRYIPCCenter/MRYIPCCenter.h>
 
 @interface VMHUDView  (){
     CGPoint _originalPoint;//之前的位置
