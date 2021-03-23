@@ -1,19 +1,15 @@
+#import "VMHookInfo.h"
+#import "VMHookAudioUnit.hpp"
+
 #import <notify.h>
 #import <MRYIPCCenter/MRYIPCCenter.h>
 
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 
-#import "VMHUDWindow.h"
-#import "VMHUDRootViewController.h"
-#import "VMHookInfo.h"
-#import "VMHookAudioUnit.hpp"
 
-static BOOL byVolumeButton;
 static BOOL webAudioUnitHookEnabled;
 
-VMHUDWindow*hudWindow;
-static VMHUDRootViewController*rootViewController;
 static double g_curScale=1;
 static AudioQueueRef lstAudioQueue;
 static AVPlayer* lstAVPlayer;
@@ -27,27 +23,17 @@ static void initScale();
 
 static void loadPref(){
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-	if(!prefs) prefs=[NSMutableDictionary new];
-	byVolumeButton=prefs[@"byVolumeButton"]?[prefs[@"byVolumeButton"] boolValue]:NO;
 	webAudioUnitHookEnabled=prefs[@"webAudioUnitHookEnabled"]?[prefs[@"webAudioUnitHookEnabled"] boolValue]:NO;
-
-	[rootViewController loadPref];
 }
 
 static BOOL isEnabledApp(){
 	NSString* bundleIdentifier=[[NSBundle mainBundle] bundleIdentifier];
-	if(unlikely([bundleIdentifier isEqualToString:kSpringBoardBundleId]))return YES;
-
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-	NSArray *apps=prefs?prefs[@"apps"]:nil;
-	if(!apps) return NO;
-	if([apps containsObject:bundleIdentifier]) return YES;
-
-	return NO;
+	return [prefs[@"apps"] containsObject:bundleIdentifier];
 }
 
-#pragma mark appHook
 %group appHook
+#pragma mark AudioUnit
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
 	OSStatus ret=%orig;
 	
@@ -255,44 +241,6 @@ static BOOL isEnabledApp(){
 
 %end //appHook
 
-#pragma mark SBHook
-static void showHUDWindowSB(){
-	static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-    	void(^blockForMain)(void) = ^{
-				CGRect bounds=[UIScreen mainScreen].bounds;
-		        hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
-		        rootViewController=[VMHUDRootViewController new];
-		        [hudWindow setRootViewController:rootViewController];
-		};
-		if ([NSThread isMainThread]) blockForMain();
-		else dispatch_async(dispatch_get_main_queue(), blockForMain);
-    	
-    });
-}
-%group SBHook
-%hook SpringBoard
--(void) applicationDidFinishLaunching:(id)application{
-	%orig;
-	NSLog(@"applicationDidFinishLaunching");
-	showHUDWindowSB();    
-}
-%end
-
-%hook VolumeControlClass
-- (void)increaseVolume {
-	%orig;
-	if(byVolumeButton) [hudWindow showWindow];
-}
-
-- (void)decreaseVolume {
-	%orig;
-    if(byVolumeButton) [hudWindow showWindow];
-}
-%end
-%end //SBHook
-
-
 
 static void initScale(){
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
@@ -356,18 +304,13 @@ void registerApp(){
 	if(!isEnabledApp()) return;
 	NSLog(@"ctor: VolumeMixer");
 
-	if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kSpringBoardBundleId]){
-		%init(SBHook,VolumeControlClass=objc_getClass("SBVolumeControl")?:objc_getClass("VolumeControl"));
-	}	
-	else {
-		%init(appHook);
-		if(![[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
-		initScale();
-		origCallbacks=[NSMutableDictionary new];
-		hookInfos=[NSMutableDictionary new];
-		hookedCallbacks=[NSMutableDictionary new];
+	%init(appHook);
+	if(![[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
+	initScale();
+	origCallbacks=[NSMutableDictionary new];
+	hookInfos=[NSMutableDictionary new];
+	hookedCallbacks=[NSMutableDictionary new];
 		
-	}
 	loadPref();
 	int token;
 	notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {
