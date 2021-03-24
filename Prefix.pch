@@ -17,4 +17,8 @@
 
 #define MRYIPCCenter VM_MRYIPCCenter
 #define _MRYIPCMethod VM__MRYIPCMethod
+
+#import <UIKit/UIKit.h>
+extern UIApplication *UIApp;
+
 #endif //__objc__

@@ -1,8 +1,10 @@
-#include "VMPrefRootListController.h"
-#include "BDAppListController.h"
-#include "BDInfoListController.h"
-#include "VMLicenseViewController.h"
+#import "VMPrefRootListController.h"
+#import "BDAppListController.h"
+#import "BDInfoListController.h"
+#import "VMLicenseViewController.h"
+#import "VMAuthorListController.h"
 #import <Preferences/PSSpecifier.h>
+#import <objc/runtime.h>
 
 @implementation VMPrefRootListController
 
@@ -21,6 +23,13 @@
         [spec setProperty:@0 forKey:@"min"];
         [spec setProperty:@([UIScreen mainScreen].bounds.size.width) forKey:@"max"];
         [spec setProperty:@([UIScreen mainScreen].bounds.size.width/2.) forKey:@"default"];
+
+        spec=[self specifierForID:@"AUDIO_MIX_CREDIT_GROUP"];
+        [spec setProperty:@"PSFooterHyperlinkView" forKey:@"footerCellClass"];
+        [spec setProperty:VMNSLocalizedString(@"AUDIO_MIX_CREDIT") forKey:@"headerFooterHyperlinkButtonTitle"];
+        [spec setProperty:NSStringFromRange([VMNSLocalizedString(@"AUDIO_MIX_CREDIT") rangeOfString:VMNSLocalizedString(@"AUDIO_MIX_CREDIT_HYPERLINK_TEXT")]) forKey:@"footerHyperlinkRange"];
+        [spec setProperty:[NSValue valueWithNonretainedObject:self] forKey:@"footerHyperlinkTarget"];
+        [spec setProperty:@"openOnewayticket" forKey:@"footerHyperlinkAction"];
 
         spec=[PSSpecifier emptyGroupSpecifier];
         [_specifiers addObject:spec];
@@ -42,7 +51,7 @@
                                               detail:Nil
                                                 cell:PSLinkCell
                                                 edit:Nil];
-        spec->action = @selector(showInfo);
+        spec->action = @selector(showAuthors);
         [_specifiers addObject:spec];
 
   }
@@ -82,11 +91,6 @@
     if (notificationName) {
         CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), notificationName, NULL, NULL, YES);
     }
-}
--(void)showInfo{
-  UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
-  self.navigationItem.backBarButtonItem = backItem; 
-  [self.navigationController pushViewController:[[BDInfoListController alloc] init] animated:YES];
 }
 -(void)selectAudiomixApp{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
@@ -128,9 +132,17 @@
   [self presentViewController:alertController animated:YES completion:nil];
   
 }
+-(void)showAuthors{
+  UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
+  self.navigationItem.backBarButtonItem = backItem;
+  [self.navigationController pushViewController:[[VMAuthorListController alloc] init] animated:YES];
+}
 -(void)showLicenses{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
   self.navigationItem.backBarButtonItem = backItem; 
   [self.navigationController pushViewController:[[VMLicenseViewController alloc] init] animated:TRUE];
+}
+-(void)openOnewayticket{
+  [UIApp openURL:[NSURL URLWithString:@"https://github.com/onewayticket255"]];
 }
 @end

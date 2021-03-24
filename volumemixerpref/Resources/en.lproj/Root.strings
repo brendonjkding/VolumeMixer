@@ -14,6 +14,8 @@
 "AUDIO_MIX_CREDIT"="Prevent music apps from being interrupted.(This will NOT make two \"music\" mode apps play simultaneously)
 With Audio Mix Option on, apps will not show up in ControlCenter/LockScreen. Manually choose your music apps to fix that. 
 Credit: onewayticket255";
+"AUDIO_MIX_CREDIT_HYPERLINK_TEXT"="onewayticket255";
+"AUTHOR_AUDIO_MIX"="For Audio Mix part.";
 "WEB_AUDIO_AUDIO_UNIT"="Web Audio (Advanced)";
 "WEB_FOOTER_TEXT"="Not work on some types of web audio. Known: Youtube on web, Youtube App
 Turn off two web audio options if webpages stuck or failed to load.";

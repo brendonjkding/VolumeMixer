@@ -110,8 +110,8 @@
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string></string>
-			<key>footerText</key>
-			<string>AUDIO_MIX_CREDIT</string>
+			<key>id</key>
+			<string>AUDIO_MIX_CREDIT_GROUP</string>
 		</dict>
 		<dict>
 			<key>cell</key>

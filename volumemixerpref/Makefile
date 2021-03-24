@@ -13,7 +13,7 @@ include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = volumemixer
 
-volumemixer_FILES = VMPrefRootListController.m BDInfoListController.m BDAppListController.m VMLicenseViewController.m LowiOSVersionCompatibility.x
+volumemixer_FILES = VMPrefRootListController.m BDInfoListController.m BDAppListController.m VMLicenseViewController.m LowiOSVersionCompatibility.x VMAuthorListController.m
 volumemixer_INSTALL_PATH = /Library/PreferenceBundles
 volumemixer_FRAMEWORKS = UIKit
 volumemixer_PRIVATE_FRAMEWORKS = Preferences
