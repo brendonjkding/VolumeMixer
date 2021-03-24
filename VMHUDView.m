@@ -1,5 +1,6 @@
 #import "VMHUDView.h"
 #import "VMHUDWindow.h"
+#import "TweakSB.h"
 #import "MTMaterialView.h"
 #import "MRYIPC/MRYIPCCenter.h"
 #import <objc/runtime.h>
@@ -93,15 +94,10 @@
     }
 }
 -(NSNumber*)readConf{
-    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-    if(!prefs)prefs=[NSMutableDictionary new];
     return prefs[_bundleID];
 }
 -(void)saveConf:(NSNumber*)scale{
-    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-    if(!prefs)prefs=[NSMutableDictionary new];
     prefs[_bundleID]=scale;
-    [prefs writeToFile:kPrefPath atomically:YES];
 }
 - (void)longPress:(UILongPressGestureRecognizer *)longPress{
     //获取当前位置

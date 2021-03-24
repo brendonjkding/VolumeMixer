@@ -6,6 +6,9 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 
+#import <Cephei/HBPreferences.h>
+
+static HBPreferences *prefs;
 
 static BOOL webAudioUnitHookEnabled;
 
@@ -21,14 +24,11 @@ static void registerApp();
 static void initScale();
 
 static void loadPref(){
-	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
 	webAudioUnitHookEnabled=prefs[@"webAudioUnitHookEnabled"]?[prefs[@"webAudioUnitHookEnabled"] boolValue]:NO;
 }
 
 static BOOL isEnabledApp(){
-	NSString* bundleIdentifier=[[NSBundle mainBundle] bundleIdentifier];
-	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-	return [prefs[@"apps"] containsObject:bundleIdentifier];
+	return [prefs[@"apps"] containsObject:[[NSBundle mainBundle] bundleIdentifier]];
 }
 
 %group appHook
@@ -212,8 +212,6 @@ static BOOL isEnabledApp(){
 #pragma mark AVAudioSession
 %hook AVAudioSession
 - (BOOL)setActive:(BOOL)active withOptions:(AVAudioSessionSetActiveOptions)options error:(NSError **)outError{
-	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-	if(!prefs) prefs=[NSMutableDictionary new];
 	BOOL audioMixEnabled=prefs[@"audioMixEnabled"]?[prefs[@"audioMixEnabled"] boolValue]:NO;
 	if(!audioMixEnabled) return %orig;
 
@@ -242,8 +240,6 @@ static BOOL isEnabledApp(){
 
 
 static void initScale(){
-	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-    if(!prefs)prefs=[NSMutableDictionary new];
     NSNumber *scaleNumber=prefs[[[NSBundle mainBundle] bundleIdentifier]];
     if(scaleNumber){
     	g_curScale=[scaleNumber doubleValue];
@@ -300,7 +296,11 @@ void registerApp(){
 
 #pragma mark ctor
 %ctor{
-	if(!isEnabledApp()) return;
+	prefs = [[HBPreferences alloc] initWithIdentifier:@"com.brend0n.volumemixer"];
+	if(!isEnabledApp()) {
+		prefs=nil;
+		return;
+	}
 	NSLog(@"ctor: VolumeMixer");
 
 	%init(appHook);
@@ -309,7 +309,7 @@ void registerApp(){
 	origCallbacks=[NSMutableDictionary new];
 	hookInfos=[NSMutableDictionary new];
 	hookedCallbacks=[NSMutableDictionary new];
-		
+
 	loadPref();
 	int token;
 	notify_register_dispatch("com.brend0n.volumemixer/loadPref", &token, dispatch_get_main_queue(), ^(int token) {

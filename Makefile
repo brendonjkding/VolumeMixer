@@ -25,6 +25,7 @@ ifdef SIMULATOR
 VolumeMixer_LOGOSFLAGS += -c generator=MobileSubstrate
 endif
 
+VolumeMixer_EXTRA_FRAMEWORKS += Cephei
 
 
 VolumeMixerSB_FILES = TweakSB.xm VMHUDView.m VMHUDWindow.m VMHUDRootViewController.m VMLAListener.m
@@ -40,6 +41,7 @@ VolumeMixerSB_LIBRARIES = applist
 ifdef SIMULATOR
 VolumeMixerSB_LIBRARIES += substrate
 endif
+VolumeMixerSB_EXTRA_FRAMEWORKS += Cephei
 
 ADDITIONAL_CFLAGS += -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -include Prefix.pch
 

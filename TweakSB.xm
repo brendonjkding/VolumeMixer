@@ -1,13 +1,15 @@
 #import "VMHUDWindow.h"
 #import "VMHUDRootViewController.h"
 #import <notify.h>
+#import "TweakSB.h"
+
+HBPreferences *prefs;
 
 VMHUDWindow*hudWindow;
 static VMHUDRootViewController*rootViewController;
 static BOOL byVolumeButton;
 
 static void loadPref(){
-    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
     byVolumeButton=prefs[@"byVolumeButton"]?[prefs[@"byVolumeButton"] boolValue]:NO;
 
     [rootViewController loadPref];
@@ -50,6 +52,8 @@ static void showHUDWindowSB(){
 %end //SBHook
 
 %ctor{
+    prefs = [[HBPreferences alloc] initWithIdentifier:@"com.brend0n.volumemixer"];
+
     %init(SBHook,VolumeControlClass=objc_getClass("SBVolumeControl")?:objc_getClass("VolumeControl"));
 
     loadPref();

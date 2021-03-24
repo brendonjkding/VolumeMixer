@@ -1,4 +1,5 @@
 #import "BDAppListController.h"
+#import "VMPref.h"
 #import <Preferences/PSSpecifier.h>
 #import <AppList/AppList.h>
 
@@ -62,29 +63,23 @@
     
 }
 - (void)selectAll{
-    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
-    [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
     NSMutableArray*apps=[NSMutableArray new];
-    if([settings[_key] containsObject:kWebKitBundleId]) [apps addObject:kWebKitBundleId];
+    if([prefs[_key] containsObject:kWebKitBundleId]) [apps addObject:kWebKitBundleId];
 
     NSArray *sortedDisplayIdentifiers;
     [[ALApplicationList sharedApplicationList] applicationsFilteredUsingPredicate:[NSPredicate predicateWithFormat:@"isInternalApplication = FALSE"]
       onlyVisible:YES titleSortedIdentifiers:&sortedDisplayIdentifiers];
     for(id displayIdentifier in sortedDisplayIdentifiers) [apps addObject:displayIdentifier];
-    settings[_key]=apps;
+    prefs[_key]=apps;
 
-    [settings writeToFile:kPrefPath atomically:YES];
     [self reloadSpecifiers];
 
 }
 - (void)deselectAll{
-    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
-    [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:kPrefPath]];
     NSMutableArray*apps=[NSMutableArray new];
-    if([settings[_key] containsObject:kWebKitBundleId]) [apps addObject:kWebKitBundleId];
-    settings[_key]=apps;
+    if([prefs[_key] containsObject:kWebKitBundleId]) [apps addObject:kWebKitBundleId];
+    prefs[_key]=apps;
 
-    [settings writeToFile:kPrefPath atomically:YES];
     [self reloadSpecifiers];
 }
 - (void)rightBarItemClicked:(UIBarButtonItem *)item{
@@ -147,20 +142,11 @@
 	return _specifiers;
 }
 - (id)readPreferenceValue:(PSSpecifier*)specifier {
-    NSString *path = [NSString stringWithFormat:@"/User/Library/Preferences/%@.plist", specifier.properties[@"defaults"]];
-    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
-    [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:path]];
-    NSArray*apps=settings[_key];
-    if(!apps) return @NO;
-    return [NSNumber numberWithBool:[apps containsObject:specifier.properties[@"displayIdentifier"]]];
+    return @([prefs[_key] containsObject:specifier.properties[@"displayIdentifier"]]);
 }
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier*)specifier {
-    NSString *path = [NSString stringWithFormat:@"/User/Library/Preferences/%@.plist", specifier.properties[@"defaults"]];
-    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
-    [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:path]];
-    NSMutableArray*apps=[settings[_key] mutableCopy];
-    if(!apps) apps=[NSMutableArray new];
+    NSMutableArray*apps=[prefs[_key] mutableCopy]?:[NSMutableArray new];
     NSString*displayIdentifier=specifier.properties[@"displayIdentifier"];
     if([value boolValue]&&![apps containsObject:displayIdentifier]){
       [apps addObject:displayIdentifier];
@@ -169,14 +155,6 @@
       [apps removeObjectAtIndex:[apps indexOfObject:displayIdentifier]];
     }
 
-    [settings setObject:apps forKey:_key];
-
-    [settings writeToFile:path atomically:YES];
-    CFStringRef notificationName = (__bridge CFStringRef )specifier.properties[@"PostNotification"];
-    if (notificationName) {
-        CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), notificationName, NULL, NULL, YES);
-    }
+    [prefs setObject:apps forKey:_key];
 }
-
-
 @end

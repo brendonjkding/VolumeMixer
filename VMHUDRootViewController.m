@@ -1,6 +1,7 @@
 #import "VMHUDRootViewController.h"
 #import "VMHUDWindow.h"
 #import "VMHUDView.h"
+#import "TweakSB.h"
 #import "MTMaterialView.h"
 #import "FrontBoard.h"
 #import "MRYIPC/MRYIPCCenter.h"
@@ -257,7 +258,6 @@
     }];
 }
 -(void)loadPref{
-    NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
     _panelPortraitY=prefs[@"panelPortraitY"]?[prefs[@"panelPortraitY"] doubleValue]:200.;
     _panelLandScapeY=prefs[@"panelLandScapeY"]?[prefs[@"panelLandScapeY"] doubleValue]:[UIScreen mainScreen].bounds.size.width/2.;
     _isHideInactiveApps=prefs[@"isHideInactiveApps"]?[prefs[@"isHideInactiveApps"] boolValue]:NO;

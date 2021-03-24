@@ -2,7 +2,6 @@
 #define likely(E) __builtin_expect(!!(E),1)
 #define unlikely(E) __builtin_expect(!!(E),0)
 
-#define kPrefPath @"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"
 #define kBundlePath @"/Library/PreferenceBundles/volumemixer.bundle"
 
 #define kSpringBoardBundleId @"com.apple.springboard"

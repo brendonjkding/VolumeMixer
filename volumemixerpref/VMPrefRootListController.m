@@ -3,6 +3,7 @@
 #import "BDInfoListController.h"
 #import "VMLicenseViewController.h"
 #import "VMAuthorListController.h"
+#import "VMPref.h"
 #import <Preferences/PSSpecifier.h>
 #import <objc/runtime.h>
 #import <dlfcn.h>
@@ -69,37 +70,25 @@
   return _specifiers;
 }
 - (id)readPreferenceValue:(PSSpecifier*)specifier {
-    NSString *path = [NSString stringWithFormat:@"/User/Library/Preferences/%@.plist", specifier.properties[@"defaults"]];
-    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
-    [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:path]];
     if([specifier.properties[@"key"] isEqualToString:@"webEnabled"]) {
-      NSArray*apps=settings[@"apps"];
-      if(!apps) return @NO;
-      return [NSNumber numberWithBool:[apps containsObject:kWebKitBundleId]];
+      return @([prefs[@"apps"] containsObject:kWebKitBundleId]);
     }
-    return (settings[specifier.properties[@"key"]]) ?: specifier.properties[@"default"];
+    return [super readPreferenceValue:specifier];
 }
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier*)specifier {
-    NSString *path = [NSString stringWithFormat:@"/User/Library/Preferences/%@.plist", specifier.properties[@"defaults"]];
-    NSMutableDictionary *settings = [NSMutableDictionary dictionary];
-    [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:path]];
     if([specifier.properties[@"key"] isEqualToString:@"webEnabled"]) {
-      NSMutableArray*apps=[settings[@"apps"] mutableCopy];
-      if(!apps) apps=[NSMutableArray new];
+      NSMutableArray*apps=[prefs[@"apps"] mutableCopy]?:[NSMutableArray new];
       if([value boolValue]&&![apps containsObject:kWebKitBundleId]){
         [apps addObject:kWebKitBundleId];
       }
       else if ([apps containsObject:kWebKitBundleId]){
         [apps removeObjectAtIndex:[apps indexOfObject:kWebKitBundleId]];
       }
-      settings[@"apps"]=apps;
+      prefs[@"apps"]=apps;
     }
-    else [settings setObject:value forKey:specifier.properties[@"key"]];
-    [settings writeToFile:path atomically:YES];
-    CFStringRef notificationName = (__bridge CFStringRef )specifier.properties[@"PostNotification"];
-    if (notificationName) {
-        CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), notificationName, NULL, NULL, YES);
+    else {
+      [super setPreferenceValue:value specifier:specifier];
     }
 }
 -(void)selectAudiomixApp{
@@ -113,7 +102,6 @@
   [self.navigationController pushViewController:[[BDAppListController alloc] initWithDefaults:@"com.brend0n.volumemixer" andKey:@"apps"] animated:YES];
 }
 -(void)selectApp{
-  NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
   if(prefs) {
     NSString*key=prefs[@"didShowReleaseAlert"];
     if(key){
@@ -129,10 +117,7 @@
 
   UIAlertAction *okAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_YES") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:kPrefPath];
-      if(!prefs) prefs=[NSMutableDictionary new];
       prefs[@"didShowReleaseAlert"]=@YES;
-      [prefs writeToFile:kPrefPath atomically:YES];
       [self selectApp_];
     });
   }];
