@@ -96,7 +96,7 @@
   self.navigationItem.backBarButtonItem = backItem; 
   [self.navigationController pushViewController:[[BDAppListController alloc] initWithDefaults:@"com.brend0n.volumemixer" andKey:@"audiomixApps"] animated:YES];
 }
--(void)selectApp_{
+-(void)_selectApp{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
   self.navigationItem.backBarButtonItem = backItem; 
   [self.navigationController pushViewController:[[BDAppListController alloc] initWithDefaults:@"com.brend0n.volumemixer" andKey:@"apps"] animated:YES];
@@ -105,12 +105,15 @@
   if(prefs) {
     NSString*key=prefs[@"didShowReleaseAlert"];
     if(key){
-      [self selectApp_];
+      [self _selectApp];
       return;  
     }
     
   }
 
+  if(!objc_getClass("UIAlertController")){
+    [self _selectApp];
+  }
   UIAlertController *alertController = [UIAlertController alertControllerWithTitle:VMNSLocalizedString(@"BETA_ALERT_TITLE") message:VMNSLocalizedString(@"BETA_ALERT") preferredStyle:UIAlertControllerStyleAlert];
 
   UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_NO") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {}];
@@ -118,7 +121,7 @@
   UIAlertAction *okAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_YES") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
     dispatch_async(dispatch_get_main_queue(), ^{
       prefs[@"didShowReleaseAlert"]=@YES;
-      [self selectApp_];
+      [self _selectApp];
     });
   }];
 
