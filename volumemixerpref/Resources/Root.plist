@@ -80,6 +80,8 @@
 			<string>LibActivator</string>
 			<key>activatorListener</key>
 			<string>com.brend0n.volumemixer</string>
+			<key>id</key>
+			<string>BY_ACTIVATOR</string>
 		</dict>
 
 		<dict>

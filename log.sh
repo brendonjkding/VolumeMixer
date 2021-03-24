@@ -1,1 +1,1 @@
-idevicesyslog | grep -E 'VolumeMixer' --color
+idevicesyslog | grep -Ei 'VolumeMixer' --color

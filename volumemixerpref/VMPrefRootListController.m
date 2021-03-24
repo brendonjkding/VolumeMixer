@@ -5,6 +5,7 @@
 #import "VMAuthorListController.h"
 #import <Preferences/PSSpecifier.h>
 #import <objc/runtime.h>
+#import <dlfcn.h>
 
 @implementation VMPrefRootListController
 
@@ -30,6 +31,15 @@
         [spec setProperty:NSStringFromRange([VMNSLocalizedString(@"AUDIO_MIX_CREDIT") rangeOfString:VMNSLocalizedString(@"AUDIO_MIX_CREDIT_HYPERLINK_TEXT")]) forKey:@"footerHyperlinkRange"];
         [spec setProperty:[NSValue valueWithNonretainedObject:self] forKey:@"footerHyperlinkTarget"];
         [spec setProperty:@"openOnewayticket" forKey:@"footerHyperlinkAction"];
+
+        dlopen("/usr/lib/libactivator.dylib", RTLD_LAZY);
+        Class la = objc_getClass("LAActivator");
+        if(!la){
+          for(NSString *id in @[@"BY_ACTIVATOR"]){
+            spec=[self specifierForID:id];
+            [spec setButtonAction:@selector(openActivator)];
+          }
+        }
 
         spec=[PSSpecifier emptyGroupSpecifier];
         [_specifiers addObject:spec];
@@ -144,5 +154,8 @@
 }
 -(void)openOnewayticket{
   [UIApp openURL:[NSURL URLWithString:@"https://github.com/onewayticket255"]];
+}
+-(void)openActivator{
+  [UIApp openURL:[NSURL URLWithString:@"cydia://package/libactivator"]];
 }
 @end
