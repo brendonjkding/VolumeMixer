@@ -1,9 +1,13 @@
 Package: com.brend0n.volumemixer
 Name: VolumeMixer
 Depends: mobilesubstrate, preferenceloader, applist, ws.hbang.common (>= 1.11)
-Version: 0.0.3b4
+Version: 0.0.4~rc
 Architecture: iphoneos-arm
-Description: volume control for individual app
+Description: Volume control for individual app
+ 0.0.4:
+ Add Option "Hide Inactive Apps"
+ Use Cephei to manage Settings
+ Add volume down/up Activator listeners
 Maintainer: Brend0n <brendonjkding@126.com>
 Author: Brend0n <brendonjkding@126.com>
 Section: Tweaks
