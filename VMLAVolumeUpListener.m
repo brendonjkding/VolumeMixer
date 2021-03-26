@@ -3,15 +3,15 @@
 #import <objc/runtime.h>
 #import <dlfcn.h>
 
-@interface VolumeMixerLAListener : NSObject <LAListener>
+@interface VMLAVolumeUpListener : NSObject <LAListener>
 
 @end
 
-@implementation VolumeMixerLAListener
+@implementation VMLAVolumeUpListener
 
 - (void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event
 {
-	[hudWindow changeVisibility];
+	[rootViewController increaseVolume];
 }
 
 
@@ -22,7 +22,7 @@
 		// Register listener
 		dlopen("/usr/lib/libactivator.dylib", RTLD_LAZY);
 		Class la = objc_getClass("LAActivator");
-		if (la)	[[la sharedInstance] registerListener:[self new] forName:@"com.brend0n.volumemixer"];
+		if (la)	[[la sharedInstance] registerListener:[self new] forName:@"com.brend0n.volumemixer.volumeup"];
 	}
 }
 - (NSString *)activator:(LAActivator *)activator requiresLocalizedGroupForListenerName:(NSString *)listenerName
@@ -31,12 +31,12 @@
 }
 - (NSString *)activator:(LAActivator *)activator requiresLocalizedTitleForListenerName:(NSString *)listenerName
 {
-    return @"Show Volume Mixer";
+    return @"Volume Up";
 }
 
 - (NSString *)activator:(LAActivator *)activator requiresLocalizedDescriptionForListenerName:(NSString *)listenerName
 {
-    return @"Volume control for individual app";
+    return @"Increase volume of running Apps";
 }
 
 - (UIImage *)activator:(LAActivator *)activator requiresSmallIconForListenerName:(NSString *)listenerName scale:(CGFloat)scale

@@ -126,7 +126,7 @@
         if(_isHideInactiveApps){
            NSMutableArray *runningAppIndexes=[NSMutableArray new];
            int i=0;
-           for(id pid in _pids){
+           for(NSNumber* pid in _pids){
                if([[[[objc_getClass("FBProcessManager") sharedInstance] processForPID:[pid intValue]] state] taskState]==2){
                     [runningAppIndexes addObject:@(i)];
                }
@@ -266,5 +266,23 @@
     [UIView animateWithDuration:0.25 animations:^{
         [_collectionView setCenter:CGPointMake(_collectionView.center.x,newCenterY)];
     }];
+}
+-(void)decreaseVolume{
+    int i=0;
+    for(NSNumber* pid in _pids){
+        if([[[[objc_getClass("FBProcessManager") sharedInstance] processForPID:[pid intValue]] state] taskState]==2){
+             [_hudViews[i] changeScale:-1./16.];
+        }
+        i++;
+    }
+}
+-(void)increaseVolume{
+    int i=0;
+    for(NSNumber* pid in _pids){
+        if([[[[objc_getClass("FBProcessManager") sharedInstance] processForPID:[pid intValue]] state] taskState]==2){
+             [_hudViews[i] changeScale:1./16.];
+        }
+        i++;
+    }
 }
 @end

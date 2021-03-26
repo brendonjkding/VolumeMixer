@@ -26,3 +26,7 @@ Credit: onewayticket255";
 "PANEL_PORTRAIT_Y"="面板竖屏y轴";
 "PANEL_LANDSCAPE_Y"="面板横屏y轴";
 "HIDE_INACTIVE_APPS"="仅显示运行中App";
+"ACTIVATOR_LISTENERS"="Activator Listeners";
+"ACTIVATOR_VOLUME_UP"="Volume Up";
+"ACTIVATOR_VOLUME_DOWN"="Volume Down";
+"ACTIVATOR_LISTENERS_FOOTER_TEXT"="使用Activator来调节运行中App的音量 (如Airplay/Carplay时不想点击屏幕)";

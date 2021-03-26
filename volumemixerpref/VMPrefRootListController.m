@@ -36,8 +36,8 @@
         dlopen("/usr/lib/libactivator.dylib", RTLD_LAZY);
         Class la = objc_getClass("LAActivator");
         if(!la){
-          for(NSString *id in @[@"BY_ACTIVATOR"]){
-            spec=[self specifierForID:id];
+          for(NSString *specifierId in @[@"BY_ACTIVATOR",@"ACTIVATOR_VOLUME_UP",@"ACTIVATOR_VOLUME_DOWN"]){
+            spec=[self specifierForID:specifierId];
             [spec setButtonAction:@selector(openActivator)];
           }
         }

@@ -26,3 +26,7 @@ Turn off two web audio options if webpages stuck or failed to load.";
 "PANEL_PORTRAIT_Y"="Panel Y-axis (portrait)";
 "PANEL_LANDSCAPE_Y"="Panel Y-axis (landscape)";
 "HIDE_INACTIVE_APPS"="Hide Inactive Apps";
+"ACTIVATOR_LISTENERS"="Activator Listeners";
+"ACTIVATOR_VOLUME_UP"="Volume Up";
+"ACTIVATOR_VOLUME_DOWN"="Volume Down";
+"ACTIVATOR_LISTENERS_FOOTER_TEXT"="Assign a gesture to turn up/down volume of running Apps. (If you don't want to touch the screen when Airplay/Carplay)";

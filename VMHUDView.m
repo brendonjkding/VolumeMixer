@@ -6,7 +6,7 @@
 #import <objc/runtime.h>
 
 @interface VMHUDView  (){
-    CGPoint _originalPoint;//之前的位置
+    CGPoint _lastLocation;
 }
 @property (strong, nonatomic) UIImpactFeedbackGenerator*feedback;
 @end
@@ -17,7 +17,7 @@
 
 	self.clipsToBounds = YES;
 	self.layer.cornerRadius = 14.;
-    self.curScale=1.;
+    _curScale=1.;
 
     // credits to https://github.com/Muirey03/13HUD/blob/master/MRYHUDView.xm#L69
 	// create blurred background for slider:
@@ -82,7 +82,7 @@
 
 }
 -(void)initScale{
-    NSNumber*scaleNumber=[self readConf];
+    NSNumber*scaleNumber=[self scaleFromPrefs];
     if(scaleNumber){
         double scale=[scaleNumber doubleValue];
         [_clippingView setFrame:CGRectMake(_clippingView.frame.origin.x,
@@ -93,44 +93,48 @@
         _curScale=scale;
     }
 }
--(NSNumber*)readConf{
+-(NSNumber*)scaleFromPrefs{
     return prefs[_bundleID];
 }
--(void)saveConf:(NSNumber*)scale{
+-(void)saveScaleToPrefs:(NSNumber*)scale{
     prefs[_bundleID]=scale;
 }
 - (void)longPress:(UILongPressGestureRecognizer *)longPress{
-    //获取当前位置
-    CGPoint currentPosition = [longPress locationInView:self];
+    CGPoint currentLocation = [longPress locationInView:self];
     if (longPress.state == UIGestureRecognizerStateBegan) {
-        _originalPoint = currentPosition;
+        _lastLocation = currentLocation;
         _feedback=[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
         [_feedback impactOccurred];
     }else if(longPress.state == UIGestureRecognizerStateChanged){
-        //偏移量(当前坐标 - 起始坐标 = 偏移量)
-        // CGFloat offsetX = currentPosition.x - _originalPoint.x;
-        CGFloat offsetY = currentPosition.y - _originalPoint.y;
-        _originalPoint = currentPosition;
+        CGFloat dY = currentLocation.y - _lastLocation.y;
+        _lastLocation = currentLocation;
 
-        CGFloat newY=MIN(MAX(_clippingView.frame.origin.y+offsetY,0),_clippingView.frame.size.height);
-        CGFloat scale=1.-newY/_clippingView.frame.size.height;
-        // NSLog(@"Scale:%lf",scale);
+        CGFloat newY=MIN(MAX(_clippingView.frame.origin.y+dY,0),_clippingView.frame.size.height);
+        [_clippingView setFrame:CGRectMake(_clippingView.frame.origin.x,
+                                        newY,
+                                        _clippingView.frame.size.width,
+                                        _clippingView.frame.size.height)];
+        CGFloat scale=1.-_clippingView.frame.origin.y/_clippingView.frame.size.height;
         if(fabs(scale-_curScale)>1./16.||scale<=1./16.){
-        	_curScale=scale;
-            // NSLog(@"newScale:%lf",_curScale);
+            _curScale=scale;
             [_client callExternalMethod:@selector(setVolume:)withArguments:@{@"curScale" : @(_curScale)} completion:^(id ret){}];
         }
-
-        [_clippingView setFrame:CGRectMake(_clippingView.frame.origin.x,
-        									newY,
-        									_clippingView.frame.size.width,
-        									_clippingView.frame.size.height)];
-
-
     }else if (longPress.state == UIGestureRecognizerStateEnded){
         [_feedback impactOccurred];
         _feedback=nil;
-        [self saveConf:[NSNumber numberWithDouble:1.-_clippingView.frame.origin.y/_clippingView.frame.size.height]];
+        [self saveScaleToPrefs:@(_curScale)];
     }
+}
+-(void)setCurScale:(CGFloat)scale{
+    _curScale=scale;
+    [_clippingView setFrame:CGRectMake(_clippingView.frame.origin.x,
+                                        _clippingView.frame.size.height*(1.-_curScale),
+                                        _clippingView.frame.size.width,
+                                        _clippingView.frame.size.height)];
+    [_client callExternalMethod:@selector(setVolume:)withArguments:@{@"curScale" : @(_curScale)} completion:^(id ret){}];
+    [self saveScaleToPrefs:@(_curScale)];
+}
+-(void)changeScale:(CGFloat)dScale{
+    [self setCurScale:MIN(MAX(_curScale+dScale,0.),1.)];
 }
 @end

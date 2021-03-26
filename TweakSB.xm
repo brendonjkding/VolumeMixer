@@ -6,7 +6,7 @@
 HBPreferences *prefs;
 
 VMHUDWindow*hudWindow;
-static VMHUDRootViewController*rootViewController;
+VMHUDRootViewController*rootViewController;
 static BOOL byVolumeButton;
 
 static void loadPref(){

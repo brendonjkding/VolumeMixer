@@ -28,7 +28,7 @@ endif
 VolumeMixer_EXTRA_FRAMEWORKS += Cephei
 
 
-VolumeMixerSB_FILES = TweakSB.xm VMHUDView.m VMHUDWindow.m VMHUDRootViewController.m VMLAListener.m
+VolumeMixerSB_FILES = TweakSB.xm VMHUDView.m VMHUDWindow.m VMHUDRootViewController.m VMLAListener.m VMLAVolumeDownListener.m VMLAVolumeUpListener.m
 VolumeMixerSB_FILES += MRYIPC/MRYIPCCenter.m
 ifneq ($(debug),0)
 VolumeMixerSB_FILES += test.x
