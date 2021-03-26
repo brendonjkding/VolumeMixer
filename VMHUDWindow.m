@@ -34,9 +34,13 @@
 }
 -(void) showWindow{
 	[self.rootViewController performSelector:@selector(reloadRunningApp)];
-	[UIView animateWithDuration:0.5 animations:^{
-		[self setAlpha:1.];
-    }];
+    [UIView animateWithDuration:0.5
+                      delay:0
+                    options:UIViewAnimationOptionAllowUserInteraction
+                 animations:^{
+                    [self setAlpha:1.];
+                 }
+                 completion:NULL];
 }
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
     UIView *hitTestView = [super hitTest:point withEvent:event];
