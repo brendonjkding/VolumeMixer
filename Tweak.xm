@@ -28,6 +28,10 @@ static void loadPref(){
 }
 
 static BOOL isEnabledApp(){
+	if(![[[[NSProcessInfo processInfo] arguments] objectAtIndex:0] containsString:@"/Application"]){
+		return NO;
+	}
+	prefs = [[HBPreferences alloc] initWithIdentifier:@"com.brend0n.volumemixer"];
 	return [prefs[@"apps"] containsObject:[[NSBundle mainBundle] bundleIdentifier]];
 }
 
@@ -296,11 +300,7 @@ void registerApp(){
 
 #pragma mark ctor
 %ctor{
-	prefs = [[HBPreferences alloc] initWithIdentifier:@"com.brend0n.volumemixer"];
-	if(!isEnabledApp()) {
-		prefs=nil;
-		return;
-	}
+	if(!isEnabledApp())return;
 	NSLog(@"ctor: VolumeMixer");
 
 	%init(appHook);
