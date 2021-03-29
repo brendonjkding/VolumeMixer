@@ -28,7 +28,8 @@ static void loadPref(){
 }
 
 static BOOL isEnabledApp(){
-	if(![[[[NSProcessInfo processInfo] arguments] objectAtIndex:0] containsString:@"/Application"]){
+	if(!([[[[NSProcessInfo processInfo] arguments] objectAtIndex:0] containsString:@"/Application"]
+		||[[[NSProcessInfo processInfo] processName] isEqualToString:@"com.apple.WebKit.WebContent"] )){
 		return NO;
 	}
 	prefs = [[HBPreferences alloc] initWithIdentifier:@"com.brend0n.volumemixer"];
