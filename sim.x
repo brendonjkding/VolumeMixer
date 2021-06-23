@@ -1,5 +1,6 @@
 #import "VMHUDWindow.h"
-extern VMHUDWindow*hudWindow;
+
+extern VMHUDWindow *hudWindow;
 
 %hook UIStatusBarWindow
 

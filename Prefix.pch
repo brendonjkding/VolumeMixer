@@ -1,13 +1,10 @@
 #ifdef __OBJC__
-#define likely(E) __builtin_expect(!!(E),1)
-#define unlikely(E) __builtin_expect(!!(E),0)
 
 #define kBundlePath @"/Library/PreferenceBundles/volumemixer.bundle"
 
-#define kSpringBoardBundleId @"com.apple.springboard"
 #define kWebKitBundleId @"com.apple.WebKit.WebContent"
 
-#define VMNSLocalizedString(key) NSLocalizedStringFromTableInBundle((key),@"Root",[NSBundle bundleWithPath:kBundlePath],nil)
+#define VMNSLocalizedString(key) NSLocalizedStringFromTableInBundle((key), @"Root", [NSBundle bundleWithPath:kBundlePath], nil)
 
 #if DEBUG
 #else
@@ -18,6 +15,5 @@
 #define _MRYIPCMethod VM__MRYIPCMethod
 
 #import <UIKit/UIKit.h>
-extern UIApplication *UIApp;
 
-#endif //__objc__
+#endif //__OBJC__

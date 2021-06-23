@@ -7,6 +7,8 @@
 #import <objc/runtime.h>
 #import <dlfcn.h>
 
+extern UIApplication *UIApp;
+
 @implementation VMPrefRootListController
 
 - (void)viewDidLoad{

@@ -3,4 +3,4 @@
 #import "VMHUDRootViewController.h"
 extern HBPreferences *prefs;
 extern VMHUDWindow *hudWindow;
-extern VMHUDRootViewController*rootViewController;
+extern VMHUDRootViewController *rootViewController;

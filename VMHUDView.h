@@ -1,8 +1,8 @@
 @interface VMHUDView : UIView
-@property (strong) UIView *clippingView;
+@property (strong, nonatomic) UIView *clippingView;
+@property (strong, nonatomic) NSString *bundleID;
+@property (weak, nonatomic) id client;
 @property (nonatomic) CGFloat curScale;
-@property (strong) NSString *bundleID;
-@property (weak) id client;
--(void)initScale;
--(void)changeScale:(CGFloat)dScale;
+- (void)initScale;
+- (void)changeScale:(CGFloat)dScale;
 @end

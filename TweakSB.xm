@@ -5,12 +5,12 @@
 
 HBPreferences *prefs;
 
-VMHUDWindow*hudWindow;
-VMHUDRootViewController*rootViewController;
+VMHUDWindow *hudWindow;
+VMHUDRootViewController *rootViewController;
 static BOOL byVolumeButton;
 
 static void loadPref(){
-    byVolumeButton=prefs[@"byVolumeButton"]?[prefs[@"byVolumeButton"] boolValue]:NO;
+    byVolumeButton = prefs[@"byVolumeButton"]?[prefs[@"byVolumeButton"] boolValue]:NO;
 
     [rootViewController loadPref];
 }
@@ -25,8 +25,9 @@ static void showHUDWindowSB(){
                 [hudWindow setRootViewController:rootViewController];
         };
         if ([NSThread isMainThread]) blockForMain();
-        else dispatch_async(dispatch_get_main_queue(), blockForMain);
-        
+        else {
+            dispatch_async(dispatch_get_main_queue(), blockForMain);
+        }
     });
 }
 %group SBHook
@@ -39,14 +40,18 @@ static void showHUDWindowSB(){
 %end
 
 %hook VolumeControlClass
-- (void)increaseVolume {
+- (void)increaseVolume{
     %orig;
-    if(byVolumeButton) [hudWindow showWindow];
+    if(byVolumeButton){
+        [hudWindow showWindow];
+    }
 }
 
-- (void)decreaseVolume {
+- (void)decreaseVolume{
     %orig;
-    if(byVolumeButton) [hudWindow showWindow];
+    if(byVolumeButton){
+        [hudWindow showWindow];
+    }
 }
 %end
 %end //SBHook
@@ -54,7 +59,7 @@ static void showHUDWindowSB(){
 %ctor{
     prefs = [[HBPreferences alloc] initWithIdentifier:@"com.brend0n.volumemixer"];
 
-    %init(SBHook,VolumeControlClass=objc_getClass("SBVolumeControl")?:objc_getClass("VolumeControl"));
+    %init(SBHook, VolumeControlClass = objc_getClass("SBVolumeControl")?:objc_getClass("VolumeControl"));
 
     loadPref();
     int token;
