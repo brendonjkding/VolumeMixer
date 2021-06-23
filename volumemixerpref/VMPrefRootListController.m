@@ -1,5 +1,4 @@
 #import "VMPrefRootListController.h"
-#import "BDAppListController.h"
 #import "BDInfoListController.h"
 #import "VMLicenseViewController.h"
 #import "VMAuthorListController.h"
@@ -9,6 +8,43 @@
 #import <dlfcn.h>
 
 @implementation VMPrefRootListController
+
+- (void)viewDidLoad{
+  [super viewDidLoad];
+
+  if(prefs) {
+    NSString*key=prefs[@"didShowReleaseAlert"];
+    if(key){
+      return;
+    }
+  }
+
+  if(!objc_getClass("UIAlertController")){
+    return;
+  }
+
+  UIAlertController *alertController = [UIAlertController alertControllerWithTitle:VMNSLocalizedString(@"BETA_ALERT_TITLE") message:VMNSLocalizedString(@"BETA_ALERT") preferredStyle:UIAlertControllerStyleAlert];
+
+  UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_NO") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+      if([[UIDevice currentDevice].model isEqualToString:@"iPad"]){
+        exit(0);
+      }
+      else{
+        [self.parentViewController.navigationController popViewControllerAnimated:YES];
+      }
+  }];
+
+  UIAlertAction *okAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_YES") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      prefs[@"didShowReleaseAlert"]=@YES;
+    });
+  }];
+
+  [alertController addAction:cancelAction];
+  [alertController addAction:okAction];
+  [self presentViewController:alertController animated:YES completion:nil];
+
+}
 
 - (NSArray *)specifiers {
   if (!_specifiers) {
@@ -90,45 +126,6 @@
     else {
       [super setPreferenceValue:value specifier:specifier];
     }
-}
--(void)selectAudiomixApp{
-  UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
-  self.navigationItem.backBarButtonItem = backItem; 
-  [self.navigationController pushViewController:[[BDAppListController alloc] initWithDefaults:@"com.brend0n.volumemixer" andKey:@"audiomixApps"] animated:YES];
-}
--(void)_selectApp{
-  UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
-  self.navigationItem.backBarButtonItem = backItem; 
-  [self.navigationController pushViewController:[[BDAppListController alloc] initWithDefaults:@"com.brend0n.volumemixer" andKey:@"apps"] animated:YES];
-}
--(void)selectApp{
-  if(prefs) {
-    NSString*key=prefs[@"didShowReleaseAlert"];
-    if(key){
-      [self _selectApp];
-      return;  
-    }
-    
-  }
-
-  if(!objc_getClass("UIAlertController")){
-    [self _selectApp];
-  }
-  UIAlertController *alertController = [UIAlertController alertControllerWithTitle:VMNSLocalizedString(@"BETA_ALERT_TITLE") message:VMNSLocalizedString(@"BETA_ALERT") preferredStyle:UIAlertControllerStyleAlert];
-
-  UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_NO") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {}];
-
-  UIAlertAction *okAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_YES") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      prefs[@"didShowReleaseAlert"]=@YES;
-      [self _selectApp];
-    });
-  }];
-
-  [alertController addAction:cancelAction];
-  [alertController addAction:okAction];
-  [self presentViewController:alertController animated:YES completion:nil];
-  
 }
 -(void)showAuthors{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
