@@ -4,6 +4,7 @@
 #import "TweakSB.h"
 #import "MTMaterialView.h"
 #import "FrontBoard.h"
+#import "_UIBackdropView.h"
 #import "MRYIPC/MRYIPCCenter.h"
 #import <objc/runtime.h>
 #import <notify.h>
@@ -79,7 +80,7 @@
         mtBgView=[objc_getClass("MTMaterialView") materialViewWithStyleOptions:4 materialSettings:nil captureOnly:NO];
     }
     else{
-        mtBgView=[[objc_getClass("_UIBackdropView") alloc] initWithStyle:2060];
+        mtBgView=[(_UIBackdropView*)[objc_getClass("_UIBackdropView") alloc] initWithStyle:2060];
     }
     mtBgView.layer.cornerRadius = 10.;
     mtBgView.layer.masksToBounds = YES;

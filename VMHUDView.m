@@ -2,6 +2,7 @@
 #import "VMHUDWindow.h"
 #import "TweakSB.h"
 #import "MTMaterialView.h"
+#import "_UIBackdropView.h"
 #import "MRYIPC/MRYIPCCenter.h"
 #import <objc/runtime.h>
 
@@ -58,8 +59,8 @@
         mtSliderView=[objc_getClass("MTMaterialView") materialViewWithStyleOptions:1 materialSettings:nil captureOnly:NO];
     }
     else{
-        mtBgView=[[objc_getClass("_UIBackdropView") alloc] initWithStyle:2060];
-        mtSliderView=[[objc_getClass("_UIBackdropView") alloc] initWithStyle:100];
+        mtBgView=[(_UIBackdropView*)[objc_getClass("_UIBackdropView") alloc] initWithStyle:2060];
+        mtSliderView=[(_UIBackdropView*)[objc_getClass("_UIBackdropView") alloc] initWithStyle:100];
     }
 	[mtBgView setFrame:self.bounds];
 	[self addSubview:mtBgView];
