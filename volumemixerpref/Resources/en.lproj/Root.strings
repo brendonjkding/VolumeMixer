@@ -1,6 +1,6 @@
 "CHOOSE_ENABLED_APP"="Choose Enabled App";
 "CHOOSE_AUDIO_MIX_MUSIC_APP"="Choose Music App";
-"ABOUT_AUTHOR"="Author";
+"AUTHOR"="Author";
 "BETA_ALERT_TITLE"="Read before using!!!";
 "BETA_ALERT"="This tweak does NOT control volume from system side. Instead, it hooks several audio APIs used by Apps to achieve the control of volume. It doesn't modify files on your device. But the runtime modification is detectable. Few Apps(games) may consider it as illegal. Use it AT YOUR OWN RISK";
 "ACTION_YES"="YES";
