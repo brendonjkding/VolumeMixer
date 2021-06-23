@@ -17,7 +17,7 @@ Credit: onewayticket255";
 "AUDIO_MIX_CREDIT_HYPERLINK_TEXT"="onewayticket255";
 "AUTHOR_AUDIO_MIX"="Audio Mix 部分";
 "WEB_AUDIO_AUDIO_UNIT"="网页音频 (加强)";
-"WEB_FOOTER_TEXT"="并非所有web音量都可控制
+"WEB_FOOTER_TEXT"="目前并非所有web音量都可控制。如: Youtube
 如果有网页崩溃、重复刷新现象，关闭以上两选项";
 "SELECT_ALL"="全选";
 "DESELECT_ALL"="全不选";
