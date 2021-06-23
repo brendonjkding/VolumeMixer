@@ -1,6 +1,7 @@
 #import "VMHookInfo.h"
 #import <AudioUnit/AudioUnit.h>
 #import <substrate.h>
+#import "dobby_override.h"
 #import "VMHookAudioUnit.hpp"
 
 // key: outputCallbackAddressString value: addressForCalling

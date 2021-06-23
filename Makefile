@@ -16,6 +16,7 @@ TWEAK_NAME = VolumeMixer VolumeMixerSB
 VolumeMixer_FILES = Tweak.xm VMHookInfo.mm VMHookAudioUnit.mm 
 VolumeMixer_FILES += MRYIPC/MRYIPCCenter.m
 VolumeMixer_CFLAGS = -fobjc-arc
+VolumeMixer_LIBRARIES += dobby
 
 ifdef SIMULATOR
 VolumeMixer_LIBRARIES += substrate
