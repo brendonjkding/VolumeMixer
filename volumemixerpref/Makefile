@@ -18,7 +18,6 @@ volumemixer_INSTALL_PATH = /Library/PreferenceBundles
 volumemixer_FRAMEWORKS = UIKit
 volumemixer_PRIVATE_FRAMEWORKS = Preferences
 volumemixer_CFLAGS = -fobjc-arc -Wno-error=unused-variable -Wno-error=unused-function -include Prefix.pch
-volumemixer_LIBRARIES = applist
 volumemixer_EXTRA_FRAMEWORKS += Cephei AltList
 
 include $(THEOS_MAKE_PATH)/bundle.mk

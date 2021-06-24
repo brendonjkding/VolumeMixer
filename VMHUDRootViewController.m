@@ -8,7 +8,7 @@
 #import "MRYIPC/MRYIPCCenter.h"
 #import <objc/runtime.h>
 #import <notify.h>
-#import <AppList/AppList.h>
+#import <UIKit/UIImage+Private.h>
 #import <sys/types.h>
 #import <signal.h>
 
@@ -20,6 +20,7 @@
 #define kCollectionViewItemInset 10.
 #define kHudWidth 47.
 #define kHudHeight 148.
+#define kIconSize 29.
 
 @implementation VMHUDRootViewController {
     MRYIPCCenter *_center;
@@ -60,7 +61,7 @@
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
     layout.minimumLineSpacing = 1;
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
-    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 100, minWidth, kHudHeight + ALApplicationIconSizeSmall + kSliderAndIconInterval + 2 * kCollectionViewItemInset) collectionViewLayout:layout];
+    _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 100, minWidth, kHudHeight + kIconSize + kSliderAndIconInterval + 2 * kCollectionViewItemInset) collectionViewLayout:layout];
     CGFloat newCenterY = self.view.frame.size.width < self.view.frame.size.height ? _panelPortraitY : _panelLandScapeY;
     [_collectionView setCenter:CGPointMake(self.view.frame.size.width / 2., newCenterY)];
     _collectionView.showsHorizontalScrollIndicator = NO;
@@ -160,30 +161,32 @@
         [view removeFromSuperview];
     }
     VMHUDView *hudView = _hudViews[index];
-    [contentView setFrame:CGRectMake(contentView.frame.origin.x, contentView.frame.origin.y, hudView.frame.size.width, kHudHeight + ALApplicationIconSizeSmall + kSliderAndIconInterval)];
+    [contentView setFrame:CGRectMake(contentView.frame.origin.x, contentView.frame.origin.y, hudView.frame.size.width, kHudHeight + kIconSize + kSliderAndIconInterval)];
     [contentView addSubview:hudView];
     UIImage *icon;
-    if(![_bundleIDs[index] isEqualToString:kWebKitBundleId]) icon = [[ALApplicationList sharedApplicationList] iconOfSize:ALApplicationIconSizeSmall forDisplayIdentifier:_bundleIDs[index]];
+    if(![_bundleIDs[index] isEqualToString:kWebKitBundleId]) {
+        icon = [UIImage _applicationIconImageForBundleIdentifier:_bundleIDs[index] format:0 scale:[UIScreen mainScreen].scale];
+    }
     else {
         icon = [UIImage imageNamed:@"WebKitIcon" inBundle:[NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle"] compatibleWithTraitCollection:nil];
     }
     UIImageView *imageView = [[UIImageView alloc] initWithImage:icon];
     [contentView addSubview:imageView];
     [imageView setFrame:CGRectMake(
-                            (hudView.frame.size.width - ALApplicationIconSizeSmall) / 2.,
+                            (hudView.frame.size.width - kIconSize) / 2.,
                             contentView.bounds.origin.y,
                             imageView.frame.size.width,
                             imageView.frame.size.height)];
     [hudView setFrame:CGRectMake(
                           contentView.bounds.origin.x,
-                          contentView.bounds.origin.y + ALApplicationIconSizeSmall + kSliderAndIconInterval,
+                          contentView.bounds.origin.y + kIconSize + kSliderAndIconInterval,
                           hudView.frame.size.width,
                           hudView.frame.size.height)];
     return cell;
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-    return CGSizeMake(100, kHudHeight + ALApplicationIconSizeSmall + kSliderAndIconInterval);
+    return CGSizeMake(100, kHudHeight + kIconSize + kSliderAndIconInterval);
 }
 
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section {

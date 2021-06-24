@@ -29,7 +29,7 @@ ifdef SIMULATOR
 VolumeMixerSB_FILES += sim.x
 endif
 VolumeMixerSB_CFLAGS = -fobjc-arc 
-VolumeMixerSB_LIBRARIES = applist substrate
+VolumeMixerSB_LIBRARIES = substrate
 VolumeMixerSB_EXTRA_FRAMEWORKS += Cephei
 
 ADDITIONAL_CFLAGS += -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -include Prefix.pch
