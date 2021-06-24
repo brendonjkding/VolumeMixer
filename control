@@ -4,11 +4,9 @@ Depends: mobilesubstrate, preferenceloader, com.opa334.altlist, ws.hbang.common 
 Version: 0.0.5~beta1
 Architecture: iphoneos-arm
 Description: Volume control for individual app
- 0.0.4:
- Add Option "Hide Inactive Apps"
- Use Cephei to manage Settings
- Add volume down/up Activator listeners
 Maintainer: Brend0n <brendonjkding@126.com>
 Author: Brend0n <brendonjkding@126.com>
 Section: Tweaks
 Icon: file:///Library/PreferenceBundles/volumemixer.bundle/icon@2x.png
+Depiction: http://brendonjkding.github.io/depictions/web/?p=com.brend0n.volumemixer
+SileoDepiction: http://brendonjkding.github.io/depictions/web/com.brend0n.volumemixer/depiction.json
