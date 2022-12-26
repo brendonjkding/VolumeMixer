@@ -19,8 +19,7 @@ static void showHUDWindowSB(){
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         void(^blockForMain)(void) = ^{
-                CGRect bounds=[UIScreen mainScreen].bounds;
-                hudWindow =[[VMHUDWindow alloc] initWithFrame:bounds];
+                hudWindow = [VMHUDWindow sharedWindow];
                 rootViewController=[VMHUDRootViewController new];
                 [hudWindow setRootViewController:rootViewController];
         };

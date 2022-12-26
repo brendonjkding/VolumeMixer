@@ -2,8 +2,15 @@
 #import "VMHUDRootViewController.h"
 #import <notify.h>
 
-@implementation VMHUDWindow
+static VMHUDWindow *sharedWindow;
 
+@implementation VMHUDWindow
++ (id)sharedWindow{
+    if(!sharedWindow){
+        sharedWindow = [[VMHUDWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
+    }
+    return sharedWindow;
+}
 - (id)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if(!self) return self;
