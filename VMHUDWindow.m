@@ -37,8 +37,11 @@ static VMHUDWindow *sharedWindow;
     return YES;
 }
 - (void)hideWindow {
+    ((VMHUDRootViewController *)self.rootViewController).touchBlockView.hidden = YES;
     [UIView animateWithDuration:0.5 animations:^{
         [self setAlpha:0.];
+    } completion:^(BOOL finished){
+        ((VMHUDRootViewController *)self.rootViewController).touchBlockView.hidden = NO;
     }];
 }
 - (void)showWindow {

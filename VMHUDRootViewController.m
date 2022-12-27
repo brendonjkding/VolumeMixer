@@ -54,7 +54,7 @@
 
     double maxWidth = MAX(self.view.frame.size.width, self.view.frame.size.height);
     double minWidth = MIN(self.view.frame.size.width, self.view.frame.size.height);
-    UILabel *_touchBlockView = [[UILabel alloc] initWithFrame:CGRectMake(-10, 0, maxWidth + 10, maxWidth)];
+    _touchBlockView = [[UILabel alloc] initWithFrame:CGRectMake(-10, 0, maxWidth + 10, maxWidth)];
     [self.view addSubview:_touchBlockView];
     _touchBlockView.text = @"1";
 
