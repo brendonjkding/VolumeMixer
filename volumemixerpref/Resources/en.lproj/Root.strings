@@ -10,6 +10,7 @@
 "SHOW_PANEL"="Show panel";
 "BY_VOLUME_BUTTON"="By Volume Button";
 "BY_ACTIVATOR"="By Activator";
+"CONTROLCENTER"="By Control Center Module";
 "ENABLE_AUDIO_MIX"="Audio Mix";
 "AUDIO_MIX_CREDIT"="Prevent music apps from being interrupted.(This will NOT make two \"music\" mode apps play simultaneously)
 With Audio Mix Option on, apps will not show up in ControlCenter/LockScreen. Manually choose your music apps to fix that. 

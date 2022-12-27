@@ -79,6 +79,9 @@ extern UIApplication *UIApp;
             [spec setButtonAction:@selector(openActivator)];
           }
         }
+        if(!objc_getClass("CCSModuleProviderManager")){
+          [[self specifierForID:@"ControlCenter"] setButtonAction:@selector(openCCSupport)];
+        }
 
         spec=[PSSpecifier emptyGroupSpecifier];
         [_specifiers addObject:spec];
@@ -144,5 +147,13 @@ extern UIApplication *UIApp;
 }
 -(void)openActivator{
   [UIApp openURL:[NSURL URLWithString:@"cydia://package/libactivator"]];
+}
+-(void)openCCSupport{
+  if([UIApp canOpenURL:[NSURL URLWithString:@"cydia://package/com.opa334.ccsupport"]]){
+    [UIApp openURL:[NSURL URLWithString:@"cydia://package/com.opa334.ccsupport"]];
+  }
+  else{
+    [UIApp openURL:[NSURL URLWithString:@"sileo://package/com.opa334.ccsupport"]];
+  }
 }
 @end

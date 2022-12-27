@@ -90,6 +90,24 @@
 			<key>PostNotification</key>
 			<string>com.brend0n.volumemixer/loadPref</string>
 		</dict>
+		<dict>
+		    <key>bundle</key>
+		    <string>ControlCenterSettings</string>
+		    <key>cell</key>
+		    <string>PSLinkCell</string>
+		    <key>detail</key>
+		    <string>ControlCenterSettingsListController</string>
+		    <key>iconCache</key>
+		    <string>ControlCenter</string>
+		    <key>iconImageShouldFlipForRightToLeft</key>
+		    <true/>
+		    <key>id</key>
+		    <string>ControlCenter</string>
+		    <key>isController</key>
+		    <true/>
+		    <key>label</key>
+		    <string>CONTROLCENTER</string>
+		</dict>
         <dict>
 			<key>cell</key>
 			<string>PSLinkCell</string>
