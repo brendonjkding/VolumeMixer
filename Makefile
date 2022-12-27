@@ -35,6 +35,7 @@ VolumeMixerSB_EXTRA_FRAMEWORKS += Cephei
 export ADDITIONAL_CFLAGS += -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -include Prefix.pch
 
 SUBPROJECTS += volumemixerpref
+SUBPROJECTS += ccvolumemixer
 
 include $(THEOS)/makefiles/common.mk
 include $(THEOS_MAKE_PATH)/tweak.mk

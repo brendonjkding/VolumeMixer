@@ -1,0 +1,9 @@
+Package: com.brend0n.ccvolumemixer
+Name: CCVolumeMixer
+Depends: mobilesubstrate
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: An awesome Control Center module!
+Maintainer: Brend0n <brendonjkding@126.com>
+Author: Brend0n <brendonjkding@126.com>
+Section: Control Center (Modules)
