@@ -1,11 +1,11 @@
 ifdef SIMULATOR
-TARGET = simulator:clang:latest:8.0
+export TARGET = simulator:clang:latest:8.0
 else
-TARGET = iphone:clang:latest:7.0
+export TARGET = iphone:clang:latest:7.0
 	ifeq ($(debug),0)
-		ARCHS= armv7 arm64 arm64e
+		export ARCHS = armv7 arm64 arm64e
 	else
-		ARCHS= arm64 arm64e
+		export ARCHS = arm64 arm64e
 	endif
 endif
 
@@ -32,7 +32,7 @@ VolumeMixerSB_CFLAGS = -fobjc-arc
 VolumeMixerSB_LIBRARIES = substrate
 VolumeMixerSB_EXTRA_FRAMEWORKS += Cephei
 
-ADDITIONAL_CFLAGS += -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -include Prefix.pch
+export ADDITIONAL_CFLAGS += -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -include Prefix.pch
 
 SUBPROJECTS += volumemixerpref
 
