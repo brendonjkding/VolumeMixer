@@ -27,6 +27,7 @@
     CGFloat _panelPortraitY;
     CGFloat _panelLandScapeY;
     BOOL _isHideInactiveApps;
+    BOOL _isHideBackground;
     UICollectionView *_collectionView;
     NSMutableArray<VMHUDView *> *_hudViews;
     NSMutableArray<MRYIPCCenter *> *_clients;
@@ -88,6 +89,7 @@
     mtBgView.layer.cornerRadius = 10.;
     mtBgView.layer.masksToBounds = YES;
     _collectionView.backgroundView = mtBgView;
+    _collectionView.backgroundView.hidden = _isHideBackground;
 
 
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
@@ -107,6 +109,9 @@
 }
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
     // NSLog(@"touch view: %@",touch.view);
+    if(_isHideBackground){
+        return touch.view==self.view || touch.view==_collectionView;
+    }
     return touch.view == self.view;
 }
 
@@ -248,11 +253,13 @@
     _panelPortraitY = prefs[@"panelPortraitY"] ? [prefs[@"panelPortraitY"] doubleValue] : 200.;
     _panelLandScapeY = prefs[@"panelLandScapeY"] ? [prefs[@"panelLandScapeY"] doubleValue] : [UIScreen mainScreen].bounds.size.width / 2.;
     _isHideInactiveApps = prefs[@"isHideInactiveApps"] ? [prefs[@"isHideInactiveApps"] boolValue] : NO;
+    _isHideBackground = prefs[@"isHideBackground"] ? [prefs[@"isHideBackground"] boolValue] : NO;
 
     CGFloat newCenterY = self.view.frame.size.width < self.view.frame.size.height ? _panelPortraitY : _panelLandScapeY;
     [UIView animateWithDuration:0.25 animations:^{
         [_collectionView setCenter:CGPointMake(_collectionView.center.x, newCenterY)];
     }];
+    _collectionView.backgroundView.hidden = _isHideBackground;
 }
 - (void)decreaseVolume {
     int i = 0;
