@@ -1,5 +1,5 @@
 @interface VMHUDWindow : UIWindow
-+ (id)sharedWindow;
++ (VMHUDWindow *)sharedWindow;
 - (void)changeVisibility;
 - (void)showWindow;
 - (void)hideWindow;
