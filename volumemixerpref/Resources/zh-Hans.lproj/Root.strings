@@ -28,6 +28,7 @@ Credit: onewayticket255";
 "PANEL_LANDSCAPE_Y"="面板横屏y轴";
 "HIDE_INACTIVE_APPS"="仅显示运行中App";
 "HIDE_BACKGROUND"="透明背景";
+"SHOWS_ON_LOCK_SCREEN"="在锁屏/通知中心界面显示";
 "ACTIVATOR_LISTENERS"="Activator Listeners";
 "ACTIVATOR_VOLUME_UP"="Volume Up";
 "ACTIVATOR_VOLUME_DOWN"="Volume Down";

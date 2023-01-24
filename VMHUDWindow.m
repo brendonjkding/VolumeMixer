@@ -1,6 +1,8 @@
 #import "VMHUDWindow.h"
 #import "VMHUDRootViewController.h"
 #import <notify.h>
+#import <SpringBoard/SBLockScreenManager.h>
+#import <objc/runtime.h>
 
 static VMHUDWindow *sharedWindow;
 
@@ -45,6 +47,7 @@ static VMHUDWindow *sharedWindow;
     }];
 }
 - (void)showWindow {
+    if(!_showsOnLockScreen && [[objc_getClass("SBLockScreenManager") sharedInstance] isUILocked]) return;
     [self.rootViewController performSelector:@selector(reloadRunningApp)];
     [UIView animateWithDuration:0.5
                           delay:0

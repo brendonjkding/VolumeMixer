@@ -3,4 +3,5 @@
 - (void)changeVisibility;
 - (void)showWindow;
 - (void)hideWindow;
+@property BOOL showsOnLockScreen;
 @end

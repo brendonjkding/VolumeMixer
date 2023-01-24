@@ -254,6 +254,7 @@
     _panelLandScapeY = prefs[@"panelLandScapeY"] ? [prefs[@"panelLandScapeY"] doubleValue] : [UIScreen mainScreen].bounds.size.width / 2.;
     _isHideInactiveApps = prefs[@"isHideInactiveApps"] ? [prefs[@"isHideInactiveApps"] boolValue] : NO;
     _isHideBackground = prefs[@"isHideBackground"] ? [prefs[@"isHideBackground"] boolValue] : NO;
+    [VMHUDWindow sharedWindow].showsOnLockScreen = prefs[@"showsOnLockScreen"] ? [prefs[@"showsOnLockScreen"] boolValue] : YES;
 
     CGFloat newCenterY = self.view.frame.size.width < self.view.frame.size.height ? _panelPortraitY : _panelLandScapeY;
     [UIView animateWithDuration:0.25 animations:^{
