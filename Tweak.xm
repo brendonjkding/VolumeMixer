@@ -16,6 +16,7 @@ static double g_curScale = 1;
 static AudioQueueRef lstAudioQueue;
 static AVPlayer *lstAVPlayer;
 static AVAudioPlayer *lstAVAudioPlayer;
+static id lstAVSampleBufferAudioRenderer;
 
 static NSMutableDictionary<NSString*,VMHookInfo*> *hookInfos;
 
@@ -241,6 +242,21 @@ static BOOL isEnabledApp(){
 }
 %end
 
+#pragma mark AVSampleBufferAudioRenderer
+%hook AVSampleBufferAudioRenderer
++(instancetype)alloc{
+    id ret = %orig;
+    lstAVSampleBufferAudioRenderer = ret;
+    NSLog(@"AVSampleBufferAudioRenderer alloc %@", ret);
+    if([[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) registerApp();
+    return ret;
+}
+-(void)setVolume:(float)volume{
+    NSLog(@"AVSampleBufferAudioRenderer setVolume: %f",volume);
+    if(!volume) return %orig;
+    return %orig(g_curScale);
+}
+%end //AVSampleBufferAudioRenderer
 %end //appHook
 
 
@@ -258,6 +274,7 @@ static void setScale(double curScale){
     if(lstAudioQueue) AudioQueueSetParameter(lstAudioQueue,kAudioQueueParam_Volume,g_curScale);
     [lstAVAudioPlayer setVolume:g_curScale];
     [lstAVPlayer setVolume:g_curScale];
+    [lstAVSampleBufferAudioRenderer setVolume:g_curScale];
     
 }
 @interface VMAPPServer : NSObject
@@ -304,7 +321,7 @@ void registerApp(){
     if(!isEnabledApp()) return;
     NSLog(@"ctor: VolumeMixer");
 
-    %init(appHook);
+    %init(appHook, AVSampleBufferAudioRenderer = objc_getClass("AVSampleBufferAudioRenderer"));
     if(![[[NSBundle mainBundle] bundleIdentifier] isEqualToString:kWebKitBundleId]) {
         registerApp();
     }
