@@ -18,7 +18,7 @@ Credit: onewayticket255";
 "AUDIO_MIX_CREDIT_HYPERLINK_TEXT"="onewayticket255";
 "AUTHOR_AUDIO_MIX"="For Audio Mix part.";
 "WEB_AUDIO_AUDIO_UNIT"="Web Audio (Advanced)";
-"WEB_FOOTER_TEXT"="Not work on some types of web audio. Known: Youtube on web, Youtube App
+"WEB_FOOTER_TEXT"="Not work on some types of web audio. Known: Youtube on web
 Turn off two web audio options if webpages stuck or failed to load.";
 "SELECT_ALL"="Select All";
 "DESELECT_ALL"="Deselect All";
