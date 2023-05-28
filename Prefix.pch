@@ -1,6 +1,6 @@
 #ifdef __OBJC__
 
-#define kBundlePath @"/Library/PreferenceBundles/volumemixer.bundle"
+#define kBundlePath @THEOS_PACKAGE_INSTALL_PREFIX"/Library/PreferenceBundles/volumemixer.bundle"
 
 #define kWebKitBundleId @"com.apple.WebKit.WebContent"
 
