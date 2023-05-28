@@ -36,7 +36,7 @@
 - (UIImage *)activator:(LAActivator *)activator requiresSmallIconForListenerName:(NSString *)listenerName scale:(CGFloat)scale {
     static UIImage *icon;
     if(!icon) {
-        icon = [UIImage imageNamed:@"icon" inBundle:[NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle/"] compatibleWithTraitCollection:nil];
+        icon = [UIImage imageNamed:@"icon" inBundle:[NSBundle bundleWithPath:kBundlePath] compatibleWithTraitCollection:nil];
     }
     return icon;
 }

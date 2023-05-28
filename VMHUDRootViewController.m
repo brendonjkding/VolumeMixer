@@ -173,7 +173,7 @@
         icon = [UIImage _applicationIconImageForBundleIdentifier:_bundleIDs[index] format:0 scale:[UIScreen mainScreen].scale];
     }
     else {
-        icon = [UIImage imageNamed:@"WebKitIcon" inBundle:[NSBundle bundleWithPath:@"/Library/PreferenceBundles/volumemixer.bundle"] compatibleWithTraitCollection:nil];
+        icon = [UIImage imageNamed:@"WebKitIcon" inBundle:[NSBundle bundleWithPath:kBundlePath] compatibleWithTraitCollection:nil];
     }
     UIImageView *imageView = [[UIImageView alloc] initWithImage:icon];
     [contentView addSubview:imageView];
