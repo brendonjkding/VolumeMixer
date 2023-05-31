@@ -1,5 +1,3 @@
-INSTALL_TARGET_PROCESSES = SpringBoard
-
 BUNDLE_NAME = CCVolumeMixer
 CCVolumeMixer_BUNDLE_EXTENSION = bundle
 CCVolumeMixer_FILES = CCVolumeMixer.m
