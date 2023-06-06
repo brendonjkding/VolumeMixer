@@ -245,9 +245,9 @@
     CGFloat newHeight = size.height;
 
     CGFloat newCenterY = newWidth < newHeight ? _panelPortraitY : _panelLandScapeY;
-    [UIView animateWithDuration:0.25 animations:^{
+    [coordinator animateAlongsideTransition:^(id arg1){
         [_collectionView setCenter:CGPointMake(newWidth / 2., newCenterY)];
-    }];
+    } completion:nil];
 }
 - (void)loadPref {
     _panelPortraitY = prefs[@"panelPortraitY"] ? [prefs[@"panelPortraitY"] doubleValue] : 200.;
