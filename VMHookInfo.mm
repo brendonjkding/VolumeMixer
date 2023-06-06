@@ -19,8 +19,7 @@ NSMutableDictionary<NSString *, NSNumber *> *hookedCallbacks;
 	    kAudioFormatFlagIsNonMixable                = (1U << 6),     // 0x40
 	    kAudioFormatFlagsAreAllClear                = 0x80000000,
     */
-    static int cn = 0, cc = 0;
-    (void)(cn + cc);
+    static __unused int cn = 0, cc = 0;
     //different callback hooked to same my but need different orig, use inrefcon to differ
 
     if(_outputCallback && _mFormatFlags && _inRefCon) {
