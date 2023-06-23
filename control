@@ -1,6 +1,6 @@
 Package: com.brend0n.volumemixer
 Name: VolumeMixer
-Depends: mobilesubstrate, preferenceloader, com.opa334.altlist, ws.hbang.common (>= 1.11)
+Depends: mobilesubstrate, preferenceloader, com.opa334.altlist, ws.hbang.common (>= 1.17)
 Version: 0.0.6~beta2
 Architecture: iphoneos-arm
 Description: Volume control for individual app
