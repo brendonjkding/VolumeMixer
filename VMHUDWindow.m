@@ -4,6 +4,10 @@
 #import <SpringBoard/SBLockScreenManager.h>
 #import <objc/runtime.h>
 
+@interface SpringBoard
+- (id)embeddedDisplayWindowScene;
+@end
+
 static VMHUDWindow *sharedWindow;
 
 @implementation VMHUDWindow
@@ -18,6 +22,12 @@ static VMHUDWindow *sharedWindow;
     if(!self) return self;
 
     [self configureUI];
+
+    if(@available(iOS 16.0, *)){
+        if(!self.windowScene){
+            self.windowScene = [(SpringBoard *)[UIApplication sharedApplication] embeddedDisplayWindowScene];
+        }
+    }
 
     return self;
 }
