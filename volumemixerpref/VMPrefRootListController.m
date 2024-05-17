@@ -56,13 +56,13 @@ extern UIApplication *UIApp;
         
         spec=[self specifierForID:@"PANEL_PORTRAIT_Y"];
         [spec setProperty:@0 forKey:@"min"];
-        [spec setProperty:@([UIScreen mainScreen].bounds.size.height) forKey:@"max"];
+        [spec setProperty:@(MAX(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.height)) forKey:@"max"];
         [spec setProperty:@200 forKey:@"default"];
 
         spec=[self specifierForID:@"PANEL_LANDSCAPE_Y"];
         [spec setProperty:@0 forKey:@"min"];
-        [spec setProperty:@([UIScreen mainScreen].bounds.size.width) forKey:@"max"];
-        [spec setProperty:@([UIScreen mainScreen].bounds.size.width/2.) forKey:@"default"];
+        [spec setProperty:@(MIN(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.height)) forKey:@"max"];
+        [spec setProperty:@(MIN(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.height)/2.) forKey:@"default"];
 
         spec=[self specifierForID:@"AUDIO_MIX_CREDIT_GROUP"];
         [spec setProperty:@"PSFooterHyperlinkView" forKey:@"footerCellClass"];

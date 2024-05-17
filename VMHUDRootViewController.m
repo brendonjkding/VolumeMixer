@@ -251,7 +251,7 @@
 }
 - (void)loadPref {
     _panelPortraitY = prefs[@"panelPortraitY"] ? [prefs[@"panelPortraitY"] doubleValue] : 200.;
-    _panelLandScapeY = prefs[@"panelLandScapeY"] ? [prefs[@"panelLandScapeY"] doubleValue] : [UIScreen mainScreen].bounds.size.width / 2.;
+    _panelLandScapeY = prefs[@"panelLandScapeY"] ? [prefs[@"panelLandScapeY"] doubleValue] : MIN(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.height) / 2.;
     _isHideInactiveApps = prefs[@"isHideInactiveApps"] ? [prefs[@"isHideInactiveApps"] boolValue] : NO;
     _isHideBackground = prefs[@"isHideBackground"] ? [prefs[@"isHideBackground"] boolValue] : NO;
     [VMHUDWindow sharedWindow].showsOnLockScreen = prefs[@"showsOnLockScreen"] ? [prefs[@"showsOnLockScreen"] boolValue] : YES;
