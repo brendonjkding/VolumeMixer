@@ -1,5 +1,5 @@
 #import <Preferences/PSListController.h>
 
-@interface BDInfoListController :PSListController
+@interface BDInfoListController : PSListController
 
 @end

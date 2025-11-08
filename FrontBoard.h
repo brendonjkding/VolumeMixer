@@ -5,5 +5,5 @@
 @end
 
 @interface FBProcess : NSObject
-@property (nonatomic,copy,readonly) FBProcessState * state;
+@property (nonatomic,copy,readonly) FBProcessState *state;
 @end

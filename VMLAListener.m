@@ -13,7 +13,6 @@
     [hudWindow changeVisibility];
 }
 
-
 + (void)load {
     @autoreleasepool {
         // Register listener

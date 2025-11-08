@@ -3,14 +3,14 @@
 #import <notify.h>
 #import "TweakSB.h"
 
-HBPreferences *prefs;
+HBPreferences *prefs = nil;
 
-VMHUDWindow *hudWindow;
-VMHUDRootViewController *rootViewController;
-static BOOL byVolumeButton;
+VMHUDWindow *hudWindow = nil;
+VMHUDRootViewController *rootViewController = nil;
+static BOOL byVolumeButton = NO;
 
 static void loadPref(){
-    byVolumeButton = prefs[@"byVolumeButton"]?[prefs[@"byVolumeButton"] boolValue]:NO;
+    byVolumeButton = prefs[@"byVolumeButton"] ? [prefs[@"byVolumeButton"] boolValue] : NO;
 
     [rootViewController loadPref];
 }
@@ -18,25 +18,20 @@ static void loadPref(){
 static void showHUDWindowSB(){
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        void(^blockForMain)(void) = ^{
-                hudWindow = [VMHUDWindow sharedWindow];
-                rootViewController=[VMHUDRootViewController new];
-                [hudWindow setRootViewController:rootViewController];
-        };
-        if ([NSThread isMainThread]) blockForMain();
-        else {
-            dispatch_async(dispatch_get_main_queue(), blockForMain);
-        }
+        hudWindow = VMHUDWindow.sharedWindow;
+        rootViewController = [VMHUDRootViewController new];
+        hudWindow.rootViewController = rootViewController;
     });
 }
-%group SBHook
+
+%group SB
 %hook SpringBoard
--(void) applicationDidFinishLaunching:(id)application{
+- (void)applicationDidFinishLaunching:(id)application{
     %orig;
     NSLog(@"applicationDidFinishLaunching");
     showHUDWindowSB();    
 }
-%end
+%end //SpringBoard
 
 %hook VolumeControlClass
 - (void)increaseVolume{
@@ -45,20 +40,19 @@ static void showHUDWindowSB(){
         [hudWindow showWindow];
     }
 }
-
 - (void)decreaseVolume{
     %orig;
     if(byVolumeButton){
         [hudWindow showWindow];
     }
 }
-%end
-%end //SBHook
+%end //VolumeControlClass
+%end //SB
 
 %ctor{
     prefs = [[HBPreferences alloc] initWithIdentifier:@"com.brend0n.volumemixer"];
 
-    %init(SBHook, VolumeControlClass = objc_getClass("SBVolumeControl")?:objc_getClass("VolumeControl"));
+    %init(SB, VolumeControlClass = objc_getClass("SBVolumeControl") ?: objc_getClass("VolumeControl"));
 
     loadPref();
     int token;

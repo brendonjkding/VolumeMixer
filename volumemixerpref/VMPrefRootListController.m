@@ -15,8 +15,7 @@ extern UIApplication *UIApp;
   [super viewDidLoad];
 
   if(prefs) {
-    NSString*key=prefs[@"didShowReleaseAlert"];
-    if(key){
+    if(prefs[@"didShowReleaseAlert"]){
       return;
     }
   }
@@ -38,14 +37,13 @@ extern UIApplication *UIApp;
 
   UIAlertAction *okAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_YES") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      prefs[@"didShowReleaseAlert"]=@YES;
+      prefs[@"didShowReleaseAlert"] = @YES;
     });
   }];
 
   [alertController addAction:cancelAction];
   [alertController addAction:okAction];
   [self presentViewController:alertController animated:YES completion:nil];
-
 }
 
 - (NSArray *)specifiers {
@@ -119,36 +117,36 @@ extern UIApplication *UIApp;
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier*)specifier {
     if([specifier.properties[@"key"] isEqualToString:@"webEnabled"]) {
-      NSMutableArray*apps=[prefs[@"apps"] mutableCopy]?:[NSMutableArray new];
-      if([value boolValue]&&![apps containsObject:kWebKitBundleId]){
+      NSMutableArray *apps = [prefs[@"apps"] mutableCopy] ?: [NSMutableArray new];
+      if([value boolValue] && ![apps containsObject:kWebKitBundleId]){
         [apps addObject:kWebKitBundleId];
       }
-      else if ([apps containsObject:kWebKitBundleId]){
+      else if([apps containsObject:kWebKitBundleId]){
         [apps removeObjectAtIndex:[apps indexOfObject:kWebKitBundleId]];
       }
-      prefs[@"apps"]=apps;
+      prefs[@"apps"] = apps;
     }
     else {
       [super setPreferenceValue:value specifier:specifier];
     }
 }
--(void)showAuthors{
+- (void)showAuthors{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
   self.navigationItem.backBarButtonItem = backItem;
   [self.navigationController pushViewController:[[VMAuthorListController alloc] init] animated:YES];
 }
--(void)showLicenses{
+- (void)showLicenses{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
   self.navigationItem.backBarButtonItem = backItem; 
   [self.navigationController pushViewController:[[VMLicenseViewController alloc] init] animated:TRUE];
 }
--(void)openOnewayticket{
+- (void)openOnewayticket{
   [UIApp openURL:[NSURL URLWithString:@"https://github.com/onewayticket255"]];
 }
--(void)openActivator{
+- (void)openActivator{
   [UIApp openURL:[NSURL URLWithString:@"cydia://package/libactivator"]];
 }
--(void)openCCSupport{
+- (void)openCCSupport{
   if([UIApp canOpenURL:[NSURL URLWithString:@"cydia://package/com.opa334.ccsupport"]]){
     [UIApp openURL:[NSURL URLWithString:@"cydia://package/com.opa334.ccsupport"]];
   }

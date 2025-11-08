@@ -13,7 +13,6 @@
     [rootViewController decreaseVolume];
 }
 
-
 + (void)load {
     @autoreleasepool {
         // Register listener

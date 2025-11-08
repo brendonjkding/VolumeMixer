@@ -1,6 +1,6 @@
 BUNDLE_NAME = volumemixer
 
-volumemixer_FILES = VMPrefRootListController.m BDInfoListController.m VMLicenseViewController.m  VMAuthorListController.m VMPref.x
+volumemixer_FILES = VMPrefRootListController.m BDInfoListController.m VMLicenseViewController.m VMAuthorListController.m VMPref.x
 volumemixer_INSTALL_PATH = /Library/PreferenceBundles
 volumemixer_FRAMEWORKS = UIKit
 volumemixer_PRIVATE_FRAMEWORKS = Preferences

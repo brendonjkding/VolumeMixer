@@ -43,12 +43,12 @@ extern UIApplication *UIApp;
 
   return _specifiers;
 }
--(void)openBrend0n{
+- (void)openBrend0n{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
   self.navigationItem.backBarButtonItem = backItem; 
   [self.navigationController pushViewController:[[BDInfoListController alloc] init] animated:YES];
 }
--(void)openOnewayticket{
+- (void)openOnewayticket{
   [UIApp openURL:[NSURL URLWithString:@"https://github.com/onewayticket255"]];
 }
 

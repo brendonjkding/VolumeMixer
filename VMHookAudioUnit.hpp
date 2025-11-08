@@ -1,4 +1,5 @@
 #import <AudioUnit/AudioUnit.h>
+
 typedef OSStatus (*orig_t)(void *, AudioUnitRenderActionFlags *, const AudioTimeStamp *, UInt32, UInt32, AudioBufferList *);
 extern NSMutableDictionary<NSString *, NSNumber *> *origCallbacks;
 extern double auCurScale;
@@ -23,12 +24,14 @@ static int volume_adjust(T *in_buf, T *out_buf, double in_vol) {
 
     return 0;
 }
+
 template<class T>
-OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
-                           const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData) {
+OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData) {
     OSStatus ret;
     void *inRefConKey = inRefCon;
-    if(!inRefConKey) inRefConKey = (void *)-1;
+    if(!inRefConKey){
+        inRefConKey = (void *)-1;
+    }
     orig_t orig = (orig_t)[origCallbacks[[NSString stringWithFormat:@"%p", inRefConKey]] longValue];
     ret = orig(inRefCon, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
 
@@ -42,12 +45,10 @@ OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionF
 
         uint bytes = ioData->mBuffers[i].mDataByteSize;
 
-
         for(UInt32 j = 0; j < bytes; j += sizeof(T)) {
             volume_adjust((T *)(buf + j), (T *)(buf + j), auCurScale);
         }
     }
-
 
     return ret;
 }

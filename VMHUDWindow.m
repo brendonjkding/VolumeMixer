@@ -19,20 +19,23 @@ static VMHUDWindow *sharedWindow;
 }
 - (id)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
-    if(!self) return self;
 
-    [self configureUI];
+    if(self){
+        [self configureUI];
 
-    if(@available(iOS 16.0, *)){
-        if(!self.windowScene){
-            self.windowScene = [(SpringBoard *)[UIApplication sharedApplication] embeddedDisplayWindowScene];
+        if(@available(iOS 16.0, *)){
+            if(!self.windowScene){
+                self.windowScene = [(SpringBoard *)[UIApplication sharedApplication] embeddedDisplayWindowScene];
+            }
         }
     }
 
     return self;
 }
 - (void)changeVisibility {
-    if([self alpha]) [self hideWindow];
+    if(self.alpha){
+        [self hideWindow];
+    }
     else {
         [self showWindow];
     }
@@ -41,8 +44,8 @@ static VMHUDWindow *sharedWindow;
     self.windowLevel = 1200;
     self.clipsToBounds = YES;
     [self makeKeyAndVisible];
-    [self setAlpha:0.0];
-    [self setBackgroundColor:[UIColor clearColor]];
+    self.alpha = 0.0;
+    self.backgroundColor = UIColor.clearColor;
 }
 // credits to https://twitter.com/EnjoyingElectra/status/1205992433894469633
 - (BOOL)_shouldCreateContextAsSecure {

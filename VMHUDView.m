@@ -15,8 +15,8 @@
     if(!self) return self;
 
     self.clipsToBounds = YES;
-    self.layer.cornerRadius = 14.;
-    _curScale = 1.;
+    self.layer.cornerRadius = 14.0;
+    _curScale = 1.0;
 
     // credits to https://github.com/Muirey03/13HUD/blob/master/MRYHUDView.xm#L69
     // create blurred background for slider:
@@ -50,15 +50,12 @@
     _clippingView.clipsToBounds = YES;
     [self addSubview:_clippingView];
 
-
     [mtSliderView setFrame:self.bounds];
     [_clippingView addSubview:mtSliderView];
 
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
     [self addGestureRecognizer:longPress];
     longPress.minimumPressDuration = 0;
-
-
 
     return self;
 }
@@ -67,7 +64,7 @@
     if(scaleNumber) {
         double scale = [scaleNumber doubleValue];
         [_clippingView setFrame:CGRectMake(_clippingView.frame.origin.x,
-                                           _clippingView.frame.size.height * (1. - scale),
+                                           _clippingView.frame.size.height * (1.0 - scale),
                                            _clippingView.frame.size.width,
                                            _clippingView.frame.size.height)];
         _curScale = scale;
@@ -95,8 +92,8 @@
                                            newY,
                                            _clippingView.frame.size.width,
                                            _clippingView.frame.size.height)];
-        CGFloat scale = 1. - _clippingView.frame.origin.y / _clippingView.frame.size.height;
-        if(fabs(scale - _curScale) > 1. / 16. || scale <= 1. / 16.) {
+        CGFloat scale = 1.0 - _clippingView.frame.origin.y / _clippingView.frame.size.height;
+        if(fabs(scale - _curScale) > 1.0 / 16.0 || scale <= 1.0 / 16.0) {
             _curScale = scale;
             [_client callExternalMethod:@selector(setVolume:) withArguments:@{ @"curScale": @(_curScale) } completion:^(id ret){}];
         }
@@ -110,13 +107,13 @@
 - (void)setCurScale:(CGFloat)scale {
     _curScale = scale;
     [_clippingView setFrame:CGRectMake(_clippingView.frame.origin.x,
-                                       _clippingView.frame.size.height * (1. - _curScale),
+                                       _clippingView.frame.size.height * (1.0 - _curScale),
                                        _clippingView.frame.size.width,
                                        _clippingView.frame.size.height)];
     [_client callExternalMethod:@selector(setVolume:) withArguments:@{ @"curScale": @(_curScale) } completion:^(id ret){}];
     [self saveScaleToPrefs:@(_curScale)];
 }
 - (void)changeScale:(CGFloat)dScale {
-    [self setCurScale:MIN(MAX(_curScale + dScale, 0.), 1.)];
+    [self setCurScale:MIN(MAX(_curScale + dScale, 0.0), 1.0)];
 }
 @end

@@ -9,6 +9,7 @@ export TARGET = iphone:clang:latest:7.0
 	endif
 endif
 
+INSTALL_TARGET_PROCESSES = SpringBoard
 
 TWEAK_NAME = VolumeMixer VolumeMixerSB
 
@@ -19,12 +20,8 @@ VolumeMixer_LIBRARIES += dobby substrate
 VolumeMixer_LOGOSFLAGS += -c generator=MobileSubstrate
 VolumeMixer_EXTRA_FRAMEWORKS += Cephei
 
-
 VolumeMixerSB_FILES = TweakSB.xm VMHUDView.m VMHUDWindow.m VMHUDRootViewController.m VMLAListener.m VMLAVolumeDownListener.m VMLAVolumeUpListener.m
 VolumeMixerSB_FILES += MRYIPC/MRYIPCCenter.m
-ifneq ($(debug),0)
-VolumeMixerSB_FILES += test.x
-endif
 ifdef SIMULATOR
 VolumeMixerSB_FILES += sim.x
 endif
@@ -40,8 +37,3 @@ SUBPROJECTS += ccvolumemixer
 include $(THEOS)/makefiles/common.mk
 include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/aggregate.mk
-
-after-install::
-	install.exec "killall -9 SpringBoard" || true
-
-

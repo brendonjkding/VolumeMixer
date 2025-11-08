@@ -5,10 +5,10 @@
 #import <substrate.h>
 
 // key: outputCallbackAddressString value: addressForCalling
-NSMutableDictionary<NSString *, NSNumber *> *hookedCallbacks;
+NSMutableDictionary<NSString *, NSNumber *> *hookedCallbacks = nil;
 
 @implementation VMHookInfo
-- (void)hookIfReady {
+- (void)hookIfReady{
     /*
 		kAudioFormatFlagIsFloat                     = (1U << 0),     // 0x1
 	    kAudioFormatFlagIsBigEndian                 = (1U << 1),     // 0x2
@@ -22,16 +22,16 @@ NSMutableDictionary<NSString *, NSNumber *> *hookedCallbacks;
     static __unused int cn = 0, cc = 0;
     //different callback hooked to same my but need different orig, use inrefcon to differ
 
-    if(_outputCallback && _mFormatFlags && _inRefCon) {
+    if(_outputCallback && _mFormatFlags && _inRefCon){
         //only hook once
         NSString *outputCallbackString = [NSString stringWithFormat:@"%p", _outputCallback];
         NSLog(@"checking: %@", outputCallbackString);
-        if(!hookedCallbacks[outputCallbackString]) {
+        if(!hookedCallbacks[outputCallbackString]){
             if(_mFormatFlags & kAudioFormatFlagIsFloat) {
                 MSHookFunction((void *)_outputCallback, (void *)my_outputCallback<float>, (void **)&_orig_outputCallback);
                 NSLog(@"float");
             }
-            else {
+            else{
                 MSHookFunction((void *)_outputCallback, (void *)my_outputCallback<short>, (void **)&_orig_outputCallback);
                 NSLog(@"short");
             }
@@ -48,7 +48,7 @@ NSMutableDictionary<NSString *, NSNumber *> *hookedCallbacks;
             _mFormatFlags = 0;
             _inRefCon = 0;
         }
-        else {
+        else{
             NSString *key = [NSString stringWithFormat:@"%p", _inRefCon];
             origCallbacks[key] = hookedCallbacks[outputCallbackString];
             NSLog(@"[*]cached hook %d: %@", ++cc, outputCallbackString);

@@ -4,18 +4,18 @@
 extern UIApplication *UIApp;
 
 @interface PSTableCell()
--(id)iconImageView;
+- (id)iconImageView;
 @end
 
 @implementation BDInfoListController
--(void)loadView{
+- (void)loadView{
     [super loadView];
     self.navigationItem.title = @"Brend0n";
     
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
-    id cell=[super tableView:tableView cellForRowAtIndexPath:indexPath];
-    UIImageView* imageView=[cell iconImageView];
+    PSTableCell *cell = (PSTableCell *)[super tableView:tableView cellForRowAtIndexPath:indexPath];
+    UIImageView *imageView = cell.iconImageView;
     imageView.layer.cornerRadius = 7.0;
     imageView.layer.masksToBounds = YES;
     return cell;

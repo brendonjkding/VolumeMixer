@@ -37,17 +37,16 @@
 }
 - (instancetype)init {
     self = [super init];
-    if(!self) return self;
+    if(self){
+        [self initServer];
+        [self loadPref];
 
-    [self initServer];
-    [self loadPref];
-
-    _hudViews = [NSMutableArray new];
-    _bundleIDs = [NSMutableArray new];
-    _pids = [NSMutableArray new];
-    _clients = [NSMutableArray new];
-    _runningAppIndexes = [NSMutableArray new];
-
+        _hudViews = [NSMutableArray new];
+        _bundleIDs = [NSMutableArray new];
+        _pids = [NSMutableArray new];
+        _clients = [NSMutableArray new];
+        _runningAppIndexes = [NSMutableArray new];
+    }
     return self;
 }
 - (void)loadView {
@@ -72,7 +71,6 @@
     [_collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"hudCell"];
     [self.view addSubview:_collectionView];
 
-
     UIView *mtBgView;
     if(@available(iOS 13.0, *)) {
         mtBgView = [objc_getClass("MTMaterialView") materialViewWithRecipe:4 configuration:1 initialWeighting:1];
@@ -90,7 +88,6 @@
     mtBgView.layer.masksToBounds = YES;
     _collectionView.backgroundView = mtBgView;
     _collectionView.backgroundView.hidden = _isHideBackground;
-
 
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
     longPress.delegate = self;
@@ -142,7 +139,7 @@
         }
         [_collectionView reloadData];
     };
-    if([NSThread isMainThread]) blockForMain();
+    if(NSThread.isMainThread) blockForMain();
     else {
         dispatch_async(dispatch_get_main_queue(), blockForMain);
     }
@@ -166,8 +163,9 @@
         [view removeFromSuperview];
     }
     VMHUDView *hudView = _hudViews[index];
-    [contentView setFrame:CGRectMake(contentView.frame.origin.x, contentView.frame.origin.y, hudView.frame.size.width, kHudHeight + kIconSize + kSliderAndIconInterval)];
+    contentView.frame = CGRectMake(contentView.frame.origin.x, contentView.frame.origin.y, hudView.frame.size.width, kHudHeight + kIconSize + kSliderAndIconInterval);
     [contentView addSubview:hudView];
+
     UIImage *icon;
     if(![_bundleIDs[index] isEqualToString:kWebKitBundleId]) {
         icon = [UIImage _applicationIconImageForBundleIdentifier:_bundleIDs[index] format:0 scale:[UIScreen mainScreen].scale];
@@ -219,8 +217,8 @@
     NSLog(@"registering...");
     NSString *bundleID = args[@"bundleID"];
     NSNumber *pid = args[@"pid"];
-    NSString *appNotify = [NSString stringWithFormat:@"com.brend0n.volumemixer/%@~%d/setVolume", bundleID, [pid intValue]];
-    NSLog(@"appNotify:%@", appNotify);
+    NSString *appNotify = [NSString stringWithFormat:@"com.brend0n.volumemixer/%@~%d/setVolume", bundleID, pid.intValue];
+    NSLog(@"appNotify: %@", appNotify);
 
     dispatch_async(dispatch_get_main_queue(), ^{
         [_bundleIDs addObject:bundleID];
@@ -239,18 +237,18 @@
 }
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
-    // CGFloat oldWidth=size.height;
-    // CGFloat oldHeight=size.width;
+    // CGFloat oldWidth = size.height;
+    // CGFloat oldHeight = size.width;
     CGFloat newWidth = size.width;
     CGFloat newHeight = size.height;
 
     CGFloat newCenterY = newWidth < newHeight ? _panelPortraitY : _panelLandScapeY;
     [coordinator animateAlongsideTransition:^(id arg1){
-        [_collectionView setCenter:CGPointMake(newWidth / 2., newCenterY)];
+        [_collectionView setCenter:CGPointMake(newWidth / 2.0, newCenterY)];
     } completion:nil];
 }
 - (void)loadPref {
-    _panelPortraitY = prefs[@"panelPortraitY"] ? [prefs[@"panelPortraitY"] doubleValue] : 200.;
+    _panelPortraitY = prefs[@"panelPortraitY"] ? [prefs[@"panelPortraitY"] doubleValue] : 200.0;
     _panelLandScapeY = prefs[@"panelLandScapeY"] ? [prefs[@"panelLandScapeY"] doubleValue] : MIN(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.height) / 2.;
     _isHideInactiveApps = prefs[@"isHideInactiveApps"] ? [prefs[@"isHideInactiveApps"] boolValue] : NO;
     _isHideBackground = prefs[@"isHideBackground"] ? [prefs[@"isHideBackground"] boolValue] : NO;
@@ -265,7 +263,7 @@
 - (void)decreaseVolume {
     int i = 0;
     for(NSNumber *pid in _pids) {
-        if([[[[objc_getClass("FBProcessManager") sharedInstance] processForPID:[pid intValue]] state] taskState] == 2) {
+        if([[[[objc_getClass("FBProcessManager") sharedInstance] processForPID:pid.intValue] state] taskState] == 2) {
             [_hudViews[i] changeScale:-1. / 16.];
         }
         i++;
@@ -274,7 +272,7 @@
 - (void)increaseVolume {
     int i = 0;
     for(NSNumber *pid in _pids) {
-        if([[[[objc_getClass("FBProcessManager") sharedInstance] processForPID:[pid intValue]] state] taskState] == 2) {
+        if([[[[objc_getClass("FBProcessManager") sharedInstance] processForPID:pid.intValue] state] taskState] == 2) {
             [_hudViews[i] changeScale:1. / 16.];
         }
         i++;
