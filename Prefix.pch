@@ -21,6 +21,8 @@
 #define kPrefScalesKey @"com.brend0n.volumemixer_scales"
 #define kPrefDidShowReleaseAlertKey @"com.brend0n.volumemixer_didShowReleaseAlert"
 
+#define kAllPrefKeys @[kPrefAppsKey, kPrefWebEnabledKey, kPrefWebAudioUnitHookEnabledKey, kPrefByVolumeButtonKey, kPrefIsHideInactiveAppsKey, kPrefAudioMixEnabledKey, kPrefAudiomixAppsKey, kPrefPanelPortraitYKey, kPrefPanelLandScapeYKey, kPrefIsHideBackgroundKey, kPrefShowsOnLockScreenKey, kPrefScalesKey, kPrefDidShowReleaseAlertKey]
+
 #if DEBUG
 #else
 #define NSLog(FORMAT, ...)

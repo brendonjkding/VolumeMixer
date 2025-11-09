@@ -326,6 +326,33 @@
 			<key>id</key>
 			<string>ACTIVATOR_VOLUME_DOWN</string>
 		</dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string></string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSButtonCell</string>
+            <key>label</key>
+            <string>MIGRATE_SETTINGS</string>
+            <key>action</key>
+            <string>showConfirmAlert:</string>
+            <key>id</key>
+            <string>_migrate</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSButtonCell</string>
+            <key>label</key>
+            <string>RESET_SETTINGS</string>
+            <key>action</key>
+            <string>showConfirmAlert:</string>
+            <key>id</key>
+            <string>_reset</string>
+        </dict>
 	</array>
 	<key>title</key>
 	<string>VolumeMixer</string>

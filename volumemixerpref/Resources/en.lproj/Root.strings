@@ -33,3 +33,8 @@ Turn off two web audio options if webpages stuck or failed to load.";
 "ACTIVATOR_VOLUME_UP"="Volume Up";
 "ACTIVATOR_VOLUME_DOWN"="Volume Down";
 "ACTIVATOR_LISTENERS_FOOTER_TEXT"="Assign a gesture to turn up/down volume of running Apps. (If you don't want to touch the screen when Airplay/Carplay)";
+"MIGRATE_SETTINGS"="Migrate Settings";
+"MIGRATE_SETTINGS_"="VolumeMixer 0.0.7 is not compatible with preferences created by older versions. Do you want to restore from older preferences?";
+"RESET_SETTINGS"="Reset/Clear Settings⚠️";
+"RESET_SETTINGS_"="This will also reset/clear all per-app volume values, proceed?";
+"CONFIRM"="Confirm";

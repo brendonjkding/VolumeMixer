@@ -33,3 +33,8 @@ Credit: onewayticket255";
 "ACTIVATOR_VOLUME_UP"="Volume Up";
 "ACTIVATOR_VOLUME_DOWN"="Volume Down";
 "ACTIVATOR_LISTENERS_FOOTER_TEXT"="使用Activator来调节运行中App的音量 (如Airplay/Carplay时不想点击屏幕)";
+"MIGRATE_SETTINGS"="迁移设置";
+"MIGRATE_SETTINGS_"="VolumeMixer 0.0.7 不兼容旧版的设置，需要进行一次迁移以修复设置。是否继续?";
+"RESET_SETTINGS"="初始化设置⚠️";
+"RESET_SETTINGS_"="App的音量设置也将被清除。是否继续?";
+"CONFIRM"="确认";

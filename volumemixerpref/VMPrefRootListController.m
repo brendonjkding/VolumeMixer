@@ -4,6 +4,7 @@
 #import "VMAuthorListController.h"
 #import <Preferences/PSSpecifier.h>
 #import <objc/runtime.h>
+#import <notify.h>
 #import <dlfcn.h>
 
 extern UIApplication *UIApp;
@@ -111,6 +112,50 @@ extern UIApplication *UIApp;
   }
 
   return _specifiers;
+}
+
+-(void)_reset{
+  for(NSString *key in kAllPrefKeys){
+    [_defaults removeObjectForKey:key];
+  }
+  [self reloadSpecifiers];
+  notify_post("com.brend0n.volumemixer/loadPref");
+}
+- (void)_migrate{
+  for(NSString *oldKey in _old_prefs){
+    id value = _old_prefs[oldKey];
+    NSString *newKey = [@"com.brend0n.volumemixer_" stringByAppendingString:oldKey];
+    if([kAllPrefKeys containsObject:newKey]){
+      [_defaults setObject:value forKey:newKey];
+    }
+    else if([value isKindOfClass:NSNumber.class]){
+      NSString *bundleID = oldKey;
+      NSNumber *scale = value;
+      if(scale.doubleValue>=0.0 && scale.doubleValue<=1.0){
+        NSMutableDictionary *scales = [[_defaults objectForKey:kPrefScalesKey] mutableCopy] ?: [NSMutableDictionary new];
+        scales[bundleID] = scale;
+        [_defaults setObject:scales forKey:kPrefScalesKey];
+      }
+    }
+  }
+  if([_old_prefs[@"apps"] containsObject:kWebKitBundleId]){
+    [_defaults setObject:@YES forKey:kPrefWebEnabledKey];
+  }
+  [self reloadSpecifiers];
+  notify_post("com.brend0n.volumemixer/loadPref");
+}
+- (void)showConfirmAlert:(PSSpecifier *)specifier{
+  NSString *title = VMNSLocalizedString(specifier.properties[@"label"]);
+  NSString *message = VMNSLocalizedString([specifier.properties[@"label"] stringByAppendingString:@"_"]);
+  void (^okHandler)(UIAlertAction *) = ^(UIAlertAction *action){
+    SEL selector = NSSelectorFromString(specifier.identifier);
+    ((void (*)(id, SEL))[self methodForSelector:selector])(self, selector);
+  };
+
+  UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+  [alertController addAction:[UIAlertAction actionWithTitle:VMNSLocalizedString(@"CANCEL") style:UIAlertActionStyleCancel handler:nil]];
+  [alertController addAction:[UIAlertAction actionWithTitle:VMNSLocalizedString(@"CONFIRM") style:UIAlertActionStyleDefault handler:okHandler]];
+  [self presentViewController:alertController animated:YES completion:nil];
 }
 
 - (void)showAuthors{
