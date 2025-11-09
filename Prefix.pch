@@ -6,6 +6,21 @@
 
 #define VMNSLocalizedString(key) NSLocalizedStringFromTableInBundle((key), @"Root", [NSBundle bundleWithPath:kBundlePath], nil)
 
+#define kPrefAppsKey @"com.brend0n.volumemixer_apps"
+#define kPrefWebEnabledKey @"com.brend0n.volumemixer_webEnabled"
+#define kPrefWebAudioUnitHookEnabledKey @"com.brend0n.volumemixer_webAudioUnitHookEnabled"
+#define kPrefByVolumeButtonKey @"com.brend0n.volumemixer_byVolumeButton"
+#define kPrefIsHideInactiveAppsKey @"com.brend0n.volumemixer_isHideInactiveApps"
+#define kPrefAudioMixEnabledKey @"com.brend0n.volumemixer_audioMixEnabled"
+#define kPrefAudiomixAppsKey @"com.brend0n.volumemixer_audiomixApps"
+#define kPrefPanelPortraitYKey @"com.brend0n.volumemixer_panelPortraitY"
+#define kPrefPanelLandScapeYKey @"com.brend0n.volumemixer_panelLandScapeY"
+#define kPrefIsHideBackgroundKey @"com.brend0n.volumemixer_isHideBackground"
+#define kPrefShowsOnLockScreenKey @"com.brend0n.volumemixer_showsOnLockScreen"
+
+#define kPrefScalesKey @"com.brend0n.volumemixer_scales"
+#define kPrefDidShowReleaseAlertKey @"com.brend0n.volumemixer_didShowReleaseAlert"
+
 #if DEBUG
 #else
 #define NSLog(FORMAT, ...)

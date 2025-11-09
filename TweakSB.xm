@@ -3,14 +3,14 @@
 #import <notify.h>
 #import "TweakSB.h"
 
-HBPreferences *prefs = nil;
+NSUserDefaults *g_defaults = nil;
 
 VMHUDWindow *hudWindow = nil;
 VMHUDRootViewController *rootViewController = nil;
 static BOOL byVolumeButton = NO;
 
 static void loadPref(){
-    byVolumeButton = prefs[@"byVolumeButton"] ? [prefs[@"byVolumeButton"] boolValue] : NO;
+    byVolumeButton = [g_defaults objectForKey:kPrefByVolumeButtonKey] ? [g_defaults boolForKey:kPrefByVolumeButtonKey] : NO;
 
     [rootViewController loadPref];
 }
@@ -50,7 +50,8 @@ static void showHUDWindowSB(){
 %end //SB
 
 %ctor{
-    prefs = [[HBPreferences alloc] initWithIdentifier:@"com.brend0n.volumemixer"];
+    // Credit: Polyfills — com.apple.UIKit usage
+    g_defaults = [[NSUserDefaults alloc] initWithSuiteName:@"com.apple.UIKit"];
 
     %init(SB, VolumeControlClass = objc_getClass("SBVolumeControl") ?: objc_getClass("VolumeControl"));
 

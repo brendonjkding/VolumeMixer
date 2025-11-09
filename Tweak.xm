@@ -6,9 +6,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 
-#import <Cephei/HBPreferences.h>
-
-static HBPreferences *prefs = nil;
+static NSUserDefaults *g_defaults = nil;
 
 static BOOL webAudioUnitHookEnabled = NO;
 
@@ -25,7 +23,7 @@ static void registerApp();
 static void initScale();
 
 static void loadPref(){
-    webAudioUnitHookEnabled = prefs[@"webAudioUnitHookEnabled"] ? [prefs[@"webAudioUnitHookEnabled"] boolValue] : NO;
+    webAudioUnitHookEnabled = [g_defaults objectForKey:kPrefWebAudioUnitHookEnabledKey] ? [g_defaults boolForKey:kPrefWebAudioUnitHookEnabledKey] : NO;
 }
 
 static BOOL isEnabledApp(){
@@ -33,8 +31,15 @@ static BOOL isEnabledApp(){
         && ![NSBundle.mainBundle.bundleIdentifier isEqualToString:kWebKitBundleId]){
         return NO;
     }
-    prefs = [[HBPreferences alloc] initWithIdentifier:@"com.brend0n.volumemixer"];
-    return [prefs[@"apps"] containsObject:NSBundle.mainBundle.bundleIdentifier];
+    // Credit: Polyfills — com.apple.UIKit usage
+    g_defaults = [[NSUserDefaults alloc] initWithSuiteName:@"com.apple.UIKit"];
+    if([[g_defaults objectForKey:kPrefAppsKey] containsObject:NSBundle.mainBundle.bundleIdentifier]){
+        return YES;
+    }
+    else if([g_defaults boolForKey:kPrefWebEnabledKey] && [NSBundle.mainBundle.bundleIdentifier isEqualToString:kWebKitBundleId]){
+        return YES;
+    }
+    return NO;
 }
 
 %group app
@@ -242,7 +247,7 @@ static BOOL isEnabledApp(){
 #pragma mark AVAudioSession
 %hook AVAudioSession
 - (BOOL)setActive:(BOOL)active withOptions:(AVAudioSessionSetActiveOptions)options error:(NSError **)outError{
-    BOOL audioMixEnabled = prefs[@"audioMixEnabled"] ? [prefs[@"audioMixEnabled"] boolValue] : NO;
+    BOOL audioMixEnabled = [g_defaults objectForKey:kPrefAudioMixEnabledKey] ? [g_defaults boolForKey:kPrefAudioMixEnabledKey] : NO;
     if(!audioMixEnabled){
         return %orig;
     }
@@ -255,7 +260,7 @@ static BOOL isEnabledApp(){
         return %orig;
     }
 
-    if([prefs[@"audiomixApps"] containsObject:NSBundle.mainBundle.bundleIdentifier]){
+    if([[g_defaults objectForKey:kPrefAudiomixAppsKey] containsObject:NSBundle.mainBundle.bundleIdentifier]){
         //Choose Playback Mode App to Fix that [Recommend: Music App]
         [self setCategory:AVAudioSessionCategoryPlayback withOptions:0 error:outError];
     }
@@ -290,7 +295,7 @@ static BOOL isEnabledApp(){
 %end //app
 
 static void initScale(){
-    NSNumber *scaleNumber = prefs[NSBundle.mainBundle.bundleIdentifier];
+    NSNumber *scaleNumber = [g_defaults objectForKey:kPrefScalesKey][NSBundle.mainBundle.bundleIdentifier];
     if(scaleNumber){
         g_curScale = [scaleNumber doubleValue];
         auCurScale = g_curScale;

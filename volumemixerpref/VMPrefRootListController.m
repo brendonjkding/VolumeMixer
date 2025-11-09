@@ -2,22 +2,26 @@
 #import "BDInfoListController.h"
 #import "VMLicenseViewController.h"
 #import "VMAuthorListController.h"
-#import "VMPref.h"
 #import <Preferences/PSSpecifier.h>
 #import <objc/runtime.h>
 #import <dlfcn.h>
 
 extern UIApplication *UIApp;
 
-@implementation VMPrefRootListController
+@implementation VMPrefRootListController{
+  NSDictionary *_old_prefs;
+  NSUserDefaults *_defaults;
+}
 
 - (void)viewDidLoad{
   [super viewDidLoad];
 
-  if(prefs) {
-    if(prefs[@"didShowReleaseAlert"]){
-      return;
-    }
+  // Credit: Polyfills — com.apple.UIKit usage
+  _defaults = [[NSUserDefaults alloc] initWithSuiteName:@"com.apple.UIKit"];
+  _old_prefs = [NSDictionary dictionaryWithContentsOfFile:@THEOS_PACKAGE_INSTALL_PREFIX"/var/mobile/Library/Preferences/com.brend0n.volumemixer.plist"];
+
+  if([_defaults objectForKey:kPrefDidShowReleaseAlertKey] || _old_prefs[@"didShowReleaseAlert"]){
+    return;
   }
 
   if(!objc_getClass("UIAlertController")){
@@ -37,7 +41,7 @@ extern UIApplication *UIApp;
 
   UIAlertAction *okAction = [UIAlertAction actionWithTitle:VMNSLocalizedString(@"ACTION_YES") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
     dispatch_async(dispatch_get_main_queue(), ^{
-      prefs[@"didShowReleaseAlert"] = @YES;
+      [_defaults setObject:@YES forKey:kPrefDidShowReleaseAlertKey];
     });
   }];
 
@@ -108,28 +112,7 @@ extern UIApplication *UIApp;
 
   return _specifiers;
 }
-- (id)readPreferenceValue:(PSSpecifier*)specifier {
-    if([specifier.properties[@"key"] isEqualToString:@"webEnabled"]) {
-      return @([prefs[@"apps"] containsObject:kWebKitBundleId]);
-    }
-    return [super readPreferenceValue:specifier];
-}
 
-- (void)setPreferenceValue:(id)value specifier:(PSSpecifier*)specifier {
-    if([specifier.properties[@"key"] isEqualToString:@"webEnabled"]) {
-      NSMutableArray *apps = [prefs[@"apps"] mutableCopy] ?: [NSMutableArray new];
-      if([value boolValue] && ![apps containsObject:kWebKitBundleId]){
-        [apps addObject:kWebKitBundleId];
-      }
-      else if([apps containsObject:kWebKitBundleId]){
-        [apps removeObjectAtIndex:[apps indexOfObject:kWebKitBundleId]];
-      }
-      prefs[@"apps"] = apps;
-    }
-    else {
-      [super setPreferenceValue:value specifier:specifier];
-    }
-}
 - (void)showAuthors{
   UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
   self.navigationItem.backBarButtonItem = backItem;

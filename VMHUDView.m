@@ -71,10 +71,12 @@
     }
 }
 - (NSNumber *)scaleFromPrefs {
-    return prefs[_bundleID];
+    return [g_defaults objectForKey:kPrefScalesKey][_bundleID];
 }
 - (void)saveScaleToPrefs:(NSNumber *)scale {
-    prefs[_bundleID] = scale;
+    NSMutableDictionary *scales = [[g_defaults objectForKey:kPrefScalesKey] mutableCopy] ?: [NSMutableDictionary new];
+    scales[_bundleID] = scale;
+    [g_defaults setObject:scales forKey:kPrefScalesKey];
 }
 - (void)longPress:(UILongPressGestureRecognizer *)longPress {
     CGPoint currentLocation = [longPress locationInView:self];

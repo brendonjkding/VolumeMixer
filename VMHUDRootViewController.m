@@ -248,11 +248,11 @@
     } completion:nil];
 }
 - (void)loadPref {
-    _panelPortraitY = prefs[@"panelPortraitY"] ? [prefs[@"panelPortraitY"] doubleValue] : 200.0;
-    _panelLandScapeY = prefs[@"panelLandScapeY"] ? [prefs[@"panelLandScapeY"] doubleValue] : MIN(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.height) / 2.;
-    _isHideInactiveApps = prefs[@"isHideInactiveApps"] ? [prefs[@"isHideInactiveApps"] boolValue] : NO;
-    _isHideBackground = prefs[@"isHideBackground"] ? [prefs[@"isHideBackground"] boolValue] : NO;
-    [VMHUDWindow sharedWindow].showsOnLockScreen = prefs[@"showsOnLockScreen"] ? [prefs[@"showsOnLockScreen"] boolValue] : YES;
+    _panelPortraitY = [g_defaults objectForKey:kPrefPanelPortraitYKey] ? [g_defaults doubleForKey:kPrefPanelPortraitYKey] : 200.0;
+    _panelLandScapeY = [g_defaults objectForKey:kPrefPanelLandScapeYKey] ? [g_defaults doubleForKey:kPrefPanelLandScapeYKey] : MIN(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.height) / 2.0;
+    _isHideInactiveApps = [g_defaults objectForKey:kPrefIsHideInactiveAppsKey] ? [g_defaults boolForKey:kPrefIsHideInactiveAppsKey] : NO;
+    _isHideBackground = [g_defaults objectForKey:kPrefIsHideBackgroundKey] ? [g_defaults boolForKey:kPrefIsHideBackgroundKey] : NO;
+    VMHUDWindow.sharedWindow.showsOnLockScreen = [g_defaults objectForKey:kPrefShowsOnLockScreenKey] ? [g_defaults boolForKey:kPrefShowsOnLockScreenKey] : YES;
 
     CGFloat newCenterY = self.view.frame.size.width < self.view.frame.size.height ? _panelPortraitY : _panelLandScapeY;
     [UIView animateWithDuration:0.25 animations:^{

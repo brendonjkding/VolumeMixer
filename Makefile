@@ -18,7 +18,6 @@ VolumeMixer_FILES += MRYIPC/MRYIPCCenter.m
 VolumeMixer_CFLAGS = -fobjc-arc
 VolumeMixer_LIBRARIES += dobby substrate
 VolumeMixer_LOGOSFLAGS += -c generator=MobileSubstrate
-VolumeMixer_EXTRA_FRAMEWORKS += Cephei
 
 VolumeMixerSB_FILES = TweakSB.xm VMHUDView.m VMHUDWindow.m VMHUDRootViewController.m VMLAListener.m VMLAVolumeDownListener.m VMLAVolumeUpListener.m
 VolumeMixerSB_FILES += MRYIPC/MRYIPCCenter.m
@@ -27,7 +26,6 @@ VolumeMixerSB_FILES += sim.x
 endif
 VolumeMixerSB_CFLAGS = -fobjc-arc 
 VolumeMixerSB_LIBRARIES = substrate
-VolumeMixerSB_EXTRA_FRAMEWORKS += Cephei
 
 export ADDITIONAL_CFLAGS += -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -include Prefix.pch
 

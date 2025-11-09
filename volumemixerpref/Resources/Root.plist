@@ -16,13 +16,13 @@
 			<key>cell</key>
 			<string>PSLinkListCell</string>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>label</key>
 			<string>CHOOSE_ENABLED_APP</string>
 			<key>detail</key>
 			<string>ATLApplicationListMultiSelectionController</string>
 			<key>key</key>
-			<string>apps</string>
+			<string>com.brend0n.volumemixer_apps</string>
 			<key>sections</key>
 			<array>
 				<dict>
@@ -47,9 +47,9 @@
 			<key>default</key>
 			<false/>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>key</key>
-			<string>webEnabled</string>
+			<string>com.brend0n.volumemixer_webEnabled</string>
 			<key>label</key>
 			<string>WEB_AUDIO</string>
 			<key>PostNotification</key>
@@ -61,9 +61,9 @@
 			<key>default</key>
 			<false/>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>key</key>
-			<string>webAudioUnitHookEnabled</string>
+			<string>com.brend0n.volumemixer_webAudioUnitHookEnabled</string>
 			<key>label</key>
 			<string>WEB_AUDIO_AUDIO_UNIT</string>
 			<key>PostNotification</key>
@@ -82,9 +82,9 @@
 			<key>default</key>
 			<false/>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>key</key>
-			<string>byVolumeButton</string>
+			<string>com.brend0n.volumemixer_byVolumeButton</string>
 			<key>label</key>
 			<string>BY_VOLUME_BUTTON</string>
 			<key>PostNotification</key>
@@ -137,9 +137,9 @@
 			<key>default</key>
 			<false/>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>key</key>
-			<string>isHideInactiveApps</string>
+			<string>com.brend0n.volumemixer_isHideInactiveApps</string>
 			<key>label</key>
 			<string>HIDE_INACTIVE_APPS</string>
 			<key>PostNotification</key>
@@ -160,9 +160,9 @@
 			<key>default</key>
 			<false/>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>key</key>
-			<string>audioMixEnabled</string>
+			<string>com.brend0n.volumemixer_audioMixEnabled</string>
 			<key>label</key>
 			<string>ENABLE_AUDIO_MIX</string>
 			<key>PostNotification</key>
@@ -172,13 +172,13 @@
 			<key>cell</key>
 			<string>PSLinkListCell</string>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>label</key>
 			<string>CHOOSE_AUDIO_MIX_MUSIC_APP</string>
 			<key>detail</key>
 			<string>ATLApplicationListMultiSelectionController</string>
 			<key>key</key>
-			<string>audiomixApps</string>
+			<string>com.brend0n.volumemixer_audiomixApps</string>
 			<key>sections</key>
 			<array>
 				<dict>
@@ -212,9 +212,9 @@
 			<key>showValue</key>
 			<true/>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>key</key>
-			<string>panelPortraitY</string>
+			<string>com.brend0n.volumemixer_panelPortraitY</string>
 			<key>PostNotification</key>
 			<string>com.brend0n.volumemixer/loadPref</string>
 			<key>id</key>
@@ -235,9 +235,9 @@
 			<key>showValue</key>
 			<true/>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>key</key>
-			<string>panelLandScapeY</string>
+			<string>com.brend0n.volumemixer_panelLandScapeY</string>
 			<key>PostNotification</key>
 			<string>com.brend0n.volumemixer/loadPref</string>
 			<key>id</key>
@@ -258,9 +258,9 @@
 			<key>default</key>
 			<false/>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>key</key>
-			<string>isHideBackground</string>
+			<string>com.brend0n.volumemixer_isHideBackground</string>
 			<key>label</key>
 			<string>HIDE_BACKGROUND</string>
 			<key>PostNotification</key>
@@ -281,9 +281,9 @@
 			<key>default</key>
 			<true/>
 			<key>defaults</key>
-			<string>com.brend0n.volumemixer</string>
+			<string>com.apple.UIKit</string>
 			<key>key</key>
-			<string>showsOnLockScreen</string>
+			<string>com.brend0n.volumemixer_showsOnLockScreen</string>
 			<key>label</key>
 			<string>SHOWS_ON_LOCK_SCREEN</string>
 			<key>PostNotification</key>
