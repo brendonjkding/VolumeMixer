@@ -3,6 +3,10 @@
 #import <notify.h>
 #import "TweakSB.h"
 
+@interface AXPassthroughWindow : UIWindow
++ (id)sharedInstance;
+@end
+
 NSUserDefaults *g_defaults = nil;
 
 VMHUDWindow *hudWindow = nil;
@@ -30,6 +34,12 @@ static void showHUDWindowSB(){
     %orig;
     NSLog(@"applicationDidFinishLaunching");
     showHUDWindowSB();    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        AXPassthroughWindow *axPassthroughWindow = [objc_getClass("AXPassthroughWindow") sharedInstance];
+        if(axPassthroughWindow){
+            hudWindow.windowLevel = axPassthroughWindow.windowLevel + 1;
+        }
+    });
 }
 %end //SpringBoard
 
