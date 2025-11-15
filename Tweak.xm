@@ -66,6 +66,9 @@ static BOOL isEnabledApp(){
         kAudioUnitScope_Input       = 1,
         kAudioUnitScope_Output      = 2,
     */
+    if(inScope!=kAudioUnitScope_Input && inScope!=kAudioUnitScope_Global){
+        return ret;
+    }
     //assume one thread
     NSString *unitKey = [NSString stringWithFormat:@"%p", inUnit];
     VMHookInfo *info = hookInfos[unitKey] ?: [VMHookInfo new];
