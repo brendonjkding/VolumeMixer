@@ -16,7 +16,7 @@ TWEAK_NAME = VolumeMixer VolumeMixerSB
 VolumeMixer_FILES = Tweak.xm VMHookInfo.mm VMHookAudioUnit.mm 
 VolumeMixer_FILES += MRYIPC/MRYIPCCenter.m
 VolumeMixer_CFLAGS = -fobjc-arc
-VolumeMixer_LIBRARIES += dobby substrate
+VolumeMixer_LIBRARIES += substrate
 VolumeMixer_LOGOSFLAGS += -c generator=MobileSubstrate
 
 VolumeMixerSB_FILES = TweakSB.xm VMHUDView.m VMHUDWindow.m VMHUDRootViewController.m VMLAListener.m VMLAVolumeDownListener.m VMLAVolumeUpListener.m

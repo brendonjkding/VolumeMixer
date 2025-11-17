@@ -29,9 +29,6 @@ template<class T>
 OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData) {
     OSStatus ret;
     void *inRefConKey = inRefCon;
-    if(!inRefConKey){
-        inRefConKey = (void *)-1;
-    }
     orig_t orig = (orig_t)[origCallbacks[[NSString stringWithFormat:@"%p", inRefConKey]] longValue];
     ret = orig(inRefCon, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
 

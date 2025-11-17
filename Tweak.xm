@@ -82,14 +82,12 @@ static BOOL isEnabledApp(){
         // }
         AURenderCallbackStruct *callbackSt = (AURenderCallbackStruct *)inData;
         void *inRefCon = callbackSt->inputProcRefCon;
-        if(!inRefCon){
-            inRefCon = (void *)-1;
-        }
-        NSLog(@"    context: %p", inRefCon);
+        NSLog(@"    inRefCon: %p", inRefCon);
 
         info.outputCallback = outputCallback;
         info.inRefCon = inRefCon;
-        [info hookIfReady];
+        info.inScope = inScope;
+        info.inElement = inElement;
     }
     else if(inID == kAudioUnitProperty_StreamFormat){//8
         NSLog(@"kAudioUnitProperty_StreamFormat: %p", inUnit);
@@ -106,10 +104,36 @@ static BOOL isEnabledApp(){
             NSLog(@"    mFormatFlags: %u",(unsigned int)mFormatFlags);
         // }
         info.mFormatFlags = mFormatFlags;
-        [info hookIfReady];
-
     }
     [hookInfos setObject:info forKey:unitKey];
+    if(info.outputCallback && info.mFormatFlags){
+        AURenderCallbackStruct callbackSt;
+        /*
+            kAudioFormatFlagIsFloat                     = (1U << 0),     // 0x1
+            kAudioFormatFlagIsBigEndian                 = (1U << 1),     // 0x2
+            kAudioFormatFlagIsSignedInteger             = (1U << 2),     // 0x4
+            kAudioFormatFlagIsPacked                    = (1U << 3),     // 0x8
+            kAudioFormatFlagIsAlignedHigh               = (1U << 4),     // 0x10
+            kAudioFormatFlagIsNonInterleaved            = (1U << 5),     // 0x20
+            kAudioFormatFlagIsNonMixable                = (1U << 6),     // 0x40
+            kAudioFormatFlagsAreAllClear                = 0x80000000,
+        */
+        NSString *format = nil;
+        if(info.mFormatFlags & kAudioFormatFlagIsFloat) {
+            callbackSt.inputProc = my_outputCallback<float>;
+            format = @"float";
+        }
+        else{
+            callbackSt.inputProc = my_outputCallback<short>;
+            format = @"short";
+        }
+        NSLog(@"[*] inUnit: %p, format: %@, outputCallback: %p", inUnit, format, info.outputCallback);
+        callbackSt.inputProcRefCon = info.inRefCon;
+        %orig(inUnit, kAudioUnitProperty_SetRenderCallback, info.inScope, info.inElement, &callbackSt, sizeof(callbackSt));
+
+        NSString *key = [NSString stringWithFormat:@"%p", info.inRefCon];
+        origCallbacks[key] = @((long)info.outputCallback);
+    }
     return ret;
 
     // //methoed 2: failed
@@ -366,7 +390,6 @@ static void registerApp(){
     initScale();
     origCallbacks = [NSMutableDictionary new];
     hookInfos = [NSMutableDictionary new];
-    hookedCallbacks = [NSMutableDictionary new];
 
     loadPref();
     int token;
