@@ -208,6 +208,10 @@
     NSLog(@"didSelectItemAtIndexPath: %ld", (long)indexPath.row);
 }
 
+- (BOOL)collectionView:(UICollectionView *)collectionView shouldHighlightItemAtIndexPath:(NSIndexPath *)indexPath{
+    return NO;
+}
+
 - (void)initServer {
     _center = [MRYIPCCenter centerNamed:@"com.brend0n.volumemixer/register"];
     [_center addTarget:self action:@selector(register:)];
