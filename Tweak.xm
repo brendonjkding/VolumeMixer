@@ -75,14 +75,13 @@ static BOOL isEnabledApp(){
         NSLog(@"kAudioUnitProperty_SetRenderCallback: %p", inUnit);
         NSLog(@"    AudioUnitScope:%u", (unsigned int)inScope);
 
-        void *outputCallback = (void *)*(long *)inData;
-        NSLog(@"    outputCallback:%p", outputCallback);
-
         AURenderCallbackStruct *callbackSt = (AURenderCallbackStruct *)inData;
+        AURenderCallback inputProc = callbackSt->inputProc;
         void *inRefCon = callbackSt->inputProcRefCon;
+        NSLog(@"    inputProc:%p", inputProc);
         NSLog(@"    inRefCon: %p", inRefCon);
 
-        info.outputCallback = outputCallback;
+        info.inputProc = inputProc;
         info.inRefCon = inRefCon;
         info.inScope = inScope;
         info.inElement = inElement;
@@ -103,7 +102,7 @@ static BOOL isEnabledApp(){
         info.mFormatFlags = mFormatFlags;
     }
     hookInfos[unitKey] = info;
-    if(info.outputCallback && info.mFormatFlags){
+    if(info.inputProc && info.mFormatFlags){
         AURenderCallbackStruct callbackSt;
         /*
             kAudioFormatFlagIsFloat                     = (1U << 0),     // 0x1
@@ -117,18 +116,18 @@ static BOOL isEnabledApp(){
         */
         NSString *format = nil;
         if(info.mFormatFlags & kAudioFormatFlagIsFloat) {
-            callbackSt.inputProc = my_outputCallback<float>;
+            callbackSt.inputProc = my_inputProc<float>;
             format = @"float";
         }
         else{
-            callbackSt.inputProc = my_outputCallback<short>;
+            callbackSt.inputProc = my_inputProc<short>;
             format = @"short";
         }
-        NSLog(@"[*] inUnit: %p, format: %@, outputCallback: %p", inUnit, format, info.outputCallback);
+        NSLog(@"[*] inUnit: %p, format: %@, inputProc: %p", inUnit, format, info.inputProc);
         callbackSt.inputProcRefCon = info.inRefCon;
         %orig(inUnit, kAudioUnitProperty_SetRenderCallback, info.inScope, info.inElement, &callbackSt, sizeof(callbackSt));
 
-        inRefCon_to_orig_map[info.inRefCon] = info.outputCallback;
+        inRefCon_to_orig_map[info.inRefCon] = info.inputProc;
     }
     return ret;
 }
