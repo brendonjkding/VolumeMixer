@@ -1,9 +1,6 @@
 #import <AudioUnit/AudioUnit.h>
 
-#import <unordered_map>
-
 extern double auCurScale;
-extern std::unordered_map<void *, AURenderCallback> inRefCon_to_orig_map;
 
 // credits to https://blog.csdn.net/Timsley/article/details/50683084?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase
 // credits to https://www.jianshu.com/p/ca2cb00418a7
@@ -28,7 +25,8 @@ static int volume_adjust(T *in_buf, T *out_buf, double in_vol) {
 
 template<class T>
 OSStatus my_inputProc(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData) {
-    AURenderCallback orig = (AURenderCallback)inRefCon_to_orig_map[inRefCon];
+    AURenderCallback orig = NULL;
+    asm volatile ("mov %0, x16" : "=r" (orig));
     OSStatus ret = orig(inRefCon, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
 
     if(*ioActionFlags == kAudioUnitRenderAction_OutputIsSilence) {

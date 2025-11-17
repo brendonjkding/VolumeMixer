@@ -3,8 +3,13 @@
 #import "MRYIPC/MRYIPCCenter.h"
 
 #import <notify.h>
+#import <sys/mman.h>
+#import <mach/mach.h>
+#import <unordered_map>
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
+
+extern "C" kern_return_t mach_vm_protect(vm_map_t, mach_vm_address_t, mach_vm_size_t, boolean_t, vm_prot_t);
 
 static NSUserDefaults *g_defaults = nil;
 
@@ -44,6 +49,38 @@ static BOOL isEnabledApp(){
 
 %group app
 #pragma mark AudioUnit
+
+static void trampoline(){
+    asm volatile (
+        "1: .quad 0x1122334455667788\n"
+        "2: .quad 0x1122334455667788\n"
+        "ldr x16, 1b\n"
+        "ldr x17, 2b\n"
+        "br x17\n"
+    );
+}
+
+template<class T>
+static T make_trampoline(T target, T orig){
+    void *instance = mmap(NULL, PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
+    memcpy(instance, (void *)trampoline, sizeof(uint64_t)*2 + sizeof(uint32_t)*3);
+
+    uint64_t *p = (uint64_t *)instance;
+
+    uint64_t *literal_orig = p++;
+    uint64_t *literal_target = p++;
+    uint32_t *code = (uint32_t *)p;
+
+    *literal_orig = (uint64_t) orig;
+    *literal_target = (uint64_t) target;
+
+    mach_vm_protect(mach_task_self(), (mach_vm_address_t)instance, PAGE_SIZE, FALSE, VM_PROT_READ|VM_PROT_EXECUTE);
+
+    return (T)code;
+}
+
+static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_map;
+
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
     OSStatus ret = %orig;
 
@@ -114,20 +151,26 @@ static BOOL isEnabledApp(){
             kAudioFormatFlagIsNonMixable                = (1U << 6),     // 0x40
             kAudioFormatFlagsAreAllClear                = 0x80000000,
         */
-        NSString *format = nil;
-        if(info.mFormatFlags & kAudioFormatFlagIsFloat) {
-            callbackSt.inputProc = my_inputProc<float>;
-            format = @"float";
+        AURenderCallback myInputProc = inputProc_map[info.inputProc];
+        if(!myInputProc){
+            if(info.mFormatFlags & kAudioFormatFlagIsFloat) {
+                myInputProc = make_trampoline(my_inputProc<float>, info.inputProc);
+                NSLog(@"float");
+            }
+            else{
+                myInputProc = make_trampoline(my_inputProc<short>, info.inputProc);
+                NSLog(@"short");
+            }
+            NSLog(@"[*] new inputProc: %p", info.inputProc);
+            inputProc_map[info.inputProc] = myInputProc;
         }
         else{
-            callbackSt.inputProc = my_inputProc<short>;
-            format = @"short";
+            NSLog(@"[*] cached inputProc: %p", info.inputProc);
         }
-        NSLog(@"[*] inUnit: %p, format: %@, inputProc: %p", inUnit, format, info.inputProc);
+
+        callbackSt.inputProc = myInputProc;
         callbackSt.inputProcRefCon = info.inRefCon;
         %orig(inUnit, kAudioUnitProperty_SetRenderCallback, info.inScope, info.inElement, &callbackSt, sizeof(callbackSt));
-
-        inRefCon_to_orig_map[info.inRefCon] = info.inputProc;
     }
     return ret;
 }
