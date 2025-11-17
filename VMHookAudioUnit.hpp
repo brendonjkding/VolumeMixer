@@ -1,6 +1,5 @@
 #import <AudioUnit/AudioUnit.h>
 
-typedef OSStatus (*orig_t)(void *, AudioUnitRenderActionFlags *, const AudioTimeStamp *, UInt32, UInt32, AudioBufferList *);
 extern NSMutableDictionary<NSString *, NSNumber *> *origCallbacks;
 extern double auCurScale;
 
@@ -27,11 +26,8 @@ static int volume_adjust(T *in_buf, T *out_buf, double in_vol) {
 
 template<class T>
 OSStatus my_outputCallback(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData) {
-    OSStatus ret;
-    void *inRefConKey = inRefCon;
-    orig_t orig = (orig_t)[origCallbacks[[NSString stringWithFormat:@"%p", inRefConKey]] longValue];
-    ret = orig(inRefCon, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
-
+    AURenderCallback orig = (AURenderCallback)[origCallbacks[[NSString stringWithFormat:@"%p", inRefCon]] longValue];
+    OSStatus ret = orig(inRefCon, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
 
     if(*ioActionFlags == kAudioUnitRenderAction_OutputIsSilence) {
         return ret;

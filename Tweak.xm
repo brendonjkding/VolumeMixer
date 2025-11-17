@@ -53,7 +53,6 @@ static BOOL isEnabledApp(){
         }
         registerApp();
     }
-    // method 1:
     // inID
     /*
         kAudioUnitProperty_SetRenderCallback 23
@@ -69,17 +68,16 @@ static BOOL isEnabledApp(){
     if(inScope!=kAudioUnitScope_Input && inScope!=kAudioUnitScope_Global){
         return ret;
     }
-    //assume one thread
+
     NSString *unitKey = [NSString stringWithFormat:@"%p", inUnit];
     VMHookInfo *info = hookInfos[unitKey] ?: [VMHookInfo new];
     if(inID == kAudioUnitProperty_SetRenderCallback){//23
         NSLog(@"kAudioUnitProperty_SetRenderCallback: %p", inUnit);
         NSLog(@"    AudioUnitScope:%u", (unsigned int)inScope);
-        // if(inScope&kAudioUnitScope_Input){
-            void *outputCallback = (void *)*(long *)inData;
-            NSLog(@"    outputCallback:%p", outputCallback);
-            // hookIfReady();
-        // }
+
+        void *outputCallback = (void *)*(long *)inData;
+        NSLog(@"    outputCallback:%p", outputCallback);
+
         AURenderCallbackStruct *callbackSt = (AURenderCallbackStruct *)inData;
         void *inRefCon = callbackSt->inputProcRefCon;
         NSLog(@"    inRefCon: %p", inRefCon);
@@ -92,20 +90,19 @@ static BOOL isEnabledApp(){
     else if(inID == kAudioUnitProperty_StreamFormat){//8
         NSLog(@"kAudioUnitProperty_StreamFormat: %p", inUnit);
         NSLog(@"    AudioUnitScope:%u", (unsigned int)inScope);
-        // if(inScope&kAudioUnitScope_Input){
-            //to do: other format
-            UInt32 mFormatID = ((AudioStreamBasicDescription *)inData)->mFormatID;
-            // NSLog(@"FormatID: %u",mFormatID);
-            if(mFormatID != kAudioFormatLinearPCM){
-                NSLog(@"not pcm");
-                return ret;
-            }
-            UInt32 mFormatFlags = ((AudioStreamBasicDescription *)inData)->mFormatFlags;
-            NSLog(@"    mFormatFlags: %u",(unsigned int)mFormatFlags);
-        // }
+
+        UInt32 mFormatID = ((AudioStreamBasicDescription *)inData)->mFormatID;
+        // NSLog(@"FormatID: %u", mFormatID);
+        if(mFormatID != kAudioFormatLinearPCM){
+            NSLog(@"mFormatID != kAudioFormatLinearPCM");
+            return ret;
+        }
+        UInt32 mFormatFlags = ((AudioStreamBasicDescription *)inData)->mFormatFlags;
+        NSLog(@"    mFormatFlags: %u",(unsigned int)mFormatFlags);
+
         info.mFormatFlags = mFormatFlags;
     }
-    [hookInfos setObject:info forKey:unitKey];
+    hookInfos[unitKey] = info;
     if(info.outputCallback && info.mFormatFlags){
         AURenderCallbackStruct callbackSt;
         /*
@@ -135,18 +132,6 @@ static BOOL isEnabledApp(){
         origCallbacks[key] = @((long)info.outputCallback);
     }
     return ret;
-
-    // //methoed 2: failed
-    // AURenderCallbackStruct renderCallbackProp =
-    // {
-    //  my_outputCallback,
-    //  //nullptr
-    // };
-    // if(inID==kAudioUnitProperty_SetRenderCallback){
-    //  orig_outputCallback=(orig_t)*(long*)inData;
-    //  return %orig(inUnit,inID,inScope,inElement,&renderCallbackProp,sizeof(renderCallbackProp));
-    // }
-    // return %orig;
 }
 
 /*
@@ -349,7 +334,6 @@ static void setScale(double curScale){
     if((self = [super init])){
         _center = [MRYIPCCenter centerNamed:name];
         [_center addTarget:self action:@selector(setVolume:)];
-        NSLog(@"[MRYIPC] running server in %@", NSProcessInfo.processInfo.processName);
     }
     return self;
 }
