@@ -1,4 +1,4 @@
 #import "VMHookAudioUnit.hpp"
 
 double auCurScale = 1;
-NSMutableDictionary<NSString *, NSNumber *> *origCallbacks = nil;
+std::unordered_map<void *, void *> inRefCon_to_orig_map;

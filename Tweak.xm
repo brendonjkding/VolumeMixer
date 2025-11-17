@@ -128,8 +128,7 @@ static BOOL isEnabledApp(){
         callbackSt.inputProcRefCon = info.inRefCon;
         %orig(inUnit, kAudioUnitProperty_SetRenderCallback, info.inScope, info.inElement, &callbackSt, sizeof(callbackSt));
 
-        NSString *key = [NSString stringWithFormat:@"%p", info.inRefCon];
-        origCallbacks[key] = @((long)info.outputCallback);
+        inRefCon_to_orig_map[info.inRefCon] = info.outputCallback;
     }
     return ret;
 }
@@ -372,7 +371,6 @@ static void registerApp(){
         registerApp();
     }
     initScale();
-    origCallbacks = [NSMutableDictionary new];
     hookInfos = [NSMutableDictionary new];
 
     loadPref();
