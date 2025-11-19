@@ -80,7 +80,7 @@ static T make_trampoline(T target, T orig){
     return (T)code;
 }
 
-static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_map;
+static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_maps[2];
 
 static AURenderCallback my_inputProcs[] = {
     my_inputProc<short>, my_inputProc<float>
@@ -167,17 +167,16 @@ static NSString *type_strings[] = {
             kAudioFormatFlagIsNonMixable                = (1U << 6),     // 0x40
             kAudioFormatFlagsAreAllClear                = 0x80000000,
         */
-        AURenderCallback myInputProc = inputProc_map[info.inputProc];
+        int type = info.mFormatFlags & kAudioFormatFlagIsFloat;
+        AURenderCallback myInputProc = inputProc_maps[type][info.inputProc];
         if(!myInputProc){
-            int type = info.mFormatFlags & kAudioFormatFlagIsFloat;
             myInputProc = make_trampoline(my_inputProcs[type], info.inputProc);
-            NSLog(@"%@", type_strings[type]);
 
-            NSLog(@"[*] new inputProc: %p", info.inputProc);
-            inputProc_map[info.inputProc] = myInputProc;
+            NSLog(@"[*] new inputProc: %p, type: %@", info.inputProc, type_strings[type]);
+            inputProc_maps[type][info.inputProc] = myInputProc;
         }
         else{
-            NSLog(@"[*] cached inputProc: %p", info.inputProc);
+            NSLog(@"[*] cached inputProc: %p, type: %@", info.inputProc, type_strings[type]);
         }
 
         callbackSt.inputProc = myInputProc;
