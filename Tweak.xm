@@ -107,7 +107,10 @@ static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_map;
     }
 
     NSString *unitKey = [NSString stringWithFormat:@"%p", inUnit];
-    VMHookInfo *info = hookInfos[unitKey] ?: [VMHookInfo new];
+    VMHookInfo *info = nil;
+    @synchronized(hookInfos){
+        info = hookInfos[unitKey] ?: [VMHookInfo new];
+    }
     if(inID == kAudioUnitProperty_SetRenderCallback){//23
         NSLog(@"kAudioUnitProperty_SetRenderCallback: %p", inUnit);
         NSLog(@"    AudioUnitScope:%u", (unsigned int)inScope);
@@ -141,7 +144,9 @@ static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_map;
     else{
         return ret;
     }
-    hookInfos[unitKey] = info;
+    @synchronized(hookInfos){
+        hookInfos[unitKey] = info;
+    }
     if(info.inputProc && info.mFormatFlags){
         AURenderCallbackStruct callbackSt;
         /*
