@@ -82,13 +82,13 @@ static T make_trampoline(T target, T orig){
 }
 
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_maps[2];
+static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_maps[3];
 
 static AURenderCallback my_inputProcs[] = {
-    my_inputProc<short>, my_inputProc<float>
+    my_inputProc<short>, my_inputProc<float>, my_inputProc<uint8_t>
 };
 static NSString *type_strings[] = {
-    @"short", @"float"
+    @"short", @"float", @"uint8_t"
 };
 
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
@@ -147,9 +147,12 @@ static NSString *type_strings[] = {
             return ret;
         }
         UInt32 mFormatFlags = ((AudioStreamBasicDescription *)inData)->mFormatFlags;
+        UInt32 mBitsPerChannel = ((AudioStreamBasicDescription *)inData)->mBitsPerChannel;
         NSLog(@"    mFormatFlags: %u",(unsigned int)mFormatFlags);
+        NSLog(@"    mBitsPerChannel: %u",(unsigned int)mBitsPerChannel);
 
         info.mFormatFlags = mFormatFlags;
+        info.mBitsPerChannel = mBitsPerChannel;
     }
     else{
         return ret;
@@ -169,7 +172,13 @@ static NSString *type_strings[] = {
             kAudioFormatFlagIsNonMixable                = (1U << 6),     // 0x40
             kAudioFormatFlagsAreAllClear                = 0x80000000,
         */
-        int type = info.mFormatFlags & kAudioFormatFlagIsFloat;
+        int type = -1;
+        if(info.mBitsPerChannel == 8){
+            type = 2;
+        }
+        else{
+            type = info.mFormatFlags & kAudioFormatFlagIsFloat;
+        }
         pthread_mutex_lock(&mutex);
         AURenderCallback myInputProc = inputProc_maps[type][info.inputProc];
         if(!myInputProc){
