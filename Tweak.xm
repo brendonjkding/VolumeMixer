@@ -138,6 +138,9 @@ static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_map;
 
         info.mFormatFlags = mFormatFlags;
     }
+    else{
+        return ret;
+    }
     hookInfos[unitKey] = info;
     if(info.inputProc && info.mFormatFlags){
         AURenderCallbackStruct callbackSt;
@@ -171,6 +174,8 @@ static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_map;
         callbackSt.inputProc = myInputProc;
         callbackSt.inputProcRefCon = info.inRefCon;
         %orig(inUnit, kAudioUnitProperty_SetRenderCallback, info.inScope, info.inElement, &callbackSt, sizeof(callbackSt));
+
+        info.inputProc = NULL;
     }
     return ret;
 }
