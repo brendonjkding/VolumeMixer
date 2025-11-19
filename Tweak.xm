@@ -6,6 +6,7 @@
 #import <sys/mman.h>
 #import <mach/mach.h>
 #import <dlfcn.h>
+#import <pthread.h>
 #import <unordered_map>
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
@@ -80,6 +81,7 @@ static T make_trampoline(T target, T orig){
     return (T)code;
 }
 
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_maps[2];
 
 static AURenderCallback my_inputProcs[] = {
@@ -168,6 +170,7 @@ static NSString *type_strings[] = {
             kAudioFormatFlagsAreAllClear                = 0x80000000,
         */
         int type = info.mFormatFlags & kAudioFormatFlagIsFloat;
+        pthread_mutex_lock(&mutex);
         AURenderCallback myInputProc = inputProc_maps[type][info.inputProc];
         if(!myInputProc){
             myInputProc = make_trampoline(my_inputProcs[type], info.inputProc);
@@ -178,6 +181,7 @@ static NSString *type_strings[] = {
         else{
             NSLog(@"[*] cached inputProc: %p, type: %@", info.inputProc, type_strings[type]);
         }
+        pthread_mutex_unlock(&mutex);
 
         callbackSt.inputProc = myInputProc;
         callbackSt.inputProcRefCon = info.inRefCon;
