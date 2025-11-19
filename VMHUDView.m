@@ -95,7 +95,10 @@
                                            _clippingView.frame.size.width,
                                            _clippingView.frame.size.height)];
         CGFloat scale = 1.0 - _clippingView.frame.origin.y / _clippingView.frame.size.height;
-        if(fabs(scale - _curScale) > 1.0 / 16.0 || scale <= 1.0 / 16.0) {
+        if(scale == _curScale){
+            return;
+        }
+        if(fabs(scale - _curScale) > 1.0 / 16.0 || scale <= 1.0 / 16.0 || scale == 1.0) {
             _curScale = scale;
             [_client callExternalMethod:@selector(setVolume:) withArguments:@{ @"curScale": @(_curScale) } completion:^(id ret){}];
         }
