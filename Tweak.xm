@@ -5,6 +5,7 @@
 #import <notify.h>
 #import <sys/mman.h>
 #import <mach/mach.h>
+#import <dlfcn.h>
 #import <unordered_map>
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
@@ -215,8 +216,8 @@ static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_map;
     }
     return %orig;
 }
-%hookf(OSStatus, AudioQueueStart,AudioQueueRef inAQ, const AudioTimeStamp *inStartTime){
-    NSLog(@"AudioQueueStart: %p",(void*)inAQ);
+%hookf(OSStatus, AudioQueueStartUnified, AudioQueueRef inAQ, const AudioTimeStamp *inStartTime, uint64_t flags){
+    NSLog(@"AudioQueueStartUnified: %p", (void *)inAQ);
     lstAudioQueue = inAQ;
     AudioQueueParameterValue outValue;
     AudioQueueGetParameter(lstAudioQueue, kAudioQueueParam_Volume, &outValue);
@@ -225,8 +226,8 @@ static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_map;
     }
     return %orig;
 }
-%hookf(void, AudioServicesPlaySystemSound, SystemSoundID inSystemSoundID){
-    NSLog(@"AudioServicesPlaySystemSound");
+%hookf(void, AudioServicesPlaySystemSoundWithOptions, SystemSoundID inSystemSoundID, id options, id inCompletionBlock){
+    NSLog(@"AudioServicesPlaySystemSoundWithOptions");
     if(!g_curScale){
         return;
     }
@@ -418,7 +419,15 @@ static void registerApp(){
     }
     NSLog(@"ctor: VolumeMixer");
 
-    %init(app, AVSampleBufferAudioRenderer = objc_getClass("AVSampleBufferAudioRenderer"));
+    void *AudioToolbox = dlopen("/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox", RTLD_LAZY);
+    void *AudioQueueStartUnified = dlsym(AudioToolbox, "AudioQueueStartWithFlags");
+    if(!AudioQueueStartUnified){
+        AudioQueueStartUnified = (void *)AudioQueueStart;
+    }
+    void *AudioServicesPlaySystemSoundWithOptions = dlsym(AudioToolbox, "AudioServicesPlaySystemSoundWithOptions");
+    dlclose(AudioToolbox);
+
+    %init(app, AVSampleBufferAudioRenderer = objc_getClass("AVSampleBufferAudioRenderer"), AudioQueueStartUnified = AudioQueueStartUnified, AudioServicesPlaySystemSoundWithOptions = AudioServicesPlaySystemSoundWithOptions);
     if(![NSBundle.mainBundle.bundleIdentifier isEqualToString:kWebKitBundleId]) {
         registerApp();
     }
