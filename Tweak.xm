@@ -82,6 +82,13 @@ static T make_trampoline(T target, T orig){
 
 static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_map;
 
+static AURenderCallback my_inputProcs[] = {
+    my_inputProc<short>, my_inputProc<float>
+};
+static NSString *type_strings[] = {
+    @"short", @"float"
+};
+
 %hookf(OSStatus, AudioUnitSetProperty, AudioUnit inUnit, AudioUnitPropertyID inID, AudioUnitScope inScope, AudioUnitElement inElement, const void *inData, UInt32 inDataSize){
     OSStatus ret = %orig;
 
@@ -162,14 +169,10 @@ static std::unordered_map<AURenderCallback, AURenderCallback> inputProc_map;
         */
         AURenderCallback myInputProc = inputProc_map[info.inputProc];
         if(!myInputProc){
-            if(info.mFormatFlags & kAudioFormatFlagIsFloat) {
-                myInputProc = make_trampoline(my_inputProc<float>, info.inputProc);
-                NSLog(@"float");
-            }
-            else{
-                myInputProc = make_trampoline(my_inputProc<short>, info.inputProc);
-                NSLog(@"short");
-            }
+            int type = info.mFormatFlags & kAudioFormatFlagIsFloat;
+            myInputProc = make_trampoline(my_inputProcs[type], info.inputProc);
+            NSLog(@"%@", type_strings[type]);
+
             NSLog(@"[*] new inputProc: %p", info.inputProc);
             inputProc_map[info.inputProc] = myInputProc;
         }
