@@ -1,5 +1,7 @@
 #import <AudioUnit/AudioUnit.h>
 
+#import <vector>
+
 extern double auCurScale;
 
 // credits to https://blog.csdn.net/Timsley/article/details/50683084?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase
@@ -27,6 +29,12 @@ template<class T>
 OSStatus my_inputProc(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData) {
     AURenderCallback orig = NULL;
     asm volatile ("mov %0, x16" : "=r" (orig));
+
+    std::vector<void *> mDatas;
+    for(UInt32 i = 0; i < ioData->mNumberBuffers; i++) {
+        mDatas.push_back(ioData->mBuffers[i].mData);
+    }
+
     OSStatus ret = orig(inRefCon, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
 
     if(*ioActionFlags == kAudioUnitRenderAction_OutputIsSilence) {
@@ -34,6 +42,13 @@ OSStatus my_inputProc(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
     }
 
     for(UInt32 i = 0; i < ioData->mNumberBuffers; i++) {
+        AudioBuffer *mBuffer = &ioData->mBuffers[i];
+        void *mData = mDatas[i];
+        if(mBuffer->mData != mData){
+            memcpy(mData, mBuffer->mData, mBuffer->mDataByteSize);
+            mBuffer->mData = mData;
+        }
+
         unsigned char *buf = (unsigned char *)ioData->mBuffers[i].mData;
 
         uint bytes = ioData->mBuffers[i].mDataByteSize;
