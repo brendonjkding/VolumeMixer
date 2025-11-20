@@ -62,6 +62,14 @@ static void trampoline(){
         "br x17\n"
         "3: .quad 0x8877665544332211\n"
     );
+    #elif __x86_64__
+    asm volatile (
+        "1: .quad 0x1122334455667788\n"
+        "2: .quad 0x1122334455667788\n"
+        "movq 1b(%rip), %rax\n"
+        "jmp *2b(%rip)\n"
+        "3: .quad 0x8877665544332211\n"
+    );
     #endif
 }
 

@@ -30,6 +30,8 @@ OSStatus my_inputProc(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags,
     AURenderCallback orig = NULL;
     #if __aarch64__
     asm volatile ("mov %0, x16" : "=r" (orig));
+    #elif __x86_64__
+    asm volatile ("mov %%rax, %0" : "=r" (orig));
     #endif
 
     std::vector<void *> mDatas;
