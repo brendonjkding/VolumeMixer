@@ -60,6 +60,7 @@ static void trampoline(){
         "ldr x16, 1b\n"
         "ldr x17, 2b\n"
         "br x17\n"
+        "3: .quad 0x8877665544332211\n"
     );
     #endif
 }
@@ -67,7 +68,11 @@ static void trampoline(){
 template<class T>
 static T make_trampoline(T target, T orig){
     void *instance = mmap(NULL, PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
-    memcpy(instance, (void *)trampoline, sizeof(uint64_t)*2 + sizeof(uint32_t)*3);
+    uint64_t little_start = 0x1122334455667788;
+    uint64_t little_end = 0x8877665544332211;
+    void *start = memmem((void *)trampoline, PAGE_SIZE, &little_start, sizeof(little_start));
+    void *end = memmem((void *)trampoline, PAGE_SIZE, &little_end, sizeof(little_end));
+    memcpy(instance, start, (char *)end - (char *)start);
 
     uint64_t *p = (uint64_t *)instance;
 
