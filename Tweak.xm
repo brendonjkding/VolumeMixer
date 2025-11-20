@@ -53,6 +53,7 @@ static BOOL isEnabledApp(){
 #pragma mark AudioUnit
 
 static void trampoline(){
+    #if __aarch64__
     asm volatile (
         "1: .quad 0x1122334455667788\n"
         "2: .quad 0x1122334455667788\n"
@@ -60,6 +61,7 @@ static void trampoline(){
         "ldr x17, 2b\n"
         "br x17\n"
     );
+    #endif
 }
 
 template<class T>

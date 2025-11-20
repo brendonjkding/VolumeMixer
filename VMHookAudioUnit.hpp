@@ -28,7 +28,9 @@ static int volume_adjust(T *in_buf, T *out_buf, double in_vol) {
 template<class T>
 OSStatus my_inputProc(void *inRefCon, AudioUnitRenderActionFlags *ioActionFlags, const AudioTimeStamp *inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList *ioData) {
     AURenderCallback orig = NULL;
+    #if __aarch64__
     asm volatile ("mov %0, x16" : "=r" (orig));
+    #endif
 
     std::vector<void *> mDatas;
     for(UInt32 i = 0; i < ioData->mNumberBuffers; i++) {
