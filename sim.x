@@ -1,3 +1,5 @@
+#import <theos/IOSMacros.h>
+
 #import "VMHUDWindow.h"
 
 extern VMHUDWindow *hudWindow;
@@ -40,3 +42,9 @@ extern VMHUDWindow *hudWindow;
 
 }
 %end
+
+%ctor{
+	if(IN_SPRINGBOARD){
+		%init;
+	}
+}

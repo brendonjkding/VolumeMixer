@@ -11,7 +11,7 @@ endif
 
 INSTALL_TARGET_PROCESSES = SpringBoard
 
-TWEAK_NAME = VolumeMixer VolumeMixerSB
+TWEAK_NAME = VolumeMixer
 
 VolumeMixer_FILES = Tweak.xm VMHookInfo.mm VMHookAudioUnit.mm 
 VolumeMixer_FILES += MRYIPC/MRYIPCCenter.m
@@ -19,13 +19,10 @@ VolumeMixer_CFLAGS = -fobjc-arc
 VolumeMixer_LIBRARIES += substrate
 VolumeMixer_LOGOSFLAGS += -c generator=MobileSubstrate
 
-VolumeMixerSB_FILES = TweakSB.xm VMHUDView.m VMHUDWindow.m VMHUDRootViewController.m VMLAListener.m VMLAVolumeDownListener.m VMLAVolumeUpListener.m
-VolumeMixerSB_FILES += MRYIPC/MRYIPCCenter.m
+VolumeMixer_FILES += TweakSB.xm VMHUDView.m VMHUDWindow.m VMHUDRootViewController.m VMLAListener.m VMLAVolumeDownListener.m VMLAVolumeUpListener.m
 ifdef SIMULATOR
-VolumeMixerSB_FILES += sim.x
+VolumeMixer_FILES += sim.x
 endif
-VolumeMixerSB_CFLAGS = -fobjc-arc 
-VolumeMixerSB_LIBRARIES = substrate
 
 BUNDLE_NAME = volumemixer CCVolumeMixer
 

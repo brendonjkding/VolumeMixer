@@ -1,6 +1,7 @@
 #import "VMHUDWindow.h"
 #import "VMHUDRootViewController.h"
 #import <notify.h>
+#import <theos/IOSMacros.h>
 #import "TweakSB.h"
 
 @interface AXPassthroughWindow : UIWindow
@@ -60,6 +61,9 @@ static void showHUDWindowSB(){
 %end //SB
 
 %ctor{
+    if(!IN_SPRINGBOARD){
+        return;
+    }
     // Credit: Polyfills — com.apple.UIKit usage
     g_defaults = [[NSUserDefaults alloc] initWithSuiteName:@"com.apple.UIKit"];
 
