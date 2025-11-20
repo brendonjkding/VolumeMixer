@@ -7,7 +7,7 @@
 #import <objc/runtime.h>
 
 @implementation VMHUDView {
-    CGPoint _lastLocation;
+    CGPoint _startingOrigin;
     UIImpactFeedbackGenerator *_feedback;
 }
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -84,15 +84,13 @@
     [g_defaults setObject:scales forKey:kPrefScalesKey];
 }
 - (void)pan:(UIPanGestureRecognizer *)pan{
-    CGPoint currentLocation = [pan locationInView:self];
     if(pan.state == UIGestureRecognizerStateBegan) {
-        _lastLocation = currentLocation;
+        _startingOrigin = _clippingView.frame.origin;
     }
     else if(pan.state == UIGestureRecognizerStateChanged) {
-        CGFloat dY = currentLocation.y - _lastLocation.y;
-        _lastLocation = currentLocation;
+        CGPoint translation = [pan translationInView:pan.view];
 
-        CGFloat newY = MIN(MAX(_clippingView.frame.origin.y + dY, 0), _clippingView.frame.size.height);
+        CGFloat newY = MIN(MAX(_startingOrigin.y + translation.y, 0), _clippingView.frame.size.height);
         [_clippingView setFrame:CGRectMake(_clippingView.frame.origin.x,
                                            newY,
                                            _clippingView.frame.size.width,
