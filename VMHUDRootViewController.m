@@ -31,7 +31,6 @@
     UICollectionView *_collectionView;
     UIView *_mtBgView;
     NSMutableArray<VMHUDView *> *_hudViews;
-    NSMutableArray<MRYIPCCenter *> *_clients;
     NSMutableArray<NSString *> *_bundleIDs;
     NSMutableArray<NSNumber *> *_pids;
     NSMutableArray<NSNumber *> *_runningAppIndexes;
@@ -45,7 +44,6 @@
         _hudViews = [NSMutableArray new];
         _bundleIDs = [NSMutableArray new];
         _pids = [NSMutableArray new];
-        _clients = [NSMutableArray new];
         _runningAppIndexes = [NSMutableArray new];
     }
     return self;
@@ -119,7 +117,6 @@
     [_hudViews[i] removeFromSuperview];
     [_hudViews removeObjectAtIndex:i];
     [_pids removeObjectAtIndex:i];
-    [_clients removeObjectAtIndex:i];
 }
 - (void)reloadRunningApp {
     void (^blockForMain)(void) = ^{
@@ -231,10 +228,11 @@
         [_pids addObject:pid];
 
         VMHUDView *hudView = [[VMHUDView alloc] initWithFrame:CGRectMake(0, 0, kHudWidth, kHudHeight)];
-        [hudView setBundleID:bundleID];
+        hudView.bundleID = bundleID;
         MRYIPCCenter *client = [MRYIPCCenter centerNamed:appNotify];
-        [_clients addObject:client];
-        [hudView setClient:client];
+        hudView.valueDidChange = ^(CGFloat curScale){
+            [client callExternalVoidMethod:@selector(setVolume:) withArguments:@{ @"curScale": @(curScale) }];
+        };
         [hudView initScale];
         [_hudViews addObject:hudView];
 

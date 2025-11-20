@@ -105,7 +105,7 @@
         }
         if(fabs(scale - _curScale) > 1.0 / 16.0 || scale <= 1.0 / 16.0 || scale == 1.0) {
             _curScale = scale;
-            [_client callExternalVoidMethod:@selector(setVolume:) withArguments:@{ @"curScale": @(_curScale) }];
+            _valueDidChange(_curScale);
         }
     }
     else if(pan.state == UIGestureRecognizerStateEnded) {
@@ -141,7 +141,7 @@
                                        _clippingView.frame.size.height * (1.0 - _curScale),
                                        _clippingView.frame.size.width,
                                        _clippingView.frame.size.height)];
-    [_client callExternalVoidMethod:@selector(setVolume:) withArguments:@{ @"curScale": @(_curScale) }];
+    _valueDidChange(_curScale);
     [self saveScaleToPrefs:@(_curScale)];
 }
 - (void)changeScale:(CGFloat)dScale {
