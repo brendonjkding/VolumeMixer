@@ -93,6 +93,8 @@
     longPress.delegate = self;
     [self.view addGestureRecognizer:longPress];
     longPress.minimumPressDuration = 0;
+
+    [self registerExistingApps];
 }
 // credits to https://twitter.com/aydenpanhuyzen/status/1205981139086782469
 - (BOOL)_canShowWhileLocked {
@@ -238,6 +240,14 @@
 
         [self reloadRunningApp];
     });
+}
+- (void)registerExistingApps{
+    for(NSString *bundleID in [g_defaults objectForKey:kPrefAppsKey]){
+        FBApplicationProcess *process = [[objc_getClass("FBProcessManager") sharedInstance] applicationProcessesForBundleIdentifier:bundleID].firstObject;
+        if(process.pid){
+            [self register:@{@"bundleID":bundleID, @"pid":@(process.pid)}];
+        }
+    }
 }
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
