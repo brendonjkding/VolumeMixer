@@ -435,7 +435,7 @@ static void registerApp(){
         MRYIPCCenter *idClient = [MRYIPCCenter centerNamed:@"com.brend0n.volumemixer/register"];
 
         int pid = NSProcessInfo.processInfo.processIdentifier;
-        [idClient callExternalMethod:@selector(register:) withArguments:@{@"bundleID":bundleID, @"pid":@(pid)} completion:^(id ret){}];
+        [idClient callExternalVoidMethod:@selector(register:) withArguments:@{@"bundleID":bundleID, @"pid":@(pid)}];
 
         NSString *appNotify = [NSString stringWithFormat:@"com.brend0n.volumemixer/%@~%d/setVolume", bundleID, pid];
         appServer = [[VMAPPServer alloc] initWithName:appNotify];
