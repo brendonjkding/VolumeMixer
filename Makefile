@@ -27,7 +27,7 @@ endif
 VolumeMixerSB_CFLAGS = -fobjc-arc 
 VolumeMixerSB_LIBRARIES = substrate
 
-BUNDLE_NAME = volumemixer
+BUNDLE_NAME = volumemixer CCVolumeMixer
 
 volumemixer_FILES = volumemixerpref/VMPrefRootListController.m volumemixerpref/BDInfoListController.m volumemixerpref/VMLicenseViewController.m volumemixerpref/VMAuthorListController.m
 volumemixer_INSTALL_PATH = /Library/PreferenceBundles
@@ -37,14 +37,18 @@ volumemixer_CFLAGS = -fobjc-arc
 volumemixer_EXTRA_FRAMEWORKS += AltList
 volumemixer_RESOURCE_DIRS = volumemixerpref/Resources
 
-export ADDITIONAL_CFLAGS += -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -include Prefix.pch
+CCVolumeMixer_BUNDLE_EXTENSION = bundle
+CCVolumeMixer_FILES = ccvolumemixer/CCVolumeMixer.m
+CCVolumeMixer_CFLAGS = -fobjc-arc
+CCVolumeMixer_PRIVATE_FRAMEWORKS = ControlCenterUIKit
+CCVolumeMixer_INSTALL_PATH = /Library/ControlCenter/Bundles/
+CCVolumeMixer_RESOURCE_DIRS = ccvolumemixer/Resources
 
-SUBPROJECTS += ccvolumemixer
+export ADDITIONAL_CFLAGS += -Wno-error=unused-variable -Wno-error=unused-function -Wno-error=unused-value -include Prefix.pch
 
 include $(THEOS)/makefiles/common.mk
 include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/bundle.mk
-include $(THEOS_MAKE_PATH)/aggregate.mk
 
 internal-stage::
 	$(ECHO_NOTHING)mkdir -p $(THEOS_STAGING_DIR)/Library/PreferenceLoader/Preferences$(ECHO_END)
