@@ -53,8 +53,13 @@
     [mtSliderView setFrame:self.bounds];
     [_clippingView addSubview:mtSliderView];
 
+    UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
+    [self addGestureRecognizer:pan];
+    pan.delegate = (id<UIGestureRecognizerDelegate>)self;
+
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
     [self addGestureRecognizer:longPress];
+    longPress.delegate = (id<UIGestureRecognizerDelegate>)self;
     longPress.minimumPressDuration = 0;
 
     return self;
@@ -78,14 +83,12 @@
     scales[_bundleID] = scale;
     [g_defaults setObject:scales forKey:kPrefScalesKey];
 }
-- (void)longPress:(UILongPressGestureRecognizer *)longPress {
-    CGPoint currentLocation = [longPress locationInView:self];
-    if(longPress.state == UIGestureRecognizerStateBegan) {
+- (void)pan:(UIPanGestureRecognizer *)pan{
+    CGPoint currentLocation = [pan locationInView:self];
+    if(pan.state == UIGestureRecognizerStateBegan) {
         _lastLocation = currentLocation;
-        _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
-        [_feedback impactOccurred];
     }
-    else if(longPress.state == UIGestureRecognizerStateChanged) {
+    else if(pan.state == UIGestureRecognizerStateChanged) {
         CGFloat dY = currentLocation.y - _lastLocation.y;
         _lastLocation = currentLocation;
 
@@ -103,11 +106,28 @@
             [_client callExternalMethod:@selector(setVolume:) withArguments:@{ @"curScale": @(_curScale) } completion:^(id ret){}];
         }
     }
-    else if(longPress.state == UIGestureRecognizerStateEnded) {
-        [_feedback impactOccurred];
-        _feedback = nil;
+    else if(pan.state == UIGestureRecognizerStateEnded) {
         [self saveScaleToPrefs:@(_curScale)];
     }
+}
+- (void)longPress:(UILongPressGestureRecognizer *)longPress{
+    switch(longPress.state){
+        case UIGestureRecognizerStateBegan:
+            _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+            [_feedback impactOccurred];
+            break;
+        case UIGestureRecognizerStateEnded:
+            [_feedback impactOccurred];
+        case UIGestureRecognizerStateCancelled:
+        case UIGestureRecognizerStateFailed:
+            _feedback = nil;
+            break;
+        default:
+            break;
+    }
+}
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer{
+    return YES;
 }
 - (void)setCurScale:(CGFloat)scale {
     _curScale = scale;
