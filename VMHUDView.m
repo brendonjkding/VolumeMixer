@@ -60,7 +60,7 @@
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
     [self addGestureRecognizer:longPress];
     longPress.delegate = (id<UIGestureRecognizerDelegate>)self;
-    longPress.minimumPressDuration = 0;
+    longPress.minimumPressDuration = 0.1;
 
     return self;
 }
@@ -86,6 +86,10 @@
 - (void)pan:(UIPanGestureRecognizer *)pan{
     if(pan.state == UIGestureRecognizerStateBegan) {
         _startingOrigin = _clippingView.frame.origin;
+        if(!_feedback){
+            _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+            [_feedback impactOccurred];
+        }
     }
     else if(pan.state == UIGestureRecognizerStateChanged) {
         CGPoint translation = [pan translationInView:pan.view];
@@ -106,13 +110,17 @@
     }
     else if(pan.state == UIGestureRecognizerStateEnded) {
         [self saveScaleToPrefs:@(_curScale)];
+        [_feedback impactOccurred];
+        _feedback = nil;
     }
 }
 - (void)longPress:(UILongPressGestureRecognizer *)longPress{
     switch(longPress.state){
         case UIGestureRecognizerStateBegan:
-            _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
-            [_feedback impactOccurred];
+            if(!_feedback){
+                _feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+                [_feedback impactOccurred];
+            }
             break;
         case UIGestureRecognizerStateEnded:
             [_feedback impactOccurred];
